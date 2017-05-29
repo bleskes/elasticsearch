@@ -16,6 +16,12 @@
  - match: { hits.total: 5 } # no new indexed data, so expect the original 5 documents from the old cluster
 
  - do:
+     search:
+        index: index_without_replicas
+
+ - match: { hits.total: 5 } # we just ensure that all data is here after the upgrade on a 0-replica index
+
+ - do:
      bulk:
         refresh: true
         body:

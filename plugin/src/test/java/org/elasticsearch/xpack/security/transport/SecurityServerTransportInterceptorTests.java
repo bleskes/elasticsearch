@@ -383,6 +383,45 @@ public class SecurityServerTransportInterceptorTests extends ESTestCase {
         assertEquals(Version.CURRENT, authentication.getVersion());
     }
 
+    // see #1576 for details
+    public void test540HeaderBug() throws Exception {
+        final User user = new User("joe", "role");
+        final Authentication authentication = new Authentication(user, new RealmRef("file", "file", "node1"), null, Version.V_5_4_0);
+        authentication.writeToContext(threadContext, cryptoService, settings, Version.V_5_4_0, true);
+        threadContext.putTransient(AuthorizationService.ORIGINATING_ACTION_KEY, "indices:foo");
+        threadContext.putTransient("BOOM", "Stash context otherwise 5.4.0 will be broken");
+        SecurityServerTransportInterceptor interceptor = new SecurityServerTransportInterceptor(settings, threadPool,
+                mock(AuthenticationService.class), mock(AuthorizationService.class), xPackLicenseState, mock(SSLService.class),
+                securityContext, new DestructiveOperations(Settings.EMPTY, new ClusterSettings(Settings.EMPTY,
+                Collections.singleton(DestructiveOperations.REQUIRES_NAME_SETTING))));
+
+        AtomicBoolean calledWrappedSender = new AtomicBoolean(false);
+        AtomicReference<User> sendingUser = new AtomicReference<>();
+        AtomicReference<Authentication> authRef = new AtomicReference<>();
+        AsyncSender intercepted = new AsyncSender() {
+            @Override
+            public <T extends TransportResponse> void sendRequest(Transport.Connection connection, String action, TransportRequest request,
+                                                                  TransportRequestOptions options, TransportResponseHandler<T> handler) {
+                if (calledWrappedSender.compareAndSet(false, true) == false) {
+                    fail("sender called more than once!");
+                }
+                assertNull("context should have been rewritten", threadContext.getTransient("BOOM"));
+                sendingUser.set(securityContext.getUser());
+                authRef.set(securityContext.getAuthentication());
+            }
+        };
+        AsyncSender sender = interceptor.interceptSender(intercepted);
+
+        Transport.Connection connection = mock(Transport.Connection.class);
+        when(connection.getVersion()).thenReturn(Version.V_5_4_0);
+        sender.sendRequest(connection, "indices:foo[s]", null, null, null);
+        assertTrue(calledWrappedSender.get());
+        assertEquals(user, sendingUser.get());
+        assertEquals(user, securityContext.getUser());
+        assertEquals(Version.V_5_4_0, authRef.get().getVersion());
+        assertEquals(Version.V_5_4_0, authentication.getVersion());
+    }
+
     public void testContextRestoreResponseHandler() throws Exception {
         ThreadContext threadContext = new ThreadContext(Settings.EMPTY);
 

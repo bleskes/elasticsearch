@@ -10,6 +10,15 @@
               number_of_replicas: 1
 
  - do:
+     indices.create:
+        index: index_without_replicas # this index is just added to ensure we can upgrade an index cleanly that has no replicas
+        wait_for_active_shards : all
+        body:
+          settings:
+            index:
+              number_of_replicas: 0
+
+ - do:
      bulk:
         refresh: true
         body:
@@ -25,12 +34,33 @@
           - '{"f1": "v5_old", "f2": 4}'
 
  - do:
+     bulk:
+        refresh: true
+        body:
+          - '{"index": {"_index": "index_without_replicas", "_type": "doc"}}'
+          - '{"field": "v0"}'
+          - '{"index": {"_index": "index_without_replicas", "_type": "doc"}}'
+          - '{"field": "v1"}'
+          - '{"index": {"_index": "index_without_replicas", "_type": "doc"}}'
+          - '{"field": "v2"}'
+          - '{"index": {"_index": "index_without_replicas", "_type": "doc"}}'
+          - '{"field": "v3"}'
+          - '{"index": {"_index": "index_without_replicas", "_type": "doc"}}'
+          - '{"field": "v4"}'
+
+ - do:
      indices.flush:
-        index: test_index
+        index: test_index,index_without_replicas
 
  - do:
      search:
         index: test_index
+
+ - match: { hits.total: 5 }
+
+ - do:
+     search:
+        index: index_without_replicas
 
  - match: { hits.total: 5 }
 

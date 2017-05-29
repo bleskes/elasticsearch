@@ -108,7 +108,7 @@ public class SecurityServerTransportInterceptor extends AbstractComponent implem
                     // the transport in core normally does this check, BUT since we are serializing to a string header we need to do it
                     // ourselves otherwise we wind up using a version newer than what we can actually send
                     final Version minVersion = Version.min(connection.getVersion(), Version.CURRENT);
-
+                    final Authentication authentication = securityContext.getAuthentication();
                     // Sometimes a system action gets executed like a internal create index request or update mappings request
                     // which means that the user is copied over to system actions so we need to change the user
                     if (AuthorizationUtils.shouldReplaceUserWithSystem(threadPool.getThreadContext(), action)) {
@@ -124,8 +124,7 @@ public class SecurityServerTransportInterceptor extends AbstractComponent implem
                                 new ContextRestoreResponseHandler<>(threadPool.getThreadContext().wrapRestorable(original),
                                         handler), sender), connection.getVersion());
                     } else if (Authentication.shouldSign(settings, minVersion, signingEnabled) ||
-                        (securityContext.getAuthentication() != null &&
-                            securityContext.getAuthentication().getVersion().equals(minVersion) == false)) {
+                            (authentication != null && authenticationVersionMatches(minVersion, authentication) == false)) {
                         // re-write the authentication since we want the authentication version to match the version of the connection
                         securityContext.executeAfterRewritingAuthentication(original -> sendWithUser(connection, action, request, options,
                             new ContextRestoreResponseHandler<>(threadPool.getThreadContext().wrapRestorable(original), handler), sender),
@@ -136,6 +135,13 @@ public class SecurityServerTransportInterceptor extends AbstractComponent implem
                 } else {
                     sender.sendRequest(connection, action, request, options, handler);
                 }
+            }
+
+            private boolean authenticationVersionMatches(Version minVersion, Authentication authentication) {
+                return authentication.getVersion().equals(minVersion)
+                        // 5.4.0 has a bug where it sends out authentication headers using the remote version number, but then cannot read
+                        // them back again, so we always rewrite the authentication header if it's being sent to that version
+                        && authentication.getVersion().equals(Version.V_5_4_0) == false;
             }
         };
     }
