@@ -281,7 +281,7 @@ public final class TokenService extends AbstractComponent {
                         // no need to invalidate - it's already expired
                         listener.onResponse(false);
                     } else {
-                        final String id = userToken.getId();
+                        final String id = getDocumentId(userToken);
                         internalClient.prepareIndex(INDEX_NAME, TYPE, id)
                                 .setOpType(OpType.CREATE)
                                 .setSource("doc_type", DOC_TYPE, "expiration_time", getExpirationTime().toEpochMilli())
@@ -311,6 +311,10 @@ public final class TokenService extends AbstractComponent {
         }
     }
 
+    private static String getDocumentId(UserToken userToken) {
+        return DOC_TYPE + "_" + userToken.getId();
+    }
+
     private void ensureEnabled() {
         if (enabled == false) {
             throw new IllegalStateException("tokens are not enabled");
@@ -323,7 +327,7 @@ public final class TokenService extends AbstractComponent {
      */
     private void checkIfTokenIsRevoked(UserToken userToken, ActionListener<UserToken> listener) {
         if (lifecycleService.isSecurityIndexAvailable()) {
-            internalClient.prepareGet(INDEX_NAME, TYPE, userToken.getId())
+            internalClient.prepareGet(INDEX_NAME, TYPE, getDocumentId(userToken))
                     .execute(new ActionListener<GetResponse>() {
 
                         @Override
