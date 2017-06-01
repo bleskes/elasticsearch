@@ -66,8 +66,7 @@ public class AuthenticationTests extends ESTestCase {
      * Versions after 5.4.1 should only sign headers if they are not over ssl.
      */
     public void testShouldSignPostUnsignedOverSsl() {
-        // 5.4.1 hasn't been released so we can't use randomVersionBetween, sadly.
-        Version version = randomValueOtherThanMany(v -> v.before(Version.V_5_4_1_UNRELEASED), () -> randomVersion(random()));
+        Version version = randomVersionBetween(random(), Version.V_5_4_1, Version.CURRENT);
         assertTrue(Authentication.shouldSign(SSL_DISABLED, version, true));
         assertFalse(Authentication.shouldSign(SSL_ENABLED, version, true));
     }
