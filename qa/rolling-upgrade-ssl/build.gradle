@@ -196,6 +196,7 @@ upgradedClusterTestRunner {
 }
 
 task integTest {
+    mustRunAfter(createNodeKeyStore)
     dependsOn = [upgradedClusterTest]
 }
 
