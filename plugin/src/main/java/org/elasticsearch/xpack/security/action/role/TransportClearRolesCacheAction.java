@@ -76,8 +76,4 @@ public class TransportClearRolesCacheAction extends TransportNodesAction<ClearRo
         return new ClearRolesCacheResponse.Node(clusterService.localNode());
     }
 
-    @Override
-    protected boolean accumulateExceptions() {
-        return false;
-    }
 }

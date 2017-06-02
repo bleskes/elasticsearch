@@ -542,10 +542,6 @@ public class TestPersistentTasksPlugin extends Plugin implements ActionPlugin {
             listener.onResponse(new TestTaskResponse());
         }
 
-        @Override
-        protected boolean accumulateExceptions() {
-            return false;
-        }
     }
 
 
