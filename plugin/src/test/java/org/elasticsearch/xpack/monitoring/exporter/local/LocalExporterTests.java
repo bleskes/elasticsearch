@@ -59,7 +59,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.junit.After;
 import org.junit.AfterClass;
 
 import java.io.IOException;
@@ -78,6 +77,7 @@ import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcke
 import static org.elasticsearch.xpack.monitoring.MonitoredSystem.KIBANA;
 import static org.elasticsearch.xpack.monitoring.MonitoredSystem.LOGSTASH;
 import static org.elasticsearch.xpack.monitoring.exporter.MonitoringTemplateUtils.DATA_INDEX;
+import static org.elasticsearch.xpack.monitoring.exporter.MonitoringTemplateUtils.TEMPLATE_VERSION;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 
@@ -123,8 +123,7 @@ public class LocalExporterTests extends MonitoringIntegTestCase {
                 .build();
     }
 
-    @After
-    public void stopMonitoring() throws Exception {
+    private void stopMonitoring() throws Exception {
         // Now disabling the monitoring service, so that no more collection are started
         assertAcked(client().admin().cluster().prepareUpdateSettings()
                 .setTransientSettings(Settings.builder().putNull(MonitoringSettings.INTERVAL.getKey())));
@@ -134,23 +133,31 @@ public class LocalExporterTests extends MonitoringIntegTestCase {
         // node_stats document collected for each node is at least 10 seconds old, corresponding to
         // 2 or 3 elapsed collection intervals.
         final int elapsedInSeconds = 10;
+        final DateTime startTime = DateTime.now(DateTimeZone.UTC);
         assertBusy(() -> {
-            refresh(".monitoring-es-2-*");
-            SearchResponse response = client().prepareSearch(".monitoring-es-2-*").setTypes("node_stats").setSize(0)
-                    .addAggregation(terms("agg_nodes_ids").field("node_stats.node_id")
-                        .subAggregation(max("agg_last_time_collected").field("timestamp")))
-                    .get();
+            IndicesExistsResponse indicesExistsResponse = client().admin().indices().prepareExists(".monitoring-*").get();
+            if (indicesExistsResponse.isExists()) {
+                ensureYellow(".monitoring-*");
+                refresh(".monitoring-es-*");
 
-            Terms aggregation = response.getAggregations().get("agg_nodes_ids");
-            for (String nodeName : internalCluster().getNodeNames()) {
-                String nodeId = internalCluster().clusterService(nodeName).localNode().getId();
-                Terms.Bucket bucket = aggregation.getBucketByKey(nodeId);
-                assertTrue("No bucket found for node id [" + nodeId + "]", bucket != null);
-                assertTrue(bucket.getDocCount() >= 1L);
+                SearchResponse response = client().prepareSearch(".monitoring-es-*").setTypes("node_stats").setSize(0)
+                        .addAggregation(terms("agg_nodes_ids").field("node_stats.node_id")
+                                .subAggregation(max("agg_last_time_collected").field("timestamp")))
+                        .get();
 
-                Max subAggregation = bucket.getAggregations().get("agg_last_time_collected");
-                DateTime lastCollection = new DateTime(Math.round(subAggregation.getValue()), DateTimeZone.UTC);
-                assertTrue(lastCollection.plusSeconds(elapsedInSeconds).isBefore(DateTime.now(DateTimeZone.UTC)));
+                Terms aggregation = response.getAggregations().get("agg_nodes_ids");
+                for (String nodeName : internalCluster().getNodeNames()) {
+                    String nodeId = internalCluster().clusterService(nodeName).localNode().getId();
+                    Terms.Bucket bucket = aggregation.getBucketByKey(nodeId);
+                    assertTrue("No bucket found for node id [" + nodeId + "]", bucket != null);
+                    assertTrue(bucket.getDocCount() >= 1L);
+
+                    Max subAggregation = bucket.getAggregations().get("agg_last_time_collected");
+                    DateTime lastCollection = new DateTime(Math.round(subAggregation.getValue()), DateTimeZone.UTC);
+                    assertTrue(lastCollection.plusSeconds(elapsedInSeconds).isBefore(DateTime.now(DateTimeZone.UTC)));
+                }
+            } else {
+                assertTrue(DateTime.now(DateTimeZone.UTC).isAfter(startTime.plusSeconds(elapsedInSeconds)));
             }
         }, 30L, TimeUnit.SECONDS);
 
@@ -162,130 +169,134 @@ public class LocalExporterTests extends MonitoringIntegTestCase {
     }
 
     public void testExport() throws Exception {
-        if (randomBoolean()) {
-            // indexing some random documents
-            IndexRequestBuilder[] indexRequestBuilders = new IndexRequestBuilder[5];
-            for (int i = 0; i < indexRequestBuilders.length; i++) {
-                indexRequestBuilders[i] = client().prepareIndex("test", "type", Integer.toString(i))
-                        .setSource("title", "This is a random document");
+        try {
+            if (randomBoolean()) {
+                // indexing some random documents
+                IndexRequestBuilder[] indexRequestBuilders = new IndexRequestBuilder[5];
+                for (int i = 0; i < indexRequestBuilders.length; i++) {
+                    indexRequestBuilders[i] = client().prepareIndex("test", "type", Integer.toString(i))
+                            .setSource("title", "This is a random document");
+                }
+                indexRandom(true, indexRequestBuilders);
             }
-            indexRandom(true, indexRequestBuilders);
-        }
 
-        if (randomBoolean()) {
-            // create some marvel indices to check if aliases are correctly created
-            final int oldies = randomIntBetween(1, 5);
-            for (int i = 0; i < oldies; i++) {
-                assertAcked(client().admin().indices().prepareCreate(".marvel-es-1-2014.12." + i)
-                        .setSettings("number_of_shards", 1, "number_of_replicas", 0).get());
+            if (randomBoolean()) {
+                // create some marvel indices to check if aliases are correctly created
+                final int oldies = randomIntBetween(1, 5);
+                for (int i = 0; i < oldies; i++) {
+                    assertAcked(client().admin().indices().prepareCreate(".marvel-es-1-2014.12." + i)
+                            .setSettings("number_of_shards", 1, "number_of_replicas", 0).get());
+                }
             }
-        }
 
         if (randomBoolean()) {
             // create the monitoring data index to check if its mappings are correctly updated
             createIndex(DATA_INDEX);
-        }
-
-        Settings.Builder exporterSettings = Settings.builder()
+        }Settings.Builder exporterSettings = Settings.builder()
                 .put("xpack.monitoring.exporters._local.enabled", true);
 
-        String timeFormat = indexTimeFormat.get();
-        if (timeFormat != null) {
-            exporterSettings.put("xpack.monitoring.exporters._local.index.name.time_format",
-                    timeFormat);
-        }
-
-        // local exporter is now enabled
-        assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(exporterSettings));
-
-        if (randomBoolean()) {
-            // export some documents now, before starting the monitoring service
-            final int nbDocs = randomIntBetween(1, 20);
-            List<MonitoringBulkDoc> monitoringDocs = new ArrayList<>(nbDocs);
-            for (int i = 0; i < nbDocs; i++) {
-                monitoringDocs.add(createMonitoringBulkDoc(String.valueOf(i)));
+            String timeFormat = indexTimeFormat.get();
+            if (timeFormat != null) {
+                exporterSettings.put("xpack.monitoring.exporters._local.index.name.time_format",
+                        timeFormat);
             }
 
-            assertBusy(() -> {
-                MonitoringBulkRequestBuilder bulk = monitoringClient().prepareMonitoringBulk();
-                monitoringDocs.forEach(bulk::add);
-                assertEquals(RestStatus.OK, bulk.get().status());
-                refresh();
+            // local exporter is now enabled
+            assertAcked(client().admin().cluster().prepareUpdateSettings().setTransientSettings(exporterSettings));
 
+            if (randomBoolean()) {
+                // export some documents now, before starting the monitoring service
+                final int nbDocs = randomIntBetween(1, 20);
+                List<MonitoringBulkDoc> monitoringDocs = new ArrayList<>(nbDocs);
+                for (int i = 0; i < nbDocs; i++) {
+                    monitoringDocs.add(createMonitoringBulkDoc(String.valueOf(i)));
+                }
+
+                assertBusy(() -> {
+                    MonitoringBulkRequestBuilder bulk = monitoringClient().prepareMonitoringBulk();
+                    monitoringDocs.forEach(bulk::add);
+                    assertEquals(RestStatus.OK, bulk.get().status());
+                    refresh();
+
+                    assertThat(client().admin().indices().prepareExists(".monitoring-*").get().isExists(), is(true));
+                    ensureYellow(".monitoring-*");
+
+                    SearchResponse response = client().prepareSearch(".monitoring-*").get();
+                    assertEquals(nbDocs, response.getHits().getTotalHits());
+                });
+
+                checkMonitoringTemplates();
+                checkMonitoringPipeline();
+                checkMonitoringAliases();
+                checkMonitoringMappings();
+                checkMonitoringDocs();
+            }
+
+            // monitoring service is started
+            exporterSettings = Settings.builder()
+                    .put(MonitoringSettings.INTERVAL.getKey(), 3L, TimeUnit.SECONDS);
+            assertAcked(client().admin().cluster().prepareUpdateSettings()
+                    .setTransientSettings(exporterSettings));
+
+            final int numNodes = internalCluster().getNodeNames().length;
+            assertBusy(() -> {
                 assertThat(client().admin().indices().prepareExists(".monitoring-*").get().isExists(), is(true));
                 ensureYellow(".monitoring-*");
 
-                SearchResponse response = client().prepareSearch(".monitoring-*").get();
-                assertEquals(nbDocs, response.getHits().getTotalHits());
-            });
+                assertThat(client().prepareSearch(".monitoring-es-*").setTypes("cluster_state")
+                        .get().getHits().getTotalHits(), greaterThan(0L));
+
+                assertEquals(0L, client().prepareSearch(".monitoring-es-*").setTypes("node")
+                        .get().getHits().getTotalHits() % numNodes);
+
+                assertThat(client().prepareSearch(".monitoring-es-*").setTypes("cluster_stats")
+                        .get().getHits().getTotalHits(), greaterThan(0L));
+
+                assertThat(client().prepareSearch(".monitoring-es-*").setTypes("index_recovery")
+                        .get().getHits().getTotalHits(), greaterThan(0L));
+
+                assertThat(client().prepareSearch(".monitoring-es-*").setTypes("index_stats")
+                        .get().getHits().getTotalHits(), greaterThan(0L));
+
+                assertThat(client().prepareSearch(".monitoring-es-*").setTypes("indices_stats")
+                        .get().getHits().getTotalHits(), greaterThan(0L));
+
+                assertThat(client().prepareSearch(".monitoring-es-*").setTypes("shards")
+                        .get().getHits().getTotalHits(), greaterThan(0L));
+
+                assertThat(client().prepareSearch(".monitoring-data-2").setTypes("cluster_info")
+                        .get().getHits().getTotalHits(), greaterThan(0L));
+
+                SearchResponse response = client().prepareSearch(".monitoring-es-*")
+                        .setTypes("node_stats")
+                        .setSize(0)
+                        .addAggregation(terms("agg_nodes_ids").field("node_stats.node_id"))
+                        .get();
+
+                Terms aggregation = response.getAggregations().get("agg_nodes_ids");
+                assertEquals("Aggregation on node_id must return a bucket per node involved in test",
+                        numNodes, aggregation.getBuckets().size());
+
+                for (String nodeName : internalCluster().getNodeNames()) {
+                    String nodeId = internalCluster().clusterService(nodeName).localNode().getId();
+                    Terms.Bucket bucket = aggregation.getBucketByKey(nodeId);
+                    assertTrue("No bucket found for node id [" + nodeId + "]", bucket != null);
+                    assertTrue(bucket.getDocCount() >= 1L);
+                }
+
+            }, 30L, TimeUnit.SECONDS);
 
             checkMonitoringTemplates();
             checkMonitoringPipeline();
             checkMonitoringAliases();
             checkMonitoringMappings();
+            checkMonitoringWatches();
             checkMonitoringDocs();
+
+            logger.info("All checks passed.");
+        } finally {
+            stopMonitoring();
         }
-
-        // monitoring service is started
-        exporterSettings = Settings.builder()
-                .put(MonitoringSettings.INTERVAL.getKey(), 3L, TimeUnit.SECONDS);
-        assertAcked(client().admin().cluster().prepareUpdateSettings()
-                .setTransientSettings(exporterSettings));
-
-        final int numNodes = internalCluster().getNodeNames().length;
-        assertBusy(() -> {
-            assertThat(client().admin().indices().prepareExists(".monitoring-*").get().isExists(), is(true));
-            ensureYellow(".monitoring-*");
-
-            assertThat(client().prepareSearch(".monitoring-es-2-*").setTypes("cluster_state")
-                    .get().getHits().getTotalHits(), greaterThan(0L));
-
-            assertEquals(0L, client().prepareSearch(".monitoring-es-2-*").setTypes("node")
-                    .get().getHits().getTotalHits() % numNodes);
-
-            assertThat(client().prepareSearch(".monitoring-es-2-*").setTypes("cluster_stats")
-                    .get().getHits().getTotalHits(), greaterThan(0L));
-
-            assertThat(client().prepareSearch(".monitoring-es-2-*").setTypes("index_recovery")
-                    .get().getHits().getTotalHits(), greaterThan(0L));
-
-            assertThat(client().prepareSearch(".monitoring-es-2-*").setTypes("index_stats")
-                    .get().getHits().getTotalHits(), greaterThan(0L));
-
-            assertThat(client().prepareSearch(".monitoring-es-2-*").setTypes("indices_stats")
-                    .get().getHits().getTotalHits(), greaterThan(0L));
-
-            assertThat(client().prepareSearch(".monitoring-es-2-*").setTypes("shards")
-                    .get().getHits().getTotalHits(), greaterThan(0L));
-
-            assertThat(client().prepareSearch(".monitoring-data-2").setTypes("cluster_info")
-                    .get().getHits().getTotalHits(), greaterThan(0L));
-
-            SearchResponse response = client().prepareSearch(".monitoring-es-2-*")
-                    .setTypes("node_stats")
-                    .setSize(0)
-                    .addAggregation(terms("agg_nodes_ids").field("node_stats.node_id"))
-                    .get();
-
-            Terms aggregation = response.getAggregations().get("agg_nodes_ids");
-            assertEquals("Aggregation on node_id must return a bucket per node involved in test",
-                    numNodes, aggregation.getBuckets().size());
-
-            for (String nodeName : internalCluster().getNodeNames()) {
-                String nodeId = internalCluster().clusterService(nodeName).localNode().getId();
-                Terms.Bucket bucket = aggregation.getBucketByKey(nodeId);
-                assertTrue("No bucket found for node id [" + nodeId + "]", bucket != null);
-                assertTrue(bucket.getDocCount() >= 1L);
-            }
-
-        }, 30L, TimeUnit.SECONDS);
-
-        checkMonitoringTemplates();
-        checkMonitoringPipeline();
-        checkMonitoringAliases();
-        checkMonitoringMappings();
-        checkMonitoringWatches();
-        checkMonitoringDocs();
     }
 
     /**
@@ -327,7 +338,7 @@ public class LocalExporterTests extends MonitoringIntegTestCase {
             assertEquals("marvel index should have at least 1 alias: " + index, 1, aliases.size());
 
             String indexDate = index.substring(".marvel-es-1-".length());
-            String expectedAlias = ".monitoring-es-2-" + indexDate + "-alias";
+            String expectedAlias = ".monitoring-es-" + TEMPLATE_VERSION + "-" + indexDate + "-alias";
             assertEquals(expectedAlias, aliases.get(0).getAlias());
         }
     }
@@ -416,7 +427,7 @@ public class LocalExporterTests extends MonitoringIntegTestCase {
                 expectedIndex.add(".monitoring-data-2");
             } else {
                 String dateTime = dateFormatter.print(dateParser.parseDateTime(timestamp));
-                expectedIndex.add(".monitoring-" + expectedSystem.getSystem() + "-2-" + dateTime);
+                expectedIndex.add(".monitoring-" + expectedSystem.getSystem() + "-" + TEMPLATE_VERSION + "-" + dateTime);
 
                 if ("node".equals(type)) {
                     expectedIndex.add(".monitoring-data-2");
@@ -434,7 +445,7 @@ public class LocalExporterTests extends MonitoringIntegTestCase {
 
     private static MonitoringBulkDoc createMonitoringBulkDoc(String id) throws IOException {
         String monitoringId = randomFrom(KIBANA, LOGSTASH).getSystem();
-        String monitoringVersion = MonitoringTemplateUtils.TEMPLATE_VERSION;
+        String monitoringVersion = TEMPLATE_VERSION;
         MonitoringIndex index = randomFrom(MonitoringIndex.values());
         XContentType xContentType = randomFrom(XContentType.values());
 
