@@ -430,7 +430,7 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         private boolean usePerPartitionNormalization = false;
 
         public Builder(List<Detector> detectors) {
-            this.detectors = detectors;
+            setDetectors(detectors);
         }
 
         public Builder(AnalysisConfig analysisConfig) {
@@ -449,7 +449,19 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
         }
 
         public void setDetectors(List<Detector> detectors) {
-            this.detectors = detectors;
+            if (detectors == null) {
+                this.detectors = null;
+                return;
+            }
+            // We always assign sequential IDs to the detectors that are correct for this analysis config
+            int detectorIndex = 0;
+            List<Detector> sequentialIndexDetectors = new ArrayList<>(detectors.size());
+            for (Detector origDetector : detectors) {
+                Detector.Builder builder = new Detector.Builder(origDetector);
+                builder.setDetectorIndex(detectorIndex++);
+                sequentialIndexDetectors.add(builder.build());
+            };
+            this.detectors = sequentialIndexDetectors;
         }
 
         public void setBucketSpan(TimeValue bucketSpan) {
@@ -524,6 +536,8 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
             checkFieldIsNotNegativeIfSpecified(RESULT_FINALIZATION_WINDOW.getPreferredName(), resultFinalizationWindow);
             verifyMultipleBucketSpans();
 
+            verifyNoMetricFunctionsWhenSummaryCountFieldNameIsSet();
+
             overlappingBuckets = verifyOverlappingBucketsConfig(overlappingBuckets, detectors);
 
             if (usePerPartitionNormalization) {
@@ -536,6 +550,14 @@ public class AnalysisConfig extends ToXContentToBytes implements Writeable {
             return new AnalysisConfig(bucketSpan, categorizationFieldName, categorizationFilters,
                     latency, summaryCountFieldName, detectors, influencers, overlappingBuckets,
                     resultFinalizationWindow, multivariateByFields, multipleBucketSpans, usePerPartitionNormalization);
+        }
+
+        private void verifyNoMetricFunctionsWhenSummaryCountFieldNameIsSet() {
+            if (Strings.isNullOrEmpty(summaryCountFieldName) == false &&
+                    detectors.stream().anyMatch(d -> Detector.METRIC.equals(d.getFunction()))) {
+                throw ExceptionsHelper.badRequestException(
+                        Messages.getMessage(Messages.JOB_CONFIG_FUNCTION_INCOMPATIBLE_PRESUMMARIZED, Detector.METRIC));
+            }
         }
 
         private static void checkFieldIsNotNegativeIfSpecified(String fieldName, Long value) {

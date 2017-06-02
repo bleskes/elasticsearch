@@ -188,7 +188,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         Detector.Builder d1 = new Detector.Builder("max", "field");
         d1.setByFieldName("by_field");
 
-        Detector.Builder d2 = new Detector.Builder("metric", "field2");
+        Detector.Builder d2 = new Detector.Builder("median", "field2");
         d2.setOverFieldName("over_field");
 
         AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Arrays.asList(d1.build(), d2.build()));
@@ -204,6 +204,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         assertTrue(analysisFields.contains("over_field"));
 
         assertFalse(analysisFields.contains("max"));
+        assertFalse(analysisFields.contains("median"));
         assertFalse(analysisFields.contains(""));
         assertFalse(analysisFields.contains(null));
 
@@ -225,6 +226,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
 
         assertFalse(analysisFields.contains("count"));
         assertFalse(analysisFields.contains("max"));
+        assertFalse(analysisFields.contains("median"));
         assertFalse(analysisFields.contains(""));
         assertFalse(analysisFields.contains(null));
     }
@@ -242,7 +244,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testCheckValidId_IdTooLong()  {
         Job.Builder builder = buildJobBuilder("foo");
         builder.setId("averyveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryveryaveryveryverylongid");
-        expectThrows(IllegalArgumentException.class, () -> builder.build());
+        expectThrows(IllegalArgumentException.class, builder::build);
     }
 
     public void testCheckValidId_GivenAllValidChars() {
@@ -365,7 +367,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
     public void testBuilder_withInvalidIndexNameThrows() {
         Job.Builder builder = buildJobBuilder("foo");
         builder.setResultsIndexName("_bad^name");
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, () -> builder.build());
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, builder::build);
         assertEquals(Messages.getMessage(Messages.INVALID_ID, Job.RESULTS_INDEX_NAME.getPreferredName(), "_bad^name"), e.getMessage());
     }
 
@@ -435,8 +437,7 @@ public class JobTests extends AbstractSerializingTestCase<Job> {
         Detector.Builder d1 = new Detector.Builder("info_content", "domain");
         d1.setOverFieldName("client");
         Detector.Builder d2 = new Detector.Builder("min", "field");
-        AnalysisConfig.Builder ac = new AnalysisConfig.Builder(Arrays.asList(d1.build(), d2.build()));
-        return ac;
+        return new AnalysisConfig.Builder(Arrays.asList(d1.build(), d2.build()));
     }
 
     public static Job createRandomizedJob() {
