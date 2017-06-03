@@ -22,6 +22,7 @@ package org.elasticsearch.index.translog;
 import org.apache.lucene.util.Counter;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TranslogDeletionPolicy {
@@ -74,10 +75,40 @@ public class TranslogDeletionPolicy {
     /**
      * returns the minimum translog generation that is still required by the system. Any generation below
      * the returned value may be safely deleted
+     * @param readers current translog readers
+     * @param writer  current translog writer
      */
-    synchronized long minTranslogGenRequired() {
-        long viewRefs = translogRefCounts.keySet().stream().reduce(Math::min).orElse(Long.MAX_VALUE);
-        return Math.min(viewRefs, minTranslogGenerationForRecovery);
+    synchronized long minTranslogGenRequired(List<TranslogReader> readers, TranslogWriter writer) {
+        long minByView = getMinTranslogGenRequiredByViews();
+        long minByAge = getMinTranslogGenByAge(readers, writer);
+        long minBySize = getMinTranslogGenBySize(readers, writer);
+        long minByAgeAndSize = Math.max(minByAge, minBySize);
+        return Math.min(minByAgeAndSize, Math.min(minByView, minTranslogGenerationForRecovery));
+    }
+
+    private long getMinTranslogGenBySize(List<TranslogReader> readers, TranslogWriter writer) {
+        final long retentionSizeInBytes = 512 * 1024L * 1024;
+        long totalSize = writer.sizeInBytes();
+        long minGen = writer.getGeneration();
+        for (int i = readers.size() - 1; i>0 && totalSize < retentionSizeInBytes; i--) {
+            final TranslogReader reader = readers.get(i);
+            totalSize += reader.sizeInBytes();
+            minGen = reader.getGeneration();
+        }
+        return minGen;
+    }
+
+    private long getMinTranslogGenByAge(List<TranslogReader> readers, TranslogWriter writer) {
+        long now = System.currentTimeMillis();
+        long maxAgeToKeep = 3L * 3600 * 1000;
+        BaseTranslogReader firstNonExpired = readers.stream().map(r -> (BaseTranslogReader) r).filter(
+            r -> now - r.getCreationTimeInMillis() < maxAgeToKeep
+        ).findFirst().orElse(writer);
+        return firstNonExpired.getCreationTimeInMillis();
+    }
+
+    private long getMinTranslogGenRequiredByViews() {
+        return translogRefCounts.keySet().stream().reduce(Math::min).orElse(Long.MAX_VALUE);
     }
 
     /** returns the translog generation that will be used as a basis of a future store/peer recovery */
