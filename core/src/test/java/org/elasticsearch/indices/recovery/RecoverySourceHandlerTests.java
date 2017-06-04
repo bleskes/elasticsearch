@@ -375,7 +375,11 @@ public class RecoverySourceHandlerTests extends ESTestCase {
         final Translog.View translogView = mock(Translog.View.class);
         when(shard.acquireTranslogView()).thenReturn(translogView);
         when(shard.state()).thenReturn(IndexShardState.RELOCATED);
-        when(shard.acquireIndexCommit(anyBoolean())).thenReturn(mock(Engine.IndexCommitRef.class));
+        final Engine.IndexCommitRef indexCommitRef = mock(Engine.IndexCommitRef.class);
+        when(shard.acquireIndexCommit(anyBoolean())).thenReturn(indexCommitRef);
+        final IndexCommit indexCommit = mock(IndexCommit.class);
+        when(indexCommitRef.getIndexCommit()).thenReturn(indexCommit);
+        when(indexCommit.getUserData()).thenReturn(Collections.emptyMap());
         final AtomicBoolean phase1Called = new AtomicBoolean();
         final AtomicBoolean prepareTargetForTranslogCalled = new AtomicBoolean();
         final AtomicBoolean phase2Called = new AtomicBoolean();
@@ -450,6 +454,11 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             return null;
         }).when(shard).relocated(any(String.class));
         when(shard.acquireIndexCommit(anyBoolean())).thenReturn(mock(Engine.IndexCommitRef.class));
+        final Engine.IndexCommitRef indexCommitRef = mock(Engine.IndexCommitRef.class);
+        when(shard.acquireIndexCommit(anyBoolean())).thenReturn(indexCommitRef);
+        final IndexCommit indexCommit = mock(IndexCommit.class);
+        when(indexCommitRef.getIndexCommit()).thenReturn(indexCommit);
+        when(indexCommit.getUserData()).thenReturn(Collections.emptyMap());
 
         final Supplier<Long> currentClusterStateVersionSupplier = () -> {
             assertFalse(ensureClusterStateVersionCalled.get());

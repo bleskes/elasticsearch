@@ -44,6 +44,7 @@ import org.elasticsearch.common.util.CancellableThreads;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.engine.RecoveryEngineException;
 import org.elasticsearch.index.seqno.LocalCheckpointTracker;
+import org.elasticsearch.index.seqno.SequenceNumbers;
 import org.elasticsearch.index.seqno.SequenceNumbersService;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.IndexShardClosedException;
@@ -133,8 +134,10 @@ public class RecoverySourceHandler {
             boolean isSequenceNumberBasedRecoveryPossible = request.startingSeqNo() != SequenceNumbersService.UNASSIGNED_SEQ_NO &&
                 isTranslogReadyForSequenceNumberBasedRecovery(translogView);
 
+            final long startingSeqNo;
             if (isSequenceNumberBasedRecoveryPossible) {
                 logger.trace("performing sequence numbers based recovery. starting at [{}]", request.startingSeqNo());
+                startingSeqNo = request.startingSeqNo();
             } else {
                 final Engine.IndexCommitRef phase1Snapshot;
                 try {
@@ -143,6 +146,8 @@ public class RecoverySourceHandler {
                     IOUtils.closeWhileHandlingException(translogView);
                     throw new RecoveryEngineException(shard.shardId(), 1, "snapshot failed", e);
                 }
+                startingSeqNo = Long.parseLong(phase1Snapshot.getIndexCommit().getUserData()
+                    .getOrDefault(SequenceNumbers.LOCAL_CHECKPOINT_KEY, Long.toString(SequenceNumbersService.NO_OPS_PERFORMED))) + 1L;
                 try {
                     phase1(phase1Snapshot.getIndexCommit(), translogView);
                 } catch (final Exception e) {
@@ -183,9 +188,7 @@ public class RecoverySourceHandler {
             logger.trace("snapshot translog for recovery; current size is [{}]", translogView.totalOperations());
             final long targetLocalCheckpoint;
             try {
-                final long startingSeqNo =
-                        isSequenceNumberBasedRecoveryPossible ? request.startingSeqNo() : SequenceNumbersService.UNASSIGNED_SEQ_NO;
-                targetLocalCheckpoint = phase2(startingSeqNo, translogView.snapshot());
+                targetLocalCheckpoint = phase2(startingSeqNo, translogView.snapshot(startingSeqNo));
             } catch (Exception e) {
                 throw new RecoveryEngineException(shard.shardId(), 2, "phase2 failed", e);
             }
@@ -219,7 +222,7 @@ public class RecoverySourceHandler {
             logger.trace("all operations up to [{}] completed, checking translog content", endingSeqNo);
 
             final LocalCheckpointTracker tracker = new LocalCheckpointTracker(shard.indexSettings(), startingSeqNo, startingSeqNo - 1);
-            final Translog.Snapshot snapshot = translogView.snapshot();
+            final Translog.Snapshot snapshot = translogView.snapshot(startingSeqNo);
             Translog.Operation operation;
             while ((operation = snapshot.next()) != null) {
                 if (operation.seqNo() != SequenceNumbersService.UNASSIGNED_SEQ_NO) {

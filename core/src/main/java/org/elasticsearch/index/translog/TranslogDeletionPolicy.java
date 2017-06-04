@@ -37,9 +37,14 @@ public class TranslogDeletionPolicy {
      */
     private long minTranslogGenerationForRecovery = 1;
 
-    private long retentionSizeInBytes = 512 * 1024L * 1024;
+    private long retentionSizeInBytes;
 
-    private long maxRetentionAgeInMillis = 3 * 3600 * 1000;
+    private long maxRetentionAgeInMillis;
+
+    public TranslogDeletionPolicy(long retentionSizeInBytes, long maxRetentionAgeInMillis) {
+        this.retentionSizeInBytes = retentionSizeInBytes;
+        this.maxRetentionAgeInMillis = maxRetentionAgeInMillis;
+    }
 
     public synchronized void setMinTranslogGenerationForRecovery(long newGen) {
         if (newGen < minTranslogGenerationForRecovery) {
@@ -61,9 +66,8 @@ public class TranslogDeletionPolicy {
      * acquires the basis generation for a new view. Any translog generation above, and including, the returned generation
      * will not be deleted until a corresponding call to {@link #releaseTranslogGenView(long)} is called.
      */
-    synchronized long acquireTranslogGenForView() {
-        translogRefCounts.computeIfAbsent(minTranslogGenerationForRecovery, l -> Counter.newCounter(false)).addAndGet(1);
-        return minTranslogGenerationForRecovery;
+    synchronized void acquireTranslogGenForView(final long genForView) {
+        translogRefCounts.computeIfAbsent(genForView, l -> Counter.newCounter(false)).addAndGet(1);
     }
 
     /** returns the number of generations that were acquired for views */
@@ -72,7 +76,7 @@ public class TranslogDeletionPolicy {
     }
 
     /**
-     * releases a generation that was acquired by {@link #acquireTranslogGenForView()}
+     * releases a generation that was acquired by {@link #acquireTranslogGenForView(long)}
      */
     synchronized void releaseTranslogGenView(long translogGen) {
         Counter current = translogRefCounts.get(translogGen);
@@ -99,22 +103,30 @@ public class TranslogDeletionPolicy {
     }
 
     private long getMinTranslogGenBySize(List<TranslogReader> readers, TranslogWriter writer) {
-        long totalSize = writer.sizeInBytes();
-        long minGen = writer.getGeneration();
-        for (int i = readers.size() - 1; i >= 0 && totalSize < retentionSizeInBytes; i--) {
-            final TranslogReader reader = readers.get(i);
-            totalSize += reader.sizeInBytes();
-            minGen = reader.getGeneration();
+        if (maxRetentionAgeInMillis >= 0) {
+            long totalSize = writer.sizeInBytes();
+            long minGen = writer.getGeneration();
+            for (int i = readers.size() - 1; i >= 0 && totalSize < retentionSizeInBytes; i--) {
+                final TranslogReader reader = readers.get(i);
+                totalSize += reader.sizeInBytes();
+                minGen = reader.getGeneration();
+            }
+            return minGen;
+        } else {
+            return Long.MIN_VALUE;
         }
-        return minGen;
     }
 
     private long getMinTranslogGenByAge(List<TranslogReader> readers, TranslogWriter writer) {
-        long now = System.currentTimeMillis();
-        BaseTranslogReader firstNonExpired = readers.stream().map(r -> (BaseTranslogReader) r).filter(
-            r -> now - r.getCreationTimeInMillis() < maxRetentionAgeInMillis
-        ).findFirst().orElse(writer);
-        return firstNonExpired.getGeneration();
+        if (maxRetentionAgeInMillis >= 0) {
+            long now = System.currentTimeMillis();
+            BaseTranslogReader firstNonExpired = readers.stream().map(r -> (BaseTranslogReader) r).filter(
+                r -> now - r.getCreationTimeInMillis() < maxRetentionAgeInMillis
+            ).findFirst().orElse(writer);
+            return firstNonExpired.getGeneration();
+        } else {
+            return Long.MIN_VALUE;
+        }
     }
 
     private long getMinTranslogGenRequiredByViews() {

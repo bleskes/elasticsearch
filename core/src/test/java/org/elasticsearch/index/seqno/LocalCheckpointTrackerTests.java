@@ -45,16 +45,16 @@ public class LocalCheckpointTrackerTests extends ESTestCase {
 
     private LocalCheckpointTracker tracker;
 
-    private final int SMALL_CHUNK_SIZE = 4;
+    private static final int SMALL_CHUNK_SIZE = 4;
 
     @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        tracker = getTracker();
+        tracker = createEmptyTracker();
     }
 
-    private LocalCheckpointTracker getTracker() {
+    public static LocalCheckpointTracker createEmptyTracker() {
         return new LocalCheckpointTracker(
             IndexSettingsModule.newIndexSettings(
                 "test",

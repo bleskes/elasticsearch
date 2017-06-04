@@ -258,8 +258,8 @@ public class TranslogWriter extends BaseTranslogReader implements Closeable {
     }
 
     @Override
-    Checkpoint getCheckpoint() {
-        return getLastSyncedCheckpoint();
+    synchronized Checkpoint getCheckpoint() {
+        return new Checkpoint(totalOffset, operationCounter, generation, minSeqNo, maxSeqNo, globalCheckpointSupplier.getAsLong());
     }
 
     @Override
@@ -333,20 +333,12 @@ public class TranslogWriter extends BaseTranslogReader implements Closeable {
                 if (lastSyncedCheckpoint.offset < offset && syncNeeded()) {
                     // double checked locking - we don't want to fsync unless we have to and now that we have
                     // the lock we should check again since if this code is busy we might have fsynced enough already
-                    final long offsetToSync;
-                    final int opsCounter;
-                    final long currentMinSeqNo;
-                    final long currentMaxSeqNo;
-                    final long currentGlobalCheckpoint;
+                    final Checkpoint checkpointToSync;
                     synchronized (this) {
                         ensureOpen();
                         try {
                             outputStream.flush();
-                            offsetToSync = totalOffset;
-                            opsCounter = operationCounter;
-                            currentMinSeqNo = minSeqNo;
-                            currentMaxSeqNo = maxSeqNo;
-                            currentGlobalCheckpoint = globalCheckpointSupplier.getAsLong();
+                            checkpointToSync = getCheckpoint();
                         } catch (Exception ex) {
                             try {
                                 closeWithTragicEvent(ex);
@@ -358,11 +350,9 @@ public class TranslogWriter extends BaseTranslogReader implements Closeable {
                     }
                     // now do the actual fsync outside of the synchronized block such that
                     // we can continue writing to the buffer etc.
-                    final Checkpoint checkpoint;
                     try {
                         channel.force(false);
-                        checkpoint =
-                            writeCheckpoint(channelFactory, offsetToSync, opsCounter, currentMinSeqNo, currentMaxSeqNo, currentGlobalCheckpoint, path.getParent(), generation);
+                        writeCheckpoint(channelFactory, path.getParent(), checkpointToSync);
                     } catch (Exception ex) {
                         try {
                             closeWithTragicEvent(ex);
@@ -371,9 +361,9 @@ public class TranslogWriter extends BaseTranslogReader implements Closeable {
                         }
                         throw ex;
                     }
-                    assert lastSyncedCheckpoint.offset <= offsetToSync :
-                        "illegal state: " + lastSyncedCheckpoint.offset + " <= " + offsetToSync;
-                    lastSyncedCheckpoint = checkpoint; // write protected by syncLock
+                    assert lastSyncedCheckpoint.offset <= checkpointToSync.offset :
+                        "illegal state: " + lastSyncedCheckpoint.offset + " <= " + checkpointToSync.offset;
+                    lastSyncedCheckpoint = checkpointToSync; // write protected by syncLock
                     return true;
                 }
             }

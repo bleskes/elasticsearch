@@ -507,6 +507,21 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
         }
     }
 
+    private Snapshot createSnapshotFromMinSeqNo(long minSeqNo) {
+        try (ReleasableLock ignored = readLock.acquire()) {
+            ensureOpen();
+            Snapshot[] snapshots = Stream.concat(readers.stream(), Stream.of(current))
+                .filter(reader -> {
+                    final long maxSeqNo = reader.getCheckpoint().maxSeqNo;
+                    return maxSeqNo == SequenceNumbersService.UNASSIGNED_SEQ_NO ||
+                        maxSeqNo >= minSeqNo;
+                })
+                .map(BaseTranslogReader::newSnapshot).toArray(Snapshot[]::new);
+            return new MultiSnapshot(snapshots);
+        }
+    }
+
+
     /**
      * Returns a view into the current translog that is guaranteed to retain all current operations
      * while receiving future ones as well
@@ -514,7 +529,8 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
     public Translog.View newView() {
         try (ReleasableLock lock = readLock.acquire()) {
             ensureOpen();
-            final long viewGen = deletionPolicy.acquireTranslogGenForView();
+            final long viewGen = readers.isEmpty() ? current.getGeneration() : readers.get(0).getGeneration();
+            deletionPolicy.acquireTranslogGenForView(viewGen);
             try {
                 return new View(viewGen);
             } catch (Exception e) {
@@ -671,9 +687,9 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
         }
 
         /** create a snapshot from this view */
-        public Snapshot snapshot() {
+        public Snapshot snapshot(long minSequenceNumber) {
             ensureOpen();
-            return Translog.this.createSnapshot(minGeneration);
+            return Translog.this.createSnapshotFromMinSeqNo(minSequenceNumber);
         }
 
         void ensureOpen() {
