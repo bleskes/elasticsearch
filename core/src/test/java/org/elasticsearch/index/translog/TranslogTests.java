@@ -177,7 +177,11 @@ public class TranslogTests extends ESTestCase {
 
     private Translog create(Path path) throws IOException {
         globalCheckpoint = new AtomicLong(SequenceNumbersService.UNASSIGNED_SEQ_NO);
-        return new Translog(getTranslogConfig(path), null, new TranslogDeletionPolicy(), () -> globalCheckpoint.get());
+        final TranslogDeletionPolicy deletionPolicy = new TranslogDeletionPolicy();
+        // TODO: change
+        deletionPolicy.setRetentionSizeInBytes(0);
+        deletionPolicy.setMaxRetentionAgeInMillis(Long.MAX_VALUE);
+        return new Translog(getTranslogConfig(path), null, deletionPolicy, () -> globalCheckpoint.get());
     }
 
     private TranslogConfig getTranslogConfig(final Path path) {
@@ -340,31 +344,31 @@ public class TranslogTests extends ESTestCase {
         {
             final TranslogStats stats = stats();
             assertThat(stats.estimatedNumberOfOperations(), equalTo(1L));
-            assertThat(stats.getTranslogSizeInBytes(), equalTo(97L));
+            assertThat(stats.getTranslogSizeInBytes(), equalTo(105L));
         }
 
         translog.add(new Translog.Delete("test", "2", 1, newUid("2")));
         {
             final TranslogStats stats = stats();
             assertThat(stats.estimatedNumberOfOperations(), equalTo(2L));
-            assertThat(stats.getTranslogSizeInBytes(), equalTo(139L));
+            assertThat(stats.getTranslogSizeInBytes(), equalTo(147L));
         }
 
         translog.add(new Translog.Delete("test", "3", 2, newUid("3")));
         {
             final TranslogStats stats = stats();
             assertThat(stats.estimatedNumberOfOperations(), equalTo(3L));
-            assertThat(stats.getTranslogSizeInBytes(), equalTo(181L));
+            assertThat(stats.getTranslogSizeInBytes(), equalTo(189L));
         }
 
         translog.add(new Translog.NoOp(3, 1, randomAlphaOfLength(16)));
         {
             final TranslogStats stats = stats();
             assertThat(stats.estimatedNumberOfOperations(), equalTo(4L));
-            assertThat(stats.getTranslogSizeInBytes(), equalTo(223L));
+            assertThat(stats.getTranslogSizeInBytes(), equalTo(231L));
         }
 
-        final long expectedSizeInBytes = 266L;
+        final long expectedSizeInBytes = 282L;
         translog.rollGeneration();
         {
             final TranslogStats stats = stats();
@@ -1277,7 +1281,7 @@ public class TranslogTests extends ESTestCase {
         try (Translog ignored = new Translog(config, translogUUID, deletionPolicy, () -> SequenceNumbersService.UNASSIGNED_SEQ_NO)) {
             fail("corrupted");
         } catch (IllegalStateException ex) {
-            assertEquals("Checkpoint file translog-2.ckp already exists but has corrupted content expected: Checkpoint{offset=3123, " +
+            assertEquals("Checkpoint file translog-2.ckp already exists but has corrupted content expected: Checkpoint{offset=3131, " +
                 "numOps=55, generation=2, minSeqNo=45, maxSeqNo=99, globalCheckpoint=-2} but got: Checkpoint{offset=0, numOps=0, " +
                 "generation=0, minSeqNo=-1, maxSeqNo=-1, globalCheckpoint=-2}", ex.getMessage());
         }

@@ -37,12 +37,24 @@ public class TranslogDeletionPolicy {
      */
     private long minTranslogGenerationForRecovery = 1;
 
+    private long retentionSizeInBytes = 512 * 1024L * 1024;
+
+    private long maxRetentionAgeInMillis = 3 * 3600 * 1000;
+
     public synchronized void setMinTranslogGenerationForRecovery(long newGen) {
         if (newGen < minTranslogGenerationForRecovery) {
             throw new IllegalArgumentException("minTranslogGenerationForRecovery can't go backwards. new [" + newGen + "] current [" +
                 minTranslogGenerationForRecovery+ "]");
         }
         minTranslogGenerationForRecovery = newGen;
+    }
+
+    public synchronized void setRetentionSizeInBytes(long bytes) {
+        retentionSizeInBytes = bytes;
+    }
+
+    public synchronized void setMaxRetentionAgeInMillis(long ageInMillis) {
+        maxRetentionAgeInMillis = ageInMillis;
     }
 
     /**
@@ -87,10 +99,9 @@ public class TranslogDeletionPolicy {
     }
 
     private long getMinTranslogGenBySize(List<TranslogReader> readers, TranslogWriter writer) {
-        final long retentionSizeInBytes = 512 * 1024L * 1024;
         long totalSize = writer.sizeInBytes();
         long minGen = writer.getGeneration();
-        for (int i = readers.size() - 1; i>0 && totalSize < retentionSizeInBytes; i--) {
+        for (int i = readers.size() - 1; i >= 0 && totalSize < retentionSizeInBytes; i--) {
             final TranslogReader reader = readers.get(i);
             totalSize += reader.sizeInBytes();
             minGen = reader.getGeneration();
@@ -100,11 +111,10 @@ public class TranslogDeletionPolicy {
 
     private long getMinTranslogGenByAge(List<TranslogReader> readers, TranslogWriter writer) {
         long now = System.currentTimeMillis();
-        long maxAgeToKeep = 3L * 3600 * 1000;
         BaseTranslogReader firstNonExpired = readers.stream().map(r -> (BaseTranslogReader) r).filter(
-            r -> now - r.getCreationTimeInMillis() < maxAgeToKeep
+            r -> now - r.getCreationTimeInMillis() < maxRetentionAgeInMillis
         ).findFirst().orElse(writer);
-        return firstNonExpired.getCreationTimeInMillis();
+        return firstNonExpired.getGeneration();
     }
 
     private long getMinTranslogGenRequiredByViews() {

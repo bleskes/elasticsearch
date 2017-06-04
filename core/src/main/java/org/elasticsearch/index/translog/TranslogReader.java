@@ -118,7 +118,7 @@ public class TranslogReader extends BaseTranslogReader implements Closeable {
                     case TranslogWriter.VERSION_CHECKPOINTS:
                     case TranslogWriter.VERSION_TIMESTAMPS:
                         assert path.getFileName().toString().endsWith(Translog.TRANSLOG_FILE_SUFFIX) : "new file ends with old suffix: " + path;
-                        assert checkpoint.numOps >= 0 : "expected at least 0 operatin but got: " + checkpoint.numOps;
+                        assert checkpoint.numOps >= 0 : "expected at least 0 operation but got: " + checkpoint.numOps;
                         assert checkpoint.offset <= channel.size() : "checkpoint is inconsistent with channel length: " + channel.size() + " " + checkpoint;
                         int len = headerStream.readInt();
                         if (len > channel.size()) {

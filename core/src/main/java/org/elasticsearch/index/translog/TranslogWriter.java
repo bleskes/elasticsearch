@@ -88,6 +88,9 @@ public class TranslogWriter extends BaseTranslogReader implements Closeable {
         final ByteSizeValue bufferSize,
         long creationTimeInMillis, final LongSupplier globalCheckpointSupplier) throws IOException {
         super(initialCheckpoint.generation, channel, path, channel.position(), creationTimeInMillis);
+        assert initialCheckpoint.offset == channel.position() :
+            "initial checkpoint offset [" + initialCheckpoint.offset + "] is different than current channel poistion ["
+                + channel.position() + "]";
         this.shardId = shardId;
         this.channelFactory = channelFactory;
         this.outputStream = new BufferedChannelOutputStream(java.nio.channels.Channels.newOutputStream(channel), bufferSize.bytesAsInt());
@@ -106,13 +109,14 @@ public class TranslogWriter extends BaseTranslogReader implements Closeable {
     }
 
     static int getHeaderLength(int uuidLength) {
-        return CodecUtil.headerLength(TRANSLOG_CODEC) + uuidLength + Integer.BYTES;
+        return CodecUtil.headerLength(TRANSLOG_CODEC) + uuidLength + Integer.BYTES + Long.BYTES;
     }
 
-    static void writeHeader(OutputStreamDataOutput out, BytesRef ref) throws IOException {
+    static void writeHeader(OutputStreamDataOutput out, BytesRef ref, long creationTimeInMillis) throws IOException {
         CodecUtil.writeHeader(out, TRANSLOG_CODEC, VERSION);
         out.writeInt(ref.length);
         out.writeBytes(ref.bytes, ref.offset, ref.length);
+        out.writeLong(creationTimeInMillis);
     }
 
     public static TranslogWriter create(
@@ -124,18 +128,17 @@ public class TranslogWriter extends BaseTranslogReader implements Closeable {
         ByteSizeValue bufferSize,
         final LongSupplier globalCheckpointSupplier) throws IOException {
         final BytesRef ref = new BytesRef(translogUUID);
-        final int headerLength = getHeaderLength(ref.length);
+        final int firstOperationOffset = getHeaderLength(ref.length);
         final long creationTimeInMillis = System.currentTimeMillis();
         final FileChannel channel = channelFactory.open(file);
         try {
             // This OutputStreamDataOutput is intentionally not closed because
             // closing it will close the FileChannel
             final OutputStreamDataOutput out = new OutputStreamDataOutput(java.nio.channels.Channels.newOutputStream(channel));
-            writeHeader(out, ref);
-            out.writeLong(creationTimeInMillis);
+            writeHeader(out, ref, creationTimeInMillis);
             channel.force(true);
             final Checkpoint checkpoint =
-                    Checkpoint.emptyTranslogCheckpoint(headerLength, fileGeneration, globalCheckpointSupplier.getAsLong());
+                    Checkpoint.emptyTranslogCheckpoint(firstOperationOffset, fileGeneration, globalCheckpointSupplier.getAsLong());
             writeCheckpoint(channelFactory, file.getParent(), checkpoint);
             return new TranslogWriter(channelFactory, shardId, checkpoint, channel, file, bufferSize, creationTimeInMillis,
                 globalCheckpointSupplier);
