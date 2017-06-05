@@ -237,8 +237,9 @@ public class AutodetectProcessManager extends AbstractComponent {
         Job job = jobManager.getJobOrThrowIfUnknown(jobId);
 
         if (job.getJobVersion() == null) {
-            handler.accept(ExceptionsHelper.badRequestException("Cannot open job [" + jobId
-                    + "] because jobs created prior to version 5.5 are not supported"));
+            setJobState(jobTask, JobState.FAILED,
+                    suppressedException -> handler.accept(ExceptionsHelper.badRequestException("Cannot open job [" + jobId
+                    + "] because jobs created prior to version 5.5 are not supported")));
             return;
         }
 

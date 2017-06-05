@@ -1,0 +1,27 @@
+---
+setup:
+ - do:
+     cluster.health:
+        wait_for_status: yellow
+        wait_for_nodes: 2
+        timeout: 25s
+
+---
+"Test read old cluster job":
+  - do:
+      xpack.ml.get_jobs:
+        job_id: old-cluster-job
+  - match: { count: 1 }
+
+  - do:
+      xpack.ml.get_job_stats:
+        job_id: old-cluster-job
+  - match: { jobs.0.state: "closed" }
+  - match: { jobs.0.data_counts.processed_record_count: 2 }
+  - is_true: jobs.0.model_size_stats
+  - is_false: node
+
+  - do:
+      xpack.ml.get_buckets:
+        job_id: old-cluster-job
+  - match: { count: 1 }
