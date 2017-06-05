@@ -143,6 +143,10 @@ oldClusterTestCluster {
 }
 oldClusterTestRunner {
     systemProperty 'tests.rest.suite', 'old_cluster'
+    systemProperty 'tests.rest.blacklist', [
+            'old_cluster/40_ml_datafeed_crud/*',
+            'old_cluster/50_ml_jobs_crud/*'
+    ].join(',')
 }
 
 task mixedClusterTest(type: RestIntegTestTask) {}
@@ -167,6 +171,10 @@ mixedClusterTestCluster {
 
 mixedClusterTestRunner {
     systemProperty 'tests.rest.suite', 'mixed_cluster'
+    systemProperty 'tests.rest.blacklist', [
+            'mixed_cluster/40_ml_datafeed_crud/*',
+            'mixed_cluster/50_ml_jobs_crud/*'
+    ].join(',')
     finalizedBy 'oldClusterTestCluster#node0.stop'
 }
 
@@ -191,6 +199,10 @@ upgradedClusterTestCluster {
 }
 upgradedClusterTestRunner {
     systemProperty 'tests.rest.suite', 'upgraded_cluster'
+    systemProperty 'tests.rest.blacklist', [
+            'upgraded_cluster/40_ml_datafeed_crud/*',
+            'upgraded_cluster/50_ml_jobs_crud/*'
+    ].join(',')
     // only need to kill the mixed cluster tests node here because we explicitly told it to not stop nodes upon completion
     finalizedBy 'mixedClusterTestCluster#stop'
 }
