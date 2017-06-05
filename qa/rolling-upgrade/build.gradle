@@ -103,9 +103,16 @@ for (boolean withSystemKey: [true, false]) {
       }
     }
 
+    String firstMLVersion = '5.4.0'
     Task oldClusterTestRunner = tasks.getByName("${baseName}#oldClusterTestRunner")
     oldClusterTestRunner.configure {
       systemProperty 'tests.rest.suite', 'old_cluster'
+      if (version.before(firstMLVersion)) {
+        systemProperty 'tests.rest.blacklist', [
+                'old_cluster/40_ml_datafeed_crud/*',
+                'old_cluster/50_ml_jobs_crud/*'
+        ].join(',')
+      }
     }
 
     Task mixedClusterTest = tasks.create(name: "${baseName}#mixedClusterTest", type: RestIntegTestTask)
@@ -128,6 +135,12 @@ for (boolean withSystemKey: [true, false]) {
     Task mixedClusterTestRunner = tasks.getByName("${baseName}#mixedClusterTestRunner")
     mixedClusterTestRunner.configure {
       systemProperty 'tests.rest.suite', 'mixed_cluster'
+      if (version.before(firstMLVersion)) {
+        systemProperty 'tests.rest.blacklist', [
+                    'mixed_cluster/40_ml_datafeed_crud/*',
+                    'mixed_cluster/50_ml_jobs_crud/*'
+                    ].join(',')
+      }
       finalizedBy "${baseName}#oldClusterTestCluster#node0.stop"
     }
 
@@ -151,17 +164,21 @@ for (boolean withSystemKey: [true, false]) {
     Task upgradedClusterTestRunner = tasks.getByName("${baseName}#upgradedClusterTestRunner")
     upgradedClusterTestRunner.configure {
       systemProperty 'tests.rest.suite', 'upgraded_cluster'
+      def blackListedTests = [];
+      if (version.before(firstMLVersion)) {
+        blackListedTests.add('upgraded_cluster/40_ml_datafeed_crud/*')
+        blackListedTests.add('upgraded_cluster/50_ml_jobs_crud/*')
+      }
 
       // migration tests should only run when the original/old cluster nodes where versions < 5.2.0.
       // this stinks but we do the check here since our rest tests do not support conditionals
       // otherwise we could check the index created version
-      String versionStr = project.extensions.findByName("${baseName}#oldClusterTestCluster").properties.get('bwcVersion')
-      String[] versionParts = versionStr.split('\\.')
-      if (versionParts[0].equals("5")) {
-          Integer minor = Integer.parseInt(versionParts[1])
-          if (minor >= 2) {
-              systemProperty 'tests.rest.blacklist', '/20_security/Verify default password migration results in upgraded cluster'
-          }
+      if (version.onOrAfter('5.2.0')) {
+        blackListedTests.add('/20_security/Verify default password migration results in upgraded cluster')
+      }
+
+      if (blackListedTests.size() > 0) {
+        systemProperty 'tests.rest.blacklist', blackListedTests.join(',')
       }
       // only need to kill the mixed cluster tests node here because we explicitly told it to not stop nodes upon completion
       finalizedBy "${baseName}#mixedClusterTestCluster#stop"
