@@ -15,6 +15,7 @@
 package org.elasticsearch.xpack.ml.job.process.autodetect;
 
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.CheckedConsumer;
 import org.elasticsearch.common.settings.Settings;
@@ -50,6 +51,7 @@ import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSnapshot;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.Quantiles;
 import org.elasticsearch.xpack.ml.job.process.normalizer.NormalizerFactory;
 import org.elasticsearch.xpack.ml.notifications.Auditor;
+import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData;
 import org.junit.Before;
 import org.mockito.Mockito;
 
@@ -141,6 +143,13 @@ public class AutodetectProcessManagerTests extends ESTestCase {
 
         JobTask jobTask = mock(JobTask.class);
         when(jobTask.getJobId()).thenReturn(job.getId());
+        doAnswer(invocationOnMock -> {
+            @SuppressWarnings("unchecked")
+            ActionListener<PersistentTasksCustomMetaData.PersistentTask<?>> handler =
+                    (ActionListener<PersistentTasksCustomMetaData.PersistentTask<?>>) invocationOnMock.getArguments()[1];
+            handler.onResponse(null);
+            return null;
+        }).when(jobTask).updatePersistentStatus(any(), any());
 
         AtomicReference<Exception> errorHolder = new AtomicReference<>();
         manager.openJob(jobTask, false, e -> errorHolder.set(e));
