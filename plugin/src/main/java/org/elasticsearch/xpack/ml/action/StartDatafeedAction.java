@@ -552,7 +552,7 @@ public class StartDatafeedAction
     }
 
     static void validate(String datafeedId, MlMetadata mlMetadata, PersistentTasksCustomMetaData tasks) {
-        DatafeedConfig datafeed = mlMetadata.getDatafeed(datafeedId);
+        DatafeedConfig datafeed = (mlMetadata == null) ? null : mlMetadata.getDatafeed(datafeedId);
         if (datafeed == null) {
             throw ExceptionsHelper.missingDatafeedException(datafeedId);
         }
