@@ -79,7 +79,10 @@ class DatafeedJob {
 
     void isolate() {
         isIsolated = true;
-        stop();
+    }
+
+    boolean isIsolated() {
+        return isIsolated;
     }
 
     Long runLookBack(long startTime, Long endTime) throws Exception {
@@ -105,7 +108,7 @@ class DatafeedJob {
         request.setCalcInterim(true);
         run(lookbackStartTimeMs, lookbackEnd, request);
 
-        if (isRunning()) {
+        if (isRunning() && !isIsolated) {
             auditor.info(jobId, Messages.getMessage(Messages.JOB_AUDIT_DATAFEED_LOOKBACK_COMPLETED));
             LOGGER.info("[{}] Lookback has finished", jobId);
             if (isLookbackOnly) {
@@ -163,7 +166,7 @@ class DatafeedJob {
         long recordCount = 0;
         DataExtractor dataExtractor = dataExtractorFactory.newExtractor(start, end);
         while (dataExtractor.hasNext()) {
-            if (!isRunning() && !dataExtractor.isCancelled()) {
+            if ((isIsolated || !isRunning()) && !dataExtractor.isCancelled()) {
                 dataExtractor.cancel();
             }
             if (isIsolated) {
@@ -241,7 +244,7 @@ class DatafeedJob {
         // If the datafeed was stopped, then it is possible that by the time
         // we call flush the job is closed. Thus, we don't flush unless the
         // datafeed is still running.
-        if (isRunning()) {
+        if (isRunning() && !isIsolated) {
             flushJob(flushRequest);
         }
     }
