@@ -164,6 +164,7 @@ mixedClusterTestCluster {
     setting 'xpack.security.transport.ssl.verification_mode', 'certificate' // only use cert validation to avoid SAN complexity
     setting 'xpack.ssl.keystore.path', nodeKeystore.name
     setting 'xpack.ssl.keystore.password', 'keypass'
+    setting 'node.attr.upgraded', 'first'
 
     // copy keystores into config/
     extraConfigFile nodeKeystore.name, nodeKeystore

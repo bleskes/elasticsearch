@@ -31,10 +31,16 @@ import org.elasticsearch.action.support.ActionFilterChain;
 import org.elasticsearch.action.support.ContextPreservingActionListener;
 import org.elasticsearch.action.support.DestructiveOperations;
 import org.elasticsearch.action.support.IndicesOptions;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.node.DiscoveryNodes;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.license.XPackLicenseState;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.tasks.Task;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -49,7 +55,9 @@ import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.security.user.SystemUser;
 import org.elasticsearch.xpack.security.user.User;
 import org.junit.Before;
+import org.mockito.ArgumentCaptor;
 
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashSet;
 
@@ -78,6 +86,7 @@ public class SecurityActionFilterTests extends ESTestCase {
     private XPackLicenseState licenseState;
     private SecurityActionFilter filter;
     private ThreadContext threadContext;
+    private ClusterService clusterService;
     private boolean failDestructiveOperations;
 
     @Before
@@ -97,10 +106,20 @@ public class SecurityActionFilterTests extends ESTestCase {
                 .put(DestructiveOperations.REQUIRES_NAME_SETTING.getKey(), failDestructiveOperations).build();
         DestructiveOperations destructiveOperations = new DestructiveOperations(settings,
                 new ClusterSettings(settings, Collections.singleton(DestructiveOperations.REQUIRES_NAME_SETTING)));
+        clusterService = mock(ClusterService.class);
+        ClusterState state = mock(ClusterState.class);
+        when(clusterService.state()).thenReturn(state);
+        DiscoveryNodes nodes = DiscoveryNodes.builder()
+                .add(new DiscoveryNode("id1", new InetSocketTransportAddress(InetAddress.getByName("localhost"),
+                        randomIntBetween(49000, 65500)), Version.CURRENT))
+                .add(new DiscoveryNode("id2", new InetSocketTransportAddress(InetAddress.getByName("localhost"),
+                        randomIntBetween(49000, 65500)), Version.V_5_4_0))
+                .build();
+        when(state.nodes()).thenReturn(nodes);
 
         SecurityContext securityContext = new SecurityContext(settings, threadContext, cryptoService);
         filter = new SecurityActionFilter(Settings.EMPTY, authcService, authzService, cryptoService, auditTrail,
-                        licenseState, new HashSet<>(), threadPool, securityContext, destructiveOperations);
+                        licenseState, new HashSet<>(), threadPool, securityContext, destructiveOperations, clusterService);
     }
 
     public void testApply() throws Exception {
@@ -284,6 +303,7 @@ public class SecurityActionFilterTests extends ESTestCase {
             return Void.TYPE;
         }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
                 any(ActionListener.class));
+        when(cryptoService.isSystemKeyPresent()).thenReturn(true);
         when(cryptoService.isSigned("signed_scroll_id")).thenReturn(true);
         when(cryptoService.unsignAndVerify("signed_scroll_id", null)).thenReturn("scroll_id");
         final Role empty = Role.EMPTY;
@@ -295,6 +315,82 @@ public class SecurityActionFilterTests extends ESTestCase {
         }).when(authzService).roles(any(User.class), any(ActionListener.class));
         filter.apply(task, "_action", request, listener, chain);
         assertThat(request.scrollId(), equalTo("scroll_id"));
+
+        verify(authzService).authorize(authentication, "_action", request, empty, null);
+        verify(chain).proceed(eq(task), eq("_action"), eq(request), isA(ContextPreservingActionListener.class));
+    }
+
+    public void testUnsignedWithOldVersionNode() throws Exception {
+        DiscoveryNodes nodes = DiscoveryNodes.builder(clusterService.state().nodes())
+                .add(new DiscoveryNode("id3", new InetSocketTransportAddress(InetAddress.getByName("localhost"),
+                        randomIntBetween(49000, 65500)), Version.V_5_4_0))
+                .build();
+        when(clusterService.state().nodes()).thenReturn(nodes);
+        SearchScrollRequest request = new SearchScrollRequest("unsigned");
+        ActionListener listener = mock(ActionListener.class);
+        ActionFilterChain chain = mock(ActionFilterChain.class);
+        User user = mock(User.class);
+        Task task = mock(Task.class);
+        Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
+        doAnswer((i) -> {
+            ActionListener callback =
+                    (ActionListener) i.getArguments()[4];
+            callback.onResponse(authentication);
+            return Void.TYPE;
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
+                any(ActionListener.class));
+        when(cryptoService.isSigned("unsigned")).thenReturn(false);
+        when(cryptoService.isSystemKeyPresent()).thenReturn(true);
+        final Role empty = Role.EMPTY;
+        doAnswer((i) -> {
+            ActionListener callback =
+                    (ActionListener) i.getArguments()[1];
+            callback.onResponse(empty);
+            return Void.TYPE;
+        }).when(authzService).roles(any(User.class), any(ActionListener.class));
+        filter.apply(task, "_action", request, listener, chain);
+
+        ArgumentCaptor<ElasticsearchSecurityException> captor = ArgumentCaptor.forClass(ElasticsearchSecurityException.class);
+        verify(listener).onFailure(captor.capture());
+        ElasticsearchSecurityException e = captor.getValue();
+        assertEquals("invalid request", e.getMessage());
+        assertEquals(RestStatus.FORBIDDEN, e.status());
+        verify(authzService).authorize(authentication, "_action", request, empty, null);
+        verifyZeroInteractions(chain);
+    }
+
+    public void testUnsigned() throws Exception {
+        DiscoveryNodes nodes = DiscoveryNodes.builder()
+                .add(new DiscoveryNode("id1", new InetSocketTransportAddress(InetAddress.getByName("localhost"),
+                        randomIntBetween(49000, 65500)), Version.V_5_5_0_UNRELEASED))
+                .add(new DiscoveryNode("id2", new InetSocketTransportAddress(InetAddress.getByName("localhost"),
+                        randomIntBetween(49000, 65500)), Version.V_5_5_0_UNRELEASED))
+                .build();
+        when(clusterService.state().nodes()).thenReturn(nodes);
+        SearchScrollRequest request = new SearchScrollRequest("unsigned");
+        ActionListener listener = mock(ActionListener.class);
+        ActionFilterChain chain = mock(ActionFilterChain.class);
+        User user = mock(User.class);
+        Task task = mock(Task.class);
+        Authentication authentication = new Authentication(user, new RealmRef("test", "test", "foo"), null);
+        doAnswer((i) -> {
+            ActionListener callback =
+                    (ActionListener) i.getArguments()[4];
+            callback.onResponse(authentication);
+            return Void.TYPE;
+        }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
+                any(ActionListener.class));
+        when(cryptoService.isSigned("unsigned")).thenReturn(false);
+        when(cryptoService.isSystemKeyPresent()).thenReturn(randomBoolean());
+        final Role empty = Role.EMPTY;
+        doAnswer((i) -> {
+            ActionListener callback =
+                    (ActionListener) i.getArguments()[1];
+            callback.onResponse(empty);
+            return Void.TYPE;
+        }).when(authzService).roles(any(User.class), any(ActionListener.class));
+        filter.apply(task, "_action", request, listener, chain);
+        assertThat(request.scrollId(), equalTo("unsigned"));
 
         verify(authzService).authorize(authentication, "_action", request, empty, null);
         verify(chain).proceed(eq(task), eq("_action"), eq(request), isA(ContextPreservingActionListener.class));
@@ -315,6 +411,7 @@ public class SecurityActionFilterTests extends ESTestCase {
             return Void.TYPE;
         }).when(authcService).authenticate(eq("_action"), eq(request), eq(SystemUser.INSTANCE), eq(Version.CURRENT),
                 any(ActionListener.class));
+        when(cryptoService.isSystemKeyPresent()).thenReturn(true);
         when(cryptoService.isSigned("scroll_id")).thenReturn(true);
         doThrow(sigException).when(cryptoService).unsignAndVerify("scroll_id", null);
         doAnswer((i) -> {

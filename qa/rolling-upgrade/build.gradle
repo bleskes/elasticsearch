@@ -126,6 +126,7 @@ for (boolean withSystemKey: [true, false]) {
       dataDir = "${-> oldClusterTest.nodes[1].dataDir}"
       waitCondition = waitWithAuth
       setting 'logger.org.elasticsearch.xpack.security', 'TRACE'
+      setting 'node.attr.upgraded', 'first'
       if (withSystemKey) {
         setting 'xpack.security.system_key.required', 'true'
         extraConfigFile 'x-pack/system_key', 'src/test/resources/system_key'

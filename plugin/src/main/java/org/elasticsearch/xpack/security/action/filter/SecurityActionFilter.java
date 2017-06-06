@@ -32,6 +32,8 @@ import org.elasticsearch.action.support.ActionFilter;
 import org.elasticsearch.action.support.ActionFilterChain;
 import org.elasticsearch.action.support.ContextPreservingActionListener;
 import org.elasticsearch.action.support.DestructiveOperations;
+import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
@@ -81,12 +83,14 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
     private final ThreadContext threadContext;
     private final SecurityContext securityContext;
     private final DestructiveOperations destructiveOperations;
+    private final ClusterService clusterService;
 
     @Inject
     public SecurityActionFilter(Settings settings, AuthenticationService authcService, AuthorizationService authzService,
                                 CryptoService cryptoService, AuditTrailService auditTrail, XPackLicenseState licenseState,
                                 Set<RequestInterceptor> requestInterceptors, ThreadPool threadPool,
-                                SecurityContext securityContext, DestructiveOperations destructiveOperations) {
+                                SecurityContext securityContext, DestructiveOperations destructiveOperations,
+                                ClusterService clusterService) {
         super(settings);
         this.authcService = authcService;
         this.authzService = authzService;
@@ -97,6 +101,7 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
         this.threadContext = threadPool.getThreadContext();
         this.securityContext = securityContext;
         this.destructiveOperations = destructiveOperations;
+        this.clusterService = clusterService;
     }
 
     @Override
@@ -208,22 +213,59 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
 
     ActionRequest unsign(User user, String action, final ActionRequest request) {
         try {
+            // In order to provide backwards compatibility with previous versions that always signed scroll ids
+            // we sign the scroll requests and do not allow unsigned requests until all of the nodes in the cluster
+            // have been upgraded to a version that does not sign scroll ids and instead relies improved scroll
+            // authorization. It is important to note that older versions do not actually sign if the system key
+            // does not exist so we need to take that into account as well.
+            // TODO update to 5.5 on backport and remove any signing from master!
+            final ClusterState state = clusterService.state();
+            final boolean signingRequired = state.nodes().getMinNodeVersion().before(Version.V_5_5_0_UNRELEASED) &&
+                    cryptoService.isSystemKeyPresent();
             if (request instanceof SearchScrollRequest) {
                 SearchScrollRequest scrollRequest = (SearchScrollRequest) request;
                 String scrollId = scrollRequest.scrollId();
-                if (cryptoService.isSigned(scrollId)) {
+                if (signingRequired) {
+                    if (cryptoService.isSigned(scrollId)) {
+                        scrollRequest.scrollId(cryptoService.unsignAndVerify(scrollId, null));
+                    } else {
+                        logger.error("scroll id [{}] is not signed but is expected to be. nodes [{}], minimum node version [{}]",
+                                scrollId, state.nodes(), state.nodes().getMinNodeVersion());
+                        // if we get a unsigned scroll request and not all nodes are up to date, then we cannot trust
+                        // this scroll id and reject it
+                        auditTrail.tamperedRequest(user, action, request);
+                        throw authorizationError("invalid request");
+                    }
+                } else if (cryptoService.isSigned(scrollId)) {
+                    // if signing isn't required we could still get a signed ID from an already running scroll or
+                    // a node that hasn't received the current cluster state that shows signing isn't required
                     scrollRequest.scrollId(cryptoService.unsignAndVerify(scrollId, null));
                 }
+                // else the scroll id is fine on the request so don't do anything
             } else if (request instanceof ClearScrollRequest) {
                 ClearScrollRequest clearScrollRequest = (ClearScrollRequest) request;
-                boolean isClearAllScrollRequest = clearScrollRequest.scrollIds().contains("_all");
+                final boolean isClearAllScrollRequest = clearScrollRequest.scrollIds().contains("_all");
                 if (isClearAllScrollRequest == false) {
                     List<String> signedIds = clearScrollRequest.scrollIds();
                     List<String> unsignedIds = new ArrayList<>(signedIds.size());
                     for (String signedId : signedIds) {
-                        if (cryptoService.isSigned(signedId)) {
+                        if (signingRequired) {
+                            if (cryptoService.isSigned(signedId)) {
+                                unsignedIds.add(cryptoService.unsignAndVerify(signedId, null));
+                            } else {
+                                logger.error("scroll id [{}] is not signed but is expected to be. nodes [{}], minimum node version [{}]",
+                                        signedId, state.nodes(), state.nodes().getMinNodeVersion());
+                                // if we get a unsigned scroll request and not all nodes are up to date, then we cannot trust
+                                // this scroll id and reject it
+                                auditTrail.tamperedRequest(user, action, request);
+                                throw authorizationError("invalid request");
+                            }
+                        } else if (cryptoService.isSigned(signedId)) {
+                            // if signing isn't required we could still get a signed ID from an already running scroll or
+                            // a node that hasn't received the current cluster state that shows signing isn't required
                             unsignedIds.add(cryptoService.unsignAndVerify(signedId, null));
                         } else {
+                            // the id is not signed and we allow unsigned requests so just add it
                             unsignedIds.add(signedId);
                         }
                     }
@@ -231,6 +273,7 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
                 }
             }
         } catch (IllegalArgumentException | IllegalStateException e) {
+            // this can happen when we decode invalid base64 or get a invalid scroll id
             auditTrail.tamperedRequest(user, action, request);
             throw authorizationError("invalid request. {}", e.getMessage());
         }
@@ -239,10 +282,17 @@ public class SecurityActionFilter extends AbstractComponent implements ActionFil
 
     private <Response extends ActionResponse> Response sign(Response response) throws IOException {
         if (response instanceof SearchResponse) {
-            SearchResponse searchResponse = (SearchResponse) response;
-            String scrollId = searchResponse.getScrollId();
-            if (scrollId != null && cryptoService.isSigned(scrollId) == false) {
-                searchResponse.scrollId(cryptoService.sign(scrollId, Version.CURRENT));
+            // In order to provide backwards compatibility with previous versions that always signed scroll ids
+            // we sign the scroll requests and do not allow unsigned requests until all of the nodes in the cluster
+            // have been upgraded to a version that supports unsigned scroll ids
+            final boolean sign = clusterService.state().nodes().getMinNodeVersion().before(Version.V_5_5_0_UNRELEASED);
+
+            if (sign) {
+                SearchResponse searchResponse = (SearchResponse) response;
+                String scrollId = searchResponse.getScrollId();
+                if (scrollId != null && !cryptoService.isSigned(scrollId)) {
+                    searchResponse.scrollId(cryptoService.sign(scrollId, Version.CURRENT));
+                }
             }
         }
         return response;
