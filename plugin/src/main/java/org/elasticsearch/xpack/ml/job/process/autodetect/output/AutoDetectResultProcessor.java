@@ -124,11 +124,10 @@ public class AutoDetectResultProcessor {
             }
 
             try {
-                context.bulkResultsPersister.executeRequest();
-            } catch (Exception e) {
-                if (processKilled) {
-                    throw e;
+                if (processKilled == false) {
+                    context.bulkResultsPersister.executeRequest();
                 }
+            } catch (Exception e) {
                 LOGGER.warn(new ParameterizedMessage("[{}] Error persisting autodetect results", jobId), e);
             }
 
@@ -141,7 +140,7 @@ public class AutoDetectResultProcessor {
                 // that it would have been better to close jobs before shutting down,
                 // but we now fully expect jobs to move between nodes without doing
                 // all their graceful close activities.
-                LOGGER.warn("[{}] some results not processed due to node shutdown", jobId);
+                LOGGER.warn("[{}] some results not processed due to the process being killed", jobId);
             } else {
                 // We should only get here if the iterator throws in which
                 // case parsing the autodetect output has failed.
@@ -169,6 +168,10 @@ public class AutoDetectResultProcessor {
     }
 
     void processResult(Context context, AutodetectResult result) {
+        if (processKilled) {
+            return;
+        }
+
         Bucket bucket = result.getBucket();
         if (bucket != null) {
             if (context.deleteInterimRequired) {
