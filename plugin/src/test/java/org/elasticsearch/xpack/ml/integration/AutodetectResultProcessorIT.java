@@ -29,7 +29,13 @@ import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.XPackSettings;
 import org.elasticsearch.xpack.XPackSingleNodeTestCase;
 import org.elasticsearch.xpack.ml.MachineLearningTemplateRegistry;
+import org.elasticsearch.xpack.ml.action.DeleteJobAction;
+import org.elasticsearch.xpack.ml.action.PutJobAction;
 import org.elasticsearch.xpack.ml.action.util.QueryPage;
+import org.elasticsearch.xpack.ml.job.config.AnalysisConfig;
+import org.elasticsearch.xpack.ml.job.config.DataDescription;
+import org.elasticsearch.xpack.ml.job.config.Detector;
+import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.config.JobTests;
 import org.elasticsearch.xpack.ml.job.persistence.BucketsQueryBuilder;
 import org.elasticsearch.xpack.ml.job.persistence.InfluencersQueryBuilder;
@@ -53,6 +59,7 @@ import org.elasticsearch.xpack.ml.job.results.CategoryDefinitionTests;
 import org.elasticsearch.xpack.ml.job.results.Influencer;
 import org.elasticsearch.xpack.ml.job.results.ModelPlot;
 import org.elasticsearch.xpack.ml.job.results.ModelPlotTests;
+import org.junit.After;
 import org.junit.Before;
 
 import java.util.ArrayList;
@@ -101,7 +108,7 @@ public class AutodetectResultProcessorIT extends XPackSingleNodeTestCase {
     }
 
     @Before
-    public void createComponents() {
+    public void createComponents() throws Exception {
         renormalizer = new NoOpRenormalizer();
         jobResultsPersister = new JobResultsPersister(nodeSettings(), client());
         Settings.Builder builder = Settings.builder()
@@ -115,11 +122,18 @@ public class AutodetectResultProcessorIT extends XPackSingleNodeTestCase {
                 capturedUpdateModelSnapshotOnJobRequests.add(modelSnapshot);
             }
         };
+        putIndexTemplates();
+        putJob();
+    }
+
+    @After
+    public void deleteJob() throws Exception {
+        DeleteJobAction.Request request = new DeleteJobAction.Request(JOB_ID);
+        DeleteJobAction.Response response = client().execute(DeleteJobAction.INSTANCE, request).actionGet();
+        assertTrue(response.isAcknowledged());
     }
 
     public void testProcessResults() throws Exception {
-        putIndexTemplates();
-
         ResultsBuilder builder = new ResultsBuilder();
         Bucket bucket = createBucket(false);
         builder.addBucket(bucket);
@@ -169,7 +183,7 @@ public class AutodetectResultProcessorIT extends XPackSingleNodeTestCase {
         QueryPage<ModelSnapshot> persistedModelSnapshot = getModelSnapshots();
         assertEquals(1, persistedModelSnapshot.count());
         assertEquals(modelSnapshot, persistedModelSnapshot.results().get(0));
-        assertEquals(Arrays.asList(modelSnapshot), capturedUpdateModelSnapshotOnJobRequests);
+        assertEquals(Collections.singletonList(modelSnapshot), capturedUpdateModelSnapshotOnJobRequests);
 
         Optional<Quantiles> persistedQuantiles = getQuantiles();
         assertTrue(persistedQuantiles.isPresent());
@@ -177,7 +191,6 @@ public class AutodetectResultProcessorIT extends XPackSingleNodeTestCase {
     }
 
     public void testDeleteInterimResults() throws Exception {
-        putIndexTemplates();
         Bucket nonInterimBucket = createBucket(false);
         Bucket interimBucket = createBucket(true);
 
@@ -206,7 +219,6 @@ public class AutodetectResultProcessorIT extends XPackSingleNodeTestCase {
     }
 
     public void testMultipleFlushesBetweenPersisting() throws Exception {
-        putIndexTemplates();
         Bucket finalBucket = createBucket(true);
         List<AnomalyRecord> finalAnomalyRecords = createRecords(true);
 
@@ -236,7 +248,6 @@ public class AutodetectResultProcessorIT extends XPackSingleNodeTestCase {
     }
 
     public void testEndOfStreamTriggersPersisting() throws Exception {
-        putIndexTemplates();
         Bucket bucket = createBucket(false);
         List<AnomalyRecord> firstSetOfRecords = createRecords(false);
         List<AnomalyRecord> secondSetOfRecords = createRecords(false);
@@ -276,6 +287,16 @@ public class AutodetectResultProcessorIT extends XPackSingleNodeTestCase {
             assertTrue("Timed out waiting for the ML templates to be installed",
                     MachineLearningTemplateRegistry.allTemplatesInstalled(metaData));
         });
+    }
+
+    private void putJob() throws Exception {
+        Detector detector = new Detector.Builder("dc", "by_instance").build();
+        Job.Builder jobBuilder = new Job.Builder(JOB_ID);
+        jobBuilder.setDataDescription(new DataDescription.Builder());
+        jobBuilder.setAnalysisConfig(new AnalysisConfig.Builder(Collections.singletonList(detector)));
+        PutJobAction.Request request = new PutJobAction.Request(jobBuilder);
+        PutJobAction.Response response = client().execute(PutJobAction.INSTANCE, request).actionGet();
+        assertTrue(response.isAcknowledged());
     }
 
     private Bucket createBucket(boolean isInterim) {
