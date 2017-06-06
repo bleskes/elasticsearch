@@ -157,11 +157,11 @@ class LdapUserSearchSessionFactory extends SessionFactory {
     }
 
     static SimpleBindRequest bindRequest(Settings settings) {
-        SimpleBindRequest request = null;
         if (BIND_DN.exists(settings)) {
-            request = new SimpleBindRequest(BIND_DN.get(settings), BIND_PASSWORD.get(settings));
+            return new SimpleBindRequest(BIND_DN.get(settings), BIND_PASSWORD.get(settings));
+        } else {
+            return new SimpleBindRequest();
         }
-        return request;
     }
 
     public static boolean hasUserSearchSettings(RealmConfig config) {
