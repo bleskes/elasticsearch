@@ -123,6 +123,7 @@ public class NodeStatsResolverTests extends MonitoringIndexNameResolverTestCase<
                 Sets.newHashSet(
                         "cluster_uuid",
                         "timestamp",
+                        "type",
                         "source_node",
                         "node_stats"), XContentType.JSON);
     }

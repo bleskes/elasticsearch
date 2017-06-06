@@ -213,6 +213,6 @@ public class XPackRestIT extends XPackRestTestCase {
 
     private boolean isMonitoringTest() {
         String testName = getTestName();
-        return testName != null && testName.contains("=monitoring/");
+        return testName != null && (testName.contains("=monitoring/") || testName.contains("=monitoring\\"));
     }
 }

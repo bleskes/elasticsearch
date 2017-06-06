@@ -65,6 +65,7 @@ public class ClusterStateResolverTests extends MonitoringIndexNameResolverTestCa
                 Sets.newHashSet(
                         "cluster_uuid",
                         "timestamp",
+                        "type",
                         "source_node",
                         "cluster_state"), XContentType.JSON);
     }

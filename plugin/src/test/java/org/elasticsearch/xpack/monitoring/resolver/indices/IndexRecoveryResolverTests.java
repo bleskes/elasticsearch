@@ -73,6 +73,7 @@ public class IndexRecoveryResolverTests extends MonitoringIndexNameResolverTestC
                 Sets.newHashSet(
                         "cluster_uuid",
                         "timestamp",
+                        "type",
                         "source_node",
                         "index_recovery"), XContentType.JSON);
     }

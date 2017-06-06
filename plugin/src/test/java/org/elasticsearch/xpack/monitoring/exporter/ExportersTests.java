@@ -27,7 +27,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsException;
 import org.elasticsearch.common.util.concurrent.AbstractRunnable;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
@@ -39,7 +38,6 @@ import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.junit.Before;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -224,14 +222,6 @@ public class ExportersTests extends ESTestCase {
         assertThat(settings, hasEntry("_name0.foo", "bar"));
         assertThat(settings, hasEntry("_name1.type", "_type"));
         assertThat(settings, hasEntry("_name1.foo", "bar"));
-    }
-
-    public void testEmptyPipeline() throws IOException {
-        String json = Exporter.emptyPipeline(XContentType.JSON).string();
-
-        // ensure the description starts with the API version
-        assertThat(json, containsString("\"description\":\"" + MonitoringTemplateUtils.TEMPLATE_VERSION + ":"));
-        assertThat(json, containsString("\"processors\":[]"));
     }
 
     public void testExporterBlocksOnClusterState() {

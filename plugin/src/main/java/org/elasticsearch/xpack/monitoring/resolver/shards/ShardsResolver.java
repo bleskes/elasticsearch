@@ -39,6 +39,7 @@ public class ShardsResolver extends MonitoringIndexNameResolver.Timestamped<Shar
         Set<String> filters = Sets.newHashSet(
             "cluster_uuid",
             "timestamp",
+            "type",
             "source_node",
             "state_uuid",
             "shard.state",

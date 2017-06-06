@@ -1,7 +1,7 @@
 {
   "template": ".monitoring-data-${monitoring.template.version}",
   "mappings": {
-    "type_1": {
+    "doc": {
       "_meta": {
         "template.version": "${monitoring.template.version}"
       }
