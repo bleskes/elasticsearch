@@ -148,6 +148,7 @@ public class NoMasterNodeTests extends AbstractWatcherIntegrationTestCase {
         assertWatchWithMinimumPerformedActionsCount("my-second-watch", 1);
     }
 
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/966")
     public void testDedicatedMasterNodeLayout() throws Exception {
         // Only the master nodes are in the unicast nodes list:
         config = new ClusterDiscoveryConfiguration.UnicastZen(11, 3, Settings.EMPTY);
