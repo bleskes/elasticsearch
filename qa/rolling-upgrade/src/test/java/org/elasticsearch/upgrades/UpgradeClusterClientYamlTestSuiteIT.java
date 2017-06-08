@@ -28,6 +28,7 @@ import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
 import com.carrotsearch.randomizedtesting.annotations.TimeoutSuite;
 import org.apache.http.HttpStatus;
 import org.apache.lucene.util.TimeUnits;
+import org.elasticsearch.Version;
 import org.elasticsearch.common.CheckedFunction;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
@@ -50,11 +51,16 @@ public class UpgradeClusterClientYamlTestSuiteIT extends SecurityClusterClientYa
 
     /**
      * Waits for the Machine Learning templates to be created by {@link MachineLearningTemplateRegistry}
+     * if the cluster is expected to create them
      */
     @Before
     public void waitForTemplates() throws Exception {
         List<String> templates = new ArrayList<>();
-        templates.addAll(Arrays.asList(MachineLearningTemplateRegistry.TEMPLATE_NAMES));
+
+        // Only wait for the ML templates if the master node is version 5.4 or above
+        if (findMasterVersion().onOrAfter(Version.V_5_4_0)) {
+            templates.addAll(Arrays.asList(MachineLearningTemplateRegistry.TEMPLATE_NAMES));
+        }
 
         for (String template : templates) {
             awaitCallApi("indices.exists_template", singletonMap("name", template), emptyList(),
@@ -102,8 +108,7 @@ public class UpgradeClusterClientYamlTestSuiteIT extends SecurityClusterClientYa
         AtomicReference<IOException> exceptionHolder = new AtomicReference<>();
         awaitBusy(() -> {
             try {
-                ClientYamlTestResponse response = getAdminExecutionContext().callApi(apiName, params, bodies, Collections.emptyMap()
-                );
+                ClientYamlTestResponse response = getAdminExecutionContext().callApi(apiName, params, bodies, Collections.emptyMap());
                 if (response.getStatusCode() == HttpStatus.SC_OK) {
                     exceptionHolder.set(null);
                     return success.apply(response);
@@ -119,5 +124,21 @@ public class UpgradeClusterClientYamlTestSuiteIT extends SecurityClusterClientYa
         if (exception != null) {
             throw new IllegalStateException(error.get(), exception);
         }
+    }
+
+    private Version findMasterVersion() throws Exception {
+        AtomicReference<Version> versionHolder = new AtomicReference<>();
+        awaitCallApi("cat.nodes", singletonMap("h", "m,v"), emptyList(),
+                response -> {
+                    for (String line : response.getBodyAsString().split("\n")) {
+                        if (line.startsWith("*")) {
+                            versionHolder.set(Version.fromString(line.substring(2).trim()));
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+                () -> "Exception when waiting to find master node version");
+        return versionHolder.get();
     }
 }
