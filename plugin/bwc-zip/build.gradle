@@ -30,7 +30,8 @@ if (bwcVersion.endsWith('-SNAPSHOT')) {
   apply plugin: 'distribution'
 
   def (String major, String minor, String bugfix) = bwcVersion.split('\\.')
-  String bwcBranch = bugfix == '0-SNAPSHOT' ? "${major}.x" : "${major}.${minor}"
+  def (String currentMajor, String currentMinor, String currentBugfix) = version.split('\\.')
+  String bwcBranch = currentMajor != major ? "${major}.x" : "${major}.${minor}"
 
   File esCheckoutDir = file("${buildDir}/bwc/checkout-es-${bwcBranch}")
   File xpackCheckoutDir = file("${esCheckoutDir}-extra/x-pack-elasticsearch")
