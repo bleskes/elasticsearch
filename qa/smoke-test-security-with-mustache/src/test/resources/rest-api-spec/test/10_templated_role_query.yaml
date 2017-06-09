@@ -55,7 +55,7 @@ setup:
                   "privileges": ["all"],
                   "query" : {
                     "template" : {
-                      "inline" : {
+                      "source" : {
                         "term" : { "username" : "{{_user.username}}" }
                       }
                     }
@@ -75,7 +75,7 @@ setup:
                   "privileges": ["all"],
                   "query" : {
                     "template" : {
-                      "inline" : "{\"terms\" : { \"username\" : {{#toJson}}_user.metadata.groups{{/toJson}} } }"
+                      "source" : "{\"terms\" : { \"username\" : {{#toJson}}_user.metadata.groups{{/toJson}} } }"
                     }
                   }
                 }
@@ -93,7 +93,7 @@ setup:
                   "privileges": ["all"],
                   "query" : {
                     "template" : {
-                      "stored" : "1"
+                      "id" : "1"
                     }
                   }
                 }

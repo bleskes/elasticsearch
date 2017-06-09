@@ -156,7 +156,8 @@ public class ScriptConditionTests extends ESTestCase {
             fail("expected a condition exception trying to parse an invalid condition XContent");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage(),
-                    containsString("must specify either code for an [inline] script or an id for a [stored] script or [file] script"));
+                    containsString("must specify either [source] for an inline script, [id] for a stored script, or " +
+                        "[file] for a file script"));
         }
     }
 
@@ -225,13 +226,13 @@ public class ScriptConditionTests extends ESTestCase {
         builder.startObject();
         switch (scriptType) {
             case INLINE:
-                builder.field("inline", script);
+                builder.field("source", script);
                 break;
             case FILE:
                 builder.field("file", script);
                 break;
             case STORED:
-                builder.field("stored", script);
+                builder.field("id", script);
                 break;
             default:
                 throw illegalArgument("unsupported script type [{}]", scriptType);

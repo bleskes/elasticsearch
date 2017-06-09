@@ -36,7 +36,7 @@ parameter, `result`:
 --------------------------------------------------
 "condition" : {
   "script" : {
-    "inline" : "return result",
+    "source" : "return result",
     "lang" : "painless",
     "params" : {
       "result" : true
@@ -56,7 +56,7 @@ always returns `true`.
 --------------------------------------------------
 "condition" : {
   "script" : {
-    "inline" : "return true"
+    "source" : "return true"
   }
 }
 --------------------------------------------------
@@ -146,7 +146,7 @@ threshold:
   },
   "condition" : {
     "script" : {
-      "inline" : "return ctx.payload.hits.total > threshold",
+      "source" : "return ctx.payload.hits.total > threshold",
       "params" : {
         "threshold" : 5
       }

@@ -325,7 +325,7 @@ public class WatchTests extends ESTestCase {
             builder.field("script", "return true");
         } else {
             builder.startObject("script");
-            builder.field("inline", "return true");
+            builder.field("source", "return true");
             builder.endObject();
         }
         builder.endObject();
@@ -340,7 +340,7 @@ public class WatchTests extends ESTestCase {
             builder.field("script", "return true");
         } else {
             builder.startObject("script");
-            builder.field("inline", "return true");
+            builder.field("source", "return true");
             builder.endObject();
         }
         builder.endObject();

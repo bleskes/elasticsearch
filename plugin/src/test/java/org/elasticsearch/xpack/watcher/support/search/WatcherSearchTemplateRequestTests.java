@@ -38,7 +38,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class WatcherSearchTemplateRequestTests extends ESTestCase {
 
     public void testFromXContentWithTemplateDefaultLang() throws IOException {
-        String source = "{\"template\":{\"stored\":\"default-script\", \"params\":{\"foo\":\"bar\"}}}";
+        String source = "{\"template\":{\"id\":\"default-script\", \"params\":{\"foo\":\"bar\"}}}";
         assertTemplate(source, "default-script", "mustache", singletonMap("foo", "bar"));
     }
 
@@ -70,7 +70,7 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
         contentBuilder.startObject("query");
         contentBuilder.startObject("script");
         contentBuilder.startObject("script");
-        contentBuilder.field("inline", "return true");
+        contentBuilder.field("source", "return true");
         contentBuilder.endObject();
         contentBuilder.endObject();
         contentBuilder.endObject();
@@ -79,14 +79,14 @@ public class WatcherSearchTemplateRequestTests extends ESTestCase {
         contentBuilder.startObject("avg_grade");
         contentBuilder.startObject("avg");
         contentBuilder.startObject("script");
-        contentBuilder.field("inline", "1 + 1");
+        contentBuilder.field("source", "1 + 1");
         contentBuilder.endObject();
         contentBuilder.endObject();
         contentBuilder.endObject();
         contentBuilder.startObject("another_avg");
         contentBuilder.startObject("avg");
         contentBuilder.startObject("script");
-        contentBuilder.field("inline", "1 + 2");
+        contentBuilder.field("source", "1 + 2");
         contentBuilder.field("lang", "javascript");
         contentBuilder.endObject();
         contentBuilder.endObject();

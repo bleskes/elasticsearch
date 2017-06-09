@@ -365,7 +365,7 @@ definition as the field value. For example:
   "email_notification" : {
     "email" : {
       "subject" : {
-         "inline" : "{{ctx.metadata.color}} alert"
+         "source" : "{{ctx.metadata.color}} alert"
       }
     }
   }
@@ -378,7 +378,7 @@ The formal object definition for a script would be:
 ----------------------------------------------------------------------
 "condition" : {
   "script" : {
-    "inline": "return true"
+    "source": "return true"
   }
 }
 ----------------------------------------------------------------------

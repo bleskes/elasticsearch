@@ -49,7 +49,7 @@
                 port: $port
                 path: "/my_index/my_type/{{ctx.watch_id}}"
                 body:
-                  inline:
+                  source:
                     watch_id: "{{ctx.watch_id}}"
                   params: {}
 
