@@ -124,6 +124,7 @@ public class JobStorageDeletionTask extends Task {
         searchRequest.source(new SearchSourceBuilder().query(query));
         searchRequest.indicesOptions(JobProvider.addIgnoreUnavailable(IndicesOptions.lenientExpandOpen()));
         request.setAbortOnVersionConflict(false);
+        request.setRefresh(true);
 
         client.execute(DeleteByQueryAction.INSTANCE, request, ActionListener.wrap(
                 response -> finishedHandler.onResponse(true),
@@ -159,6 +160,7 @@ public class JobStorageDeletionTask extends Task {
         searchRequest.source(new SearchSourceBuilder().query(query));
         searchRequest.indicesOptions(JobProvider.addIgnoreUnavailable(IndicesOptions.lenientExpandOpen()));
         request.setAbortOnVersionConflict(false);
+        request.setRefresh(true);
 
         client.execute(DeleteByQueryAction.INSTANCE, request, ActionListener.wrap(
                 response -> {

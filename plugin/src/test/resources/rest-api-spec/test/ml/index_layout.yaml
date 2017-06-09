@@ -182,9 +182,6 @@
   - is_true: ''
 
   - do:
-      indices.refresh: {}
-
-  - do:
       count:
         index: .ml-state
   - match: {count: 4}
@@ -249,9 +246,6 @@
       indices.exists:
         index: ".ml-anomalies-index-layout-job2"
   - is_false: ''
-
-  - do:
-      indices.refresh: {}
 
   - do:
       count:
@@ -381,9 +375,6 @@
   - is_true: ''
 
   - do:
-      indices.refresh: {}
-
-  - do:
       count:
         index: .ml-state
   - match: {count: 0}
@@ -392,6 +383,9 @@
       count:
         index: .ml-anomalies-shared
   - match: {count: 0}
+
+  - do:
+      indices.refresh: {}
 
   - do:
       count:
@@ -436,9 +430,6 @@
       xpack.ml.delete_job:
         job_id: "index-layout-quantiles-job"
   - match: { acknowledged: true }
-
-  - do:
-      indices.refresh: {}
 
   - do:
       count:
@@ -511,15 +502,9 @@
           state: more-new-categorizer-state
 
   - do:
-      indices.refresh: {}
-
-  - do:
       xpack.ml.delete_job:
         job_id: "index-layout-state-job"
   - match: { acknowledged: true }
-
-  - do:
-      indices.refresh: {}
 
   - do:
       count:
