@@ -54,17 +54,26 @@ public class UpgradeClusterClientYamlTestSuiteIT extends SecurityClusterClientYa
      * if the cluster is expected to create them
      */
     @Before
+    @SuppressWarnings("unchecked")
     public void waitForTemplates() throws Exception {
         List<String> templates = new ArrayList<>();
 
+        Version masterNodeVersion = findMasterVersion();
         // Only wait for the ML templates if the master node is version 5.4 or above
-        if (findMasterVersion().onOrAfter(Version.V_5_4_0)) {
+        if (masterNodeVersion.onOrAfter(Version.V_5_4_0)) {
             templates.addAll(Arrays.asList(MachineLearningTemplateRegistry.TEMPLATE_NAMES));
         }
 
         for (String template : templates) {
-            awaitCallApi("indices.exists_template", singletonMap("name", template), emptyList(),
-                    response -> true,
+            awaitCallApi("indices.get_template", singletonMap("name", template), emptyList(),
+                    response -> {
+                        // We recreate the templates for every new version, so only accept
+                        // templates that correspond to the current master node version
+                        Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
+                        Map<String, Object> templateDefinition = (Map<String, Object>) responseBody.get(template);
+                        Version templateVersion = Version.fromId((Integer) templateDefinition.get("version"));
+                        return masterNodeVersion.equals(templateVersion);
+                    },
                     () -> "Exception when waiting for [" + template + "] template to be created");
         }
     }
