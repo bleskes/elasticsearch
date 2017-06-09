@@ -137,7 +137,6 @@ subprojects {
       numNodes = 2
       clusterName = 'rolling-upgrade'
       waitCondition = waitWithAuth
-      setting 'logger.org.elasticsearch.xpack.security', 'TRACE'
       if (withSsl) {
         setting 'xpack.security.transport.ssl.enabled', 'true'
         setting 'xpack.ssl.keystore.path', 'testnode.jks'
@@ -177,7 +176,6 @@ subprojects {
       unicastTransportUri = { seedNode, node, ant -> oldClusterTest.nodes.get(0).transportUri() }
       dataDir = "${-> oldClusterTest.nodes[1].dataDir}"
       waitCondition = waitWithAuth
-      setting 'logger.org.elasticsearch.xpack.security', 'TRACE'
       setting 'node.attr.upgraded', 'first'
       if (withSsl) {
         setting 'xpack.security.transport.ssl.enabled', 'true'
@@ -215,7 +213,6 @@ subprojects {
       unicastTransportUri = { seedNode, node, ant -> mixedClusterTest.nodes.get(0).transportUri() }
       dataDir = "${-> oldClusterTest.nodes[0].dataDir}"
       waitCondition = waitWithAuth
-      setting 'logger.org.elasticsearch.xpack.security', 'TRACE'
       if (withSsl) {
         setting 'xpack.security.transport.ssl.enabled', 'true'
         setting 'xpack.ssl.keystore.path', 'testnode.jks'
