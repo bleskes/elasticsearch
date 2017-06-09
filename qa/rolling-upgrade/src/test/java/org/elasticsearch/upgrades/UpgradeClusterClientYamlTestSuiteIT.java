@@ -83,6 +83,11 @@ public class UpgradeClusterClientYamlTestSuiteIT extends SecurityClusterClientYa
         return true;
     }
 
+    @Override
+    protected boolean preserveTemplatesUponCompletion() {
+        return true;
+    }
+
     public UpgradeClusterClientYamlTestSuiteIT(ClientYamlTestCandidate testCandidate) {
         super(testCandidate);
     }
