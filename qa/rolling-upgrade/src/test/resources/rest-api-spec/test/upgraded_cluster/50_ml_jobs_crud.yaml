@@ -15,11 +15,6 @@ setup:
   - match: { count: 1 }
 
   - do:
-      catch: request
-      xpack.ml.open_job:
-        job_id: old-cluster-job
-
-  - do:
       xpack.ml.get_job_stats:
         job_id: old-cluster-job
   - match: { jobs.0.state: "closed" }
