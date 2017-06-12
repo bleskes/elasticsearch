@@ -60,6 +60,7 @@ import org.elasticsearch.xpack.ml.datafeed.DatafeedJobValidator;
 import org.elasticsearch.xpack.ml.datafeed.DatafeedManager;
 import org.elasticsearch.xpack.ml.datafeed.DatafeedNodeSelector;
 import org.elasticsearch.xpack.ml.datafeed.DatafeedState;
+import org.elasticsearch.xpack.ml.datafeed.extractor.DataExtractorFactory;
 import org.elasticsearch.xpack.ml.job.config.Job;
 import org.elasticsearch.xpack.ml.job.config.JobState;
 import org.elasticsearch.xpack.ml.job.messages.Messages;
@@ -72,6 +73,7 @@ import org.elasticsearch.xpack.persistent.PersistentTasksCustomMetaData.Persiste
 import org.elasticsearch.xpack.persistent.PersistentTasksExecutor;
 import org.elasticsearch.xpack.persistent.PersistentTasksService;
 import org.elasticsearch.xpack.persistent.PersistentTasksService.WaitForPersistentTaskStatusListener;
+import org.elasticsearch.xpack.security.InternalClient;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -428,16 +430,19 @@ public class StartDatafeedAction
     // The start datafeed api is a low through put api, so the fact that we redirect to elected master node shouldn't be an issue.
     public static class TransportAction extends TransportMasterNodeAction<Request, Response> {
 
+        private final InternalClient client;
         private final XPackLicenseState licenseState;
         private final PersistentTasksService persistentTasksService;
 
         @Inject
         public TransportAction(Settings settings, TransportService transportService, ThreadPool threadPool, ClusterService clusterService,
                                XPackLicenseState licenseState, PersistentTasksService persistentTasksService,
-                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver) {
+                               ActionFilters actionFilters, IndexNameExpressionResolver indexNameExpressionResolver,
+                               InternalClient client) {
             super(settings, NAME, transportService, clusterService, threadPool, actionFilters, indexNameExpressionResolver, Request::new);
             this.licenseState = licenseState;
             this.persistentTasksService = persistentTasksService;
+            this.client = client;
         }
 
         @Override
@@ -472,7 +477,17 @@ public class StartDatafeedAction
                         listener.onFailure(e);
                     }
                 };
-                persistentTasksService.startPersistentTask(MlMetadata.datafeedTaskId(params.datafeedId), TASK_NAME, params, finalListener);
+
+                // Verify data extractor factory can be created, then start persistent task
+                MlMetadata mlMetadata = state.metaData().custom(MlMetadata.TYPE);
+                PersistentTasksCustomMetaData tasks = state.getMetaData().custom(PersistentTasksCustomMetaData.TYPE);
+                StartDatafeedAction.validate(params.getDatafeedId(), mlMetadata, tasks);
+                DatafeedConfig datafeed = mlMetadata.getDatafeed(params.getDatafeedId());
+                Job job = mlMetadata.getJobs().get(datafeed.getJobId());
+                DataExtractorFactory.create(client, datafeed, job, ActionListener.wrap(
+                        dataExtractorFactory -> persistentTasksService.startPersistentTask(MlMetadata.datafeedTaskId(params.datafeedId),
+                                TASK_NAME, params, finalListener)
+                        , listener::onFailure));
             } else {
                 listener.onFailure(LicenseUtils.newComplianceException(XPackPlugin.MACHINE_LEARNING));
             }

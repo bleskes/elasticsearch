@@ -268,5 +268,4 @@ public class DatafeedJobTests extends ESTestCase {
         return new DatafeedJob("_job_id", dataDescription.build(), frequencyMs, queryDelayMs, dataExtractorFactory, client, auditor,
                 currentTimeSupplier, latestFinalBucketEndTimeMs, latestRecordTimeMs);
     }
-
 }

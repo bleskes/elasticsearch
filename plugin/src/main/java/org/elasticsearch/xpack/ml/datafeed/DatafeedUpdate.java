@@ -14,6 +14,7 @@
  */
 package org.elasticsearch.xpack.ml.datafeed;
 
+import org.elasticsearch.Version;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -71,7 +72,6 @@ public class DatafeedUpdate implements Writeable, ToXContent {
             return parsedScriptFields;
         }, DatafeedConfig.SCRIPT_FIELDS);
         PARSER.declareInt(Builder::setScrollSize, DatafeedConfig.SCROLL_SIZE);
-        PARSER.declareBoolean(Builder::setSource, DatafeedConfig.SOURCE);
         PARSER.declareObject(Builder::setChunkingConfig, ChunkingConfig.PARSER, DatafeedConfig.CHUNKING_CONFIG);
     }
 
@@ -85,12 +85,11 @@ public class DatafeedUpdate implements Writeable, ToXContent {
     private final AggregatorFactories.Builder aggregations;
     private final List<SearchSourceBuilder.ScriptField> scriptFields;
     private final Integer scrollSize;
-    private final Boolean source;
     private final ChunkingConfig chunkingConfig;
 
     private DatafeedUpdate(String id, String jobId, TimeValue queryDelay, TimeValue frequency, List<String> indices, List<String> types,
                            QueryBuilder query, AggregatorFactories.Builder aggregations, List<SearchSourceBuilder.ScriptField> scriptFields,
-                           Integer scrollSize, Boolean source, ChunkingConfig chunkingConfig) {
+                           Integer scrollSize, ChunkingConfig chunkingConfig) {
         this.id = id;
         this.jobId = jobId;
         this.queryDelay = queryDelay;
@@ -101,7 +100,6 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         this.aggregations = aggregations;
         this.scriptFields = scriptFields;
         this.scrollSize = scrollSize;
-        this.source = source;
         this.chunkingConfig = chunkingConfig;
     }
 
@@ -128,7 +126,10 @@ public class DatafeedUpdate implements Writeable, ToXContent {
             this.scriptFields = null;
         }
         this.scrollSize = in.readOptionalVInt();
-        this.source = in.readOptionalBoolean();
+        if (in.getVersion().before(Version.V_5_5_0_UNRELEASED)) {
+            // TODO for former _source param - remove in v7.0.0
+            in.readOptionalBoolean();
+        }
         this.chunkingConfig = in.readOptionalWriteable(ChunkingConfig::new);
     }
 
@@ -166,7 +167,10 @@ public class DatafeedUpdate implements Writeable, ToXContent {
             out.writeBoolean(false);
         }
         out.writeOptionalVInt(scrollSize);
-        out.writeOptionalBoolean(source);
+        if (out.getVersion().before(Version.V_5_5_0_UNRELEASED)) {
+            // TODO for former _source param - remove in v7.0.0
+            out.writeOptionalBoolean(false);
+        }
         out.writeOptionalWriteable(chunkingConfig);
     }
 
@@ -193,7 +197,6 @@ public class DatafeedUpdate implements Writeable, ToXContent {
             builder.endObject();
         }
         addOptionalField(builder, DatafeedConfig.SCROLL_SIZE, scrollSize);
-        addOptionalField(builder, DatafeedConfig.SOURCE, source);
         addOptionalField(builder, DatafeedConfig.CHUNKING_CONFIG, chunkingConfig);
         builder.endObject();
         return builder;
@@ -242,9 +245,6 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         if (scrollSize != null) {
             builder.setScrollSize(scrollSize);
         }
-        if (source != null) {
-            builder.setSource(source);
-        }
         if (chunkingConfig != null) {
             builder.setChunkingConfig(chunkingConfig);
         }
@@ -278,13 +278,12 @@ public class DatafeedUpdate implements Writeable, ToXContent {
                 && Objects.equals(this.scrollSize, that.scrollSize)
                 && Objects.equals(this.aggregations, that.aggregations)
                 && Objects.equals(this.scriptFields, that.scriptFields)
-                && Objects.equals(this.source, that.source)
                 && Objects.equals(this.chunkingConfig, that.chunkingConfig);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, jobId, frequency, queryDelay, indices, types, query, scrollSize, aggregations, scriptFields, source,
+        return Objects.hash(id, jobId, frequency, queryDelay, indices, types, query, scrollSize, aggregations, scriptFields,
                 chunkingConfig);
     }
 
@@ -305,7 +304,6 @@ public class DatafeedUpdate implements Writeable, ToXContent {
         private AggregatorFactories.Builder aggregations;
         private List<SearchSourceBuilder.ScriptField> scriptFields;
         private Integer scrollSize;
-        private Boolean source;
         private ChunkingConfig chunkingConfig;
 
         public Builder() {
@@ -326,7 +324,6 @@ public class DatafeedUpdate implements Writeable, ToXContent {
             this.aggregations = config.aggregations;
             this.scriptFields = config.scriptFields;
             this.scrollSize = config.scrollSize;
-            this.source = config.source;
             this.chunkingConfig = config.chunkingConfig;
         }
 
@@ -372,17 +369,13 @@ public class DatafeedUpdate implements Writeable, ToXContent {
             this.scrollSize = scrollSize;
         }
 
-        public void setSource(boolean enabled) {
-            this.source = enabled;
-        }
-
         public void setChunkingConfig(ChunkingConfig chunkingConfig) {
             this.chunkingConfig = chunkingConfig;
         }
 
         public DatafeedUpdate build() {
             return new DatafeedUpdate(id, jobId, queryDelay, frequency, indices, types, query, aggregations, scriptFields, scrollSize,
-                    source, chunkingConfig);
+                    chunkingConfig);
         }
     }
 }
