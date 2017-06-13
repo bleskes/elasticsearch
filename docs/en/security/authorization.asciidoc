@@ -59,23 +59,13 @@ themselves.
 {security} also provides a set of built-in roles you can explicitly assign
 to users. These roles have a fixed set of privileges and cannot be updated.
 
-<<<<<<< HEAD
-[[built-in-roles-ingest-user]]
-`ingest_admin`::
-=======
 [[built-in-roles-ingest-user]] `ingest_admin` ::
->>>>>>> 693c4adfb... Corrected syntax for adding IDs to definition lists in built-in roles
 Grants access to manage *all* index templates and *all* ingest pipeline configurations.
 +
 NOTE: This role does *not* provide the ability to create indices; those privileges
 must be defined in a separate role.
 
-<<<<<<< HEAD
-[[built-in-roles-kibana-system]]
-`kibana_system`::
-=======
 [[built-in-roles-kibana-system]] `kibana_system` ::
->>>>>>> 693c4adfb... Corrected syntax for adding IDs to definition lists in built-in roles
 Grants access necessary for the <<kibana, Kibana system user>>
 to read from and write to the Kibana indices and check the availability of the
 Elasticsearch cluster.
@@ -87,12 +77,7 @@ change between releases.
 Grants the minimum privileges required for any user of Kibana. This role grants
 access to the Kibana indices and grants  monitoring privileges for the cluster.
 
-<<<<<<< HEAD
-[[built-in-roles-logstash-system]]
-`logstash_system`::
-=======
 [[built-in-roles-logstash-system]] `logstash_system` ::
->>>>>>> 693c4adfb... Corrected syntax for adding IDs to definition lists in built-in roles
 Grants access necessary for the <<ls-monitoring-user, Logstash system user>>
 to send system-level data (such as monitoring) to Elasticsearch.
 +
