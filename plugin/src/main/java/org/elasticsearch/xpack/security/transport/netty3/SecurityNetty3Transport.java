@@ -19,6 +19,7 @@ package org.elasticsearch.xpack.security.transport.netty3;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
+import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.internal.Nullable;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
@@ -94,6 +95,7 @@ public class SecurityNetty3Transport extends Netty3Transport {
 
     @Override
     protected void onException(Channel channel, Exception e) throws IOException {
+        String reason = ExceptionsHelper.detailedMessage(e);
         if (isNotSslRecordException(e)) {
             if (logger.isTraceEnabled()) {
                 logger.trace(
@@ -102,14 +104,14 @@ public class SecurityNetty3Transport extends Netty3Transport {
             } else {
                 logger.warn("received plaintext traffic on a encrypted channel, closing connection {}", channel);
             }
-            disconnectFromNodeChannel(channel, e);
+            disconnectFromNodeChannel(channel, reason);
         } else if (isCloseDuringHandshakeException(e)) {
             if (logger.isTraceEnabled()) {
                 logger.trace((Supplier<?>) () -> new ParameterizedMessage("connection {} closed during handshake", channel), e);
             } else {
                 logger.warn("connection {} closed during handshake", channel);
             }
-            disconnectFromNodeChannel(channel, e);
+            disconnectFromNodeChannel(channel, reason);
         } else {
             super.onException(channel, e);
         }
