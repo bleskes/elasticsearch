@@ -52,6 +52,7 @@ import org.elasticsearch.action.admin.indices.upgrade.get.UpgradeStatusAction;
 import org.elasticsearch.action.admin.indices.upgrade.get.UpgradeStatusRequest;
 import org.elasticsearch.action.bulk.BulkAction;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
@@ -88,11 +89,13 @@ import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.LocalTransportAddress;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.license.GetLicenseAction;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
+import org.elasticsearch.transport.TransportActionProxy;
 import org.elasticsearch.transport.TransportRequest;
 import org.elasticsearch.xpack.common.action.XPackDeleteByQueryAction;
 import org.elasticsearch.xpack.security.SecurityLifecycleService;
@@ -139,10 +142,12 @@ import static org.elasticsearch.test.SecurityTestsUtils.assertThrowsAuthorizatio
 import static org.elasticsearch.test.SecurityTestsUtils.assertThrowsAuthorizationExceptionRunAs;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -1037,5 +1042,83 @@ public class AuthorizationServiceTests extends ESTestCase {
         when(clusterService.state()).thenReturn(state);
         when(state.metaData()).thenReturn(MetaData.EMPTY_META_DATA);
         return state;
+    }
+
+    public void testProxyRequestFailsOnNonProxyAction() {
+        TransportRequest request = TransportRequest.Empty.INSTANCE;
+        DiscoveryNode node = new DiscoveryNode("foo", LocalTransportAddress.buildUnique(), Version.CURRENT);
+        TransportRequest transportRequest = TransportActionProxy.wrapRequest(node, request);
+        User user = new User("test user", "role");
+        IllegalStateException illegalStateException = expectThrows(IllegalStateException.class,
+                () -> authorize(createAuthentication(user), "indices:some/action", transportRequest));
+        assertThat(illegalStateException.getMessage(),
+                startsWith("originalRequest is a proxy request for: [org.elasticsearch.transport.TransportRequest$"));
+        assertThat(illegalStateException.getMessage(), endsWith("] but action: [indices:some/action] isn't"));
+    }
+
+    public void testProxyRequestFailsOnNonProxyRequest() {
+        TransportRequest request = TransportRequest.Empty.INSTANCE;
+        User user = new User("test user", "role");
+        IllegalStateException illegalStateException = expectThrows(IllegalStateException.class,
+                () -> authorize(createAuthentication(user), TransportActionProxy.getProxyAction("indices:some/action"), request));
+        assertThat(illegalStateException.getMessage(),
+                startsWith("originalRequest is not a proxy request: [org.elasticsearch.transport.TransportRequest$"));
+        assertThat(illegalStateException.getMessage(),
+                endsWith("] but action: [internal:transport/proxy/indices:some/action] is a proxy action"));
+    }
+
+    public void testProxyRequestAuthenticationDenied() {
+        TransportRequest proxiedRequest = new SearchRequest();
+        DiscoveryNode node = new DiscoveryNode("foo", LocalTransportAddress.buildUnique(), Version.CURRENT);
+        TransportRequest transportRequest = TransportActionProxy.wrapRequest(node, proxiedRequest);
+        String action = TransportActionProxy.getProxyAction(SearchTransportService.QUERY_ACTION_NAME);
+        User user = new User("test user", "no_indices");
+        roleMap.put("no_indices", new RoleDescriptor("no_indices", null, null, null));
+        assertThrowsAuthorizationException(
+                () -> authorize(createAuthentication(user), action, transportRequest), action, "test user");
+        verify(auditTrail).accessDenied(user, action, proxiedRequest);
+        verifyNoMoreInteractions(auditTrail);
+    }
+
+    public void testProxyRequestAuthenticationGrantedWithAllPrivileges() {
+        User user = new User("test user", "a_all");
+        roleMap.put("a_all", new RoleDescriptor("a_role", null,
+                new IndicesPrivileges[] { IndicesPrivileges.builder().indices("a").privileges("all").build() }, null));
+        mockEmptyMetaData();
+        DiscoveryNode node = new DiscoveryNode("foo", LocalTransportAddress.buildUnique(), Version.CURRENT);
+
+        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+        TransportRequest transportRequest = TransportActionProxy.wrapRequest(node, clearScrollRequest);
+        String action = TransportActionProxy.getProxyAction(SearchTransportService.CLEAR_SCROLL_CONTEXTS_ACTION_NAME);
+        authorize(createAuthentication(user), action, transportRequest);
+        verify(auditTrail).accessGranted(user, action, clearScrollRequest);
+    }
+
+    public void testProxyRequestAuthenticationGranted() {
+        User user = new User("test user", "a_all");
+        roleMap.put("a_all", new RoleDescriptor("a_role", null,
+                new IndicesPrivileges[] { IndicesPrivileges.builder().indices("a").privileges("read_cross_cluster").build() }, null));
+        mockEmptyMetaData();
+        DiscoveryNode node = new DiscoveryNode("foo", LocalTransportAddress.buildUnique(), Version.CURRENT);
+
+        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+        TransportRequest transportRequest = TransportActionProxy.wrapRequest(node, clearScrollRequest);
+        String action = TransportActionProxy.getProxyAction(SearchTransportService.CLEAR_SCROLL_CONTEXTS_ACTION_NAME);
+        authorize(createAuthentication(user), action, transportRequest);
+        verify(auditTrail).accessGranted(user, action, clearScrollRequest);
+    }
+
+    public void testProxyRequestAuthenticationDeniedWithReadPrivileges() {
+        User user = new User("test user", "a_all");
+        roleMap.put("a_all", new RoleDescriptor("a_role", null,
+                new IndicesPrivileges[] { IndicesPrivileges.builder().indices("a").privileges("read").build() }, null));
+        mockEmptyMetaData();
+        DiscoveryNode node = new DiscoveryNode("foo", LocalTransportAddress.buildUnique(), Version.CURRENT);
+        ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+        TransportRequest transportRequest = TransportActionProxy.wrapRequest(node, clearScrollRequest);
+        String action = TransportActionProxy.getProxyAction(SearchTransportService.CLEAR_SCROLL_CONTEXTS_ACTION_NAME);
+        assertThrowsAuthorizationException(
+                () -> authorize(createAuthentication(user), action, transportRequest), action, "test user");
+        verify(auditTrail).accessDenied(user, action, clearScrollRequest);
     }
 }
