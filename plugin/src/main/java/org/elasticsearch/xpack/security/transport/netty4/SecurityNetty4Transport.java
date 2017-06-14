@@ -24,9 +24,7 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.ssl.SslHandler;
 import org.apache.logging.log4j.message.ParameterizedMessage;
-import org.elasticsearch.ExceptionsHelper;
-import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.inject.internal.Nullable;
+import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Setting;
@@ -51,7 +49,6 @@ import static org.elasticsearch.xpack.security.transport.SSLExceptionHelper.isNo
 import static org.elasticsearch.xpack.security.transport.SSLExceptionHelper.isReceivedCertificateUnknownException;
 import static org.elasticsearch.xpack.XPackSettings.TRANSPORT_SSL_ENABLED;
 
-
 /**
  * Implementation of a transport that extends the {@link Netty4Transport} to add SSL and IP Filtering
  */
@@ -64,7 +61,6 @@ public class SecurityNetty4Transport extends Netty4Transport {
     private final Settings transportSSLSettings;
     private final boolean ssl;
 
-    @Inject
     public SecurityNetty4Transport(Settings settings, ThreadPool threadPool, NetworkService networkService, BigArrays bigArrays,
                                    NamedWriteableRegistry namedWriteableRegistry, CircuitBreakerService circuitBreakerService,
                                    @Nullable IPFilter authenticator, SSLService sslService) {
@@ -95,10 +91,9 @@ public class SecurityNetty4Transport extends Netty4Transport {
 
     @Override
     protected void onException(Channel channel, Exception e) throws IOException {
-        String reason = ExceptionsHelper.detailedMessage(e);
         if (!lifecycle.started()) {
             // just close and ignore - we are already stopped and just need to make sure we release all resources
-            disconnectFromNodeChannel(channel, reason);
+            closeChannelWhileHandlingExceptions(channel);
         } else if (isNotSslRecordException(e)) {
             if (logger.isTraceEnabled()) {
                 logger.trace(
@@ -106,25 +101,24 @@ public class SecurityNetty4Transport extends Netty4Transport {
             } else {
                 logger.warn("received plaintext traffic on an encrypted channel, closing connection {}", channel);
             }
-            disconnectFromNodeChannel(channel, reason);
+            closeChannelWhileHandlingExceptions(channel);
         } else if (isCloseDuringHandshakeException(e)) {
             if (logger.isTraceEnabled()) {
                 logger.trace(new ParameterizedMessage("connection {} closed during ssl handshake", channel), e);
             } else {
                 logger.warn("connection {} closed during handshake", channel);
             }
-            disconnectFromNodeChannel(channel, reason);
+            closeChannelWhileHandlingExceptions(channel);
         } else if (isReceivedCertificateUnknownException(e)) {
             if (logger.isTraceEnabled()) {
                 logger.trace(new ParameterizedMessage("client did not trust server's certificate, closing connection {}", channel), e);
             } else {
                 logger.warn("client did not trust this server's certificate, closing connection {}", channel);
             }
-            disconnectFromNodeChannel(channel, reason);
+            closeChannelWhileHandlingExceptions(channel);
         } else {
             super.onException(channel, e);
         }
-
     }
 
     class SecurityServerChannelInitializer extends ServerChannelInitializer {

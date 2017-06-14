@@ -95,7 +95,6 @@ public class SecurityNetty3Transport extends Netty3Transport {
 
     @Override
     protected void onException(Channel channel, Exception e) throws IOException {
-        String reason = ExceptionsHelper.detailedMessage(e);
         if (isNotSslRecordException(e)) {
             if (logger.isTraceEnabled()) {
                 logger.trace(
@@ -104,14 +103,14 @@ public class SecurityNetty3Transport extends Netty3Transport {
             } else {
                 logger.warn("received plaintext traffic on a encrypted channel, closing connection {}", channel);
             }
-            disconnectFromNodeChannel(channel, reason);
+            closeChannelWhileHandlingExceptions(channel);
         } else if (isCloseDuringHandshakeException(e)) {
             if (logger.isTraceEnabled()) {
                 logger.trace((Supplier<?>) () -> new ParameterizedMessage("connection {} closed during handshake", channel), e);
             } else {
                 logger.warn("connection {} closed during handshake", channel);
             }
-            disconnectFromNodeChannel(channel, reason);
+            closeChannelWhileHandlingExceptions(channel);
         } else {
             super.onException(channel, e);
         }
