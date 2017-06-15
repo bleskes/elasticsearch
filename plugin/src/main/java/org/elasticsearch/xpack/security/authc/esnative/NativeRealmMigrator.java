@@ -90,7 +90,7 @@ public class NativeRealmMigrator implements IndexLifecycleManager.IndexDataMigra
                 final GroupedActionListener<Void> countDownListener = new GroupedActionListener<>(
                     ActionListener.wrap(r -> listener.onResponse(true), listener::onFailure), tasks.size(), emptyList()
                 );
-                logger.info("Performing {} security migration task(s)", tasks.size());
+                logger.info("Performing {} security migration task(s) from version {}", tasks.size(), previousVersion);
                 tasks.forEach(t -> t.accept(previousVersion, countDownListener));
             }
         } catch (Exception e) {
@@ -115,7 +115,9 @@ public class NativeRealmMigrator implements IndexLifecycleManager.IndexDataMigra
      * installs but problematic for already-locked-down upgrades.
      */
     private boolean shouldDisableLogstashUser(@Nullable Version previousVersion) {
-        return previousVersion != null && previousVersion.before(LogstashSystemUser.DEFINED_SINCE);
+        return previousVersion != null
+                && previousVersion.before(LogstashSystemUser.DEFINED_SINCE)
+                && previousVersion.onOrAfter(Version.V_5_0_0);
     }
 
     private void createLogstashUserAsDisabled(@Nullable Version previousVersion, ActionListener<Void> listener) {
