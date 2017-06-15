@@ -79,18 +79,15 @@ public class SlowWatchStatsTests extends AbstractWatcherIntegrationTestCase {
                 .addAction("_action", ActionBuilders.loggingAction("hello {{ctx.watch_id}}!"))
         ).get();
 
-        assertBusy(new Runnable() {
-            @Override
-            public void run() {
-                WatcherStatsResponse response = watcherClient().prepareWatcherStats().setIncludeCurrentWatches(true).get();
-                assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
-                assertThat(response.getWatchesCount(), equalTo(1L));
-                assertThat(response.getQueuedWatches(), nullValue());
-                assertThat(response.getSnapshots(), notNullValue());
-                assertThat(response.getSnapshots().size(), equalTo(1));
-                assertThat(response.getSnapshots().get(0).watchId(), equalTo("_id"));
-                assertThat(response.getSnapshots().get(0).executionPhase(), equalTo(ExecutionPhase.CONDITION));
-            }
+        assertBusy(() -> {
+            WatcherStatsResponse response = watcherClient().prepareWatcherStats().setIncludeCurrentWatches(true).get();
+            assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
+            assertThat(response.getWatchesCount(), equalTo(1L));
+            assertThat(response.getQueuedWatches(), nullValue());
+            assertThat(response.getSnapshots(), notNullValue());
+            assertThat(response.getSnapshots().size(), equalTo(1));
+            assertThat(response.getSnapshots().get(0).watchId(), equalTo("_id"));
+            assertThat(response.getSnapshots().get(0).executionPhase(), equalTo(ExecutionPhase.CONDITION));
         });
     }
 
@@ -105,25 +102,22 @@ public class SlowWatchStatsTests extends AbstractWatcherIntegrationTestCase {
             ).get();
         }
 
-        assertBusy(new Runnable() {
-            @Override
-            public void run() {
-                WatcherStatsResponse response = watcherClient().prepareWatcherStats().setIncludeQueuedWatches(true).get();
-                assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
-                assertThat(response.getWatchesCount(), equalTo(5L));
-                assertThat(response.getSnapshots(), nullValue());
-                assertThat(response.getQueuedWatches(), notNullValue());
-                assertThat(response.getQueuedWatches().size(), greaterThanOrEqualTo(5));
-                DateTime previous = null;
-                for (QueuedWatch queuedWatch : response.getQueuedWatches()) {
-                    assertThat(queuedWatch.watchId(),
-                            anyOf(equalTo("_id0"), equalTo("_id1"), equalTo("_id2"), equalTo("_id3"), equalTo("_id4")));
-                    if (previous != null) {
-                        // older pending watch should be on top:
-                        assertThat(previous.getMillis(), lessThanOrEqualTo(queuedWatch.executionTime().getMillis()));
-                    }
-                    previous = queuedWatch.executionTime();
+        assertBusy(() -> {
+            WatcherStatsResponse response = watcherClient().prepareWatcherStats().setIncludeQueuedWatches(true).get();
+            assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
+            assertThat(response.getWatchesCount(), equalTo(5L));
+            assertThat(response.getSnapshots(), nullValue());
+            assertThat(response.getQueuedWatches(), notNullValue());
+            assertThat(response.getQueuedWatches().size(), greaterThanOrEqualTo(5));
+            DateTime previous = null;
+            for (QueuedWatch queuedWatch : response.getQueuedWatches()) {
+                assertThat(queuedWatch.watchId(),
+                        anyOf(equalTo("_id0"), equalTo("_id1"), equalTo("_id2"), equalTo("_id3"), equalTo("_id4")));
+                if (previous != null) {
+                    // older pending watch should be on top:
+                    assertThat(previous.getMillis(), lessThanOrEqualTo(queuedWatch.executionTime().getMillis()));
                 }
+                previous = queuedWatch.executionTime();
             }
         }, 60, TimeUnit.SECONDS);
     }

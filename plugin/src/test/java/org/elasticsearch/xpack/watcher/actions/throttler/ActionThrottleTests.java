@@ -182,17 +182,14 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTestCase {
             timeWarp().clock().fastForwardSeconds(11);
         }
 
-        assertBusy(new Runnable() {
-            @Override
-            public void run() {
-                ManualExecutionContext ctx = getManualExecutionContext(new TimeValue(0, TimeUnit.SECONDS));
-                WatchRecord watchRecord = executionService().execute(ctx);
-                for (ActionWrapper.Result actionResult : watchRecord.result().actionsResults().values()) {
-                    if ("ten_sec_throttle".equals(actionResult.id())) {
-                        assertThat(actionResult.action().status(), equalTo(Action.Result.Status.SIMULATED));
-                    } else {
-                        assertThat(actionResult.action().status(), equalTo(Action.Result.Status.THROTTLED));
-                    }
+        assertBusy(() -> {
+            ManualExecutionContext ctx1 = getManualExecutionContext(new TimeValue(0, TimeUnit.SECONDS));
+            WatchRecord watchRecord1 = executionService().execute(ctx1);
+            for (ActionWrapper.Result actionResult : watchRecord1.result().actionsResults().values()) {
+                if ("ten_sec_throttle".equals(actionResult.id())) {
+                    assertThat(actionResult.action().status(), equalTo(Action.Result.Status.SIMULATED));
+                } else {
+                    assertThat(actionResult.action().status(), equalTo(Action.Result.Status.THROTTLED));
                 }
             }
         }, 11000 - (System.currentTimeMillis() - firstExecution), TimeUnit.MILLISECONDS);
@@ -242,22 +239,19 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTestCase {
             timeWarp().clock().fastForwardSeconds(5);
         }
 
-        assertBusy(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
-                            .setTriggerEvent(new ManualTriggerEvent("execute_id",
-                                    new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
-                            .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
-                            .setRecordExecution(true)
-                            .get();
-                    Map<String, Object> watchRecordMap = executeWatchResponse.getRecordSource().getAsMap();
-                    Object resultStatus = getExecutionStatus(watchRecordMap);
-                    assertThat(resultStatus.toString(), equalTo("simulated"));
-                } catch (IOException ioe) {
-                    throw new ElasticsearchException("failed to execute", ioe);
-                }
+        assertBusy(() -> {
+            try {
+                ExecuteWatchResponse executeWatchResponse1 = watcherClient().prepareExecuteWatch("_id")
+                        .setTriggerEvent(new ManualTriggerEvent("execute_id",
+                                new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
+                        .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
+                        .setRecordExecution(true)
+                        .get();
+                Map<String, Object> watchRecordMap1 = executeWatchResponse1.getRecordSource().getAsMap();
+                Object resultStatus1 = getExecutionStatus(watchRecordMap1);
+                assertThat(resultStatus1.toString(), equalTo("simulated"));
+            } catch (IOException ioe) {
+                throw new ElasticsearchException("failed to execute", ioe);
             }
         }, 6, TimeUnit.SECONDS);
     }
@@ -305,23 +299,20 @@ public class ActionThrottleTests extends AbstractWatcherIntegrationTestCase {
         if (timeWarped()) {
             timeWarp().clock().fastForwardSeconds(20);
         }
-        assertBusy(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    //Since the default throttle period is 5 seconds but we have overridden the period in the watch this should trigger
-                    ExecuteWatchResponse executeWatchResponse = watcherClient().prepareExecuteWatch("_id")
-                            .setTriggerEvent(new ManualTriggerEvent("execute_id",
-                                    new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
-                            .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
-                            .setRecordExecution(true)
-                            .get();
-                    Map<String, Object> watchRecordMap = executeWatchResponse.getRecordSource().getAsMap();
-                    Object resultStatus = getExecutionStatus(watchRecordMap);
-                    assertThat(resultStatus.toString(), equalTo("simulated"));
-                } catch (IOException ioe) {
-                    throw new ElasticsearchException("failed to execute", ioe);
-                }
+        assertBusy(() -> {
+            try {
+                //Since the default throttle period is 5 seconds but we have overridden the period in the watch this should trigger
+                ExecuteWatchResponse executeWatchResponse1 = watcherClient().prepareExecuteWatch("_id")
+                        .setTriggerEvent(new ManualTriggerEvent("execute_id",
+                                new ScheduleTriggerEvent(new DateTime(DateTimeZone.UTC), new DateTime(DateTimeZone.UTC))))
+                        .setActionMode("default_global_throttle", ActionExecutionMode.SIMULATE)
+                        .setRecordExecution(true)
+                        .get();
+                Map<String, Object> watchRecordMap1 = executeWatchResponse1.getRecordSource().getAsMap();
+                Object resultStatus1 = getExecutionStatus(watchRecordMap1);
+                assertThat(resultStatus1.toString(), equalTo("simulated"));
+            } catch (IOException ioe) {
+                throw new ElasticsearchException("failed to execute", ioe);
             }
         }, 20, TimeUnit.SECONDS);
     }

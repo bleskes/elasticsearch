@@ -56,33 +56,27 @@ public class WatcherIndexTemplateRegistryTests extends AbstractWatcherIntegratio
                         .get()
         );
 
-        assertBusy(new Runnable() {
-            @Override
-            public void run() {
-                GetIndexTemplatesResponse response = client().admin().indices()
-                        .prepareGetTemplates(WatcherIndexTemplateRegistry.HISTORY_TEMPLATE_NAME).get();
-                assertThat(response.getIndexTemplates().size(), equalTo(1));
-                // setting from the file on the classpath:
-                assertThat(response.getIndexTemplates().get(0).getSettings().getAsBoolean("index.mapper.dynamic", null), is(false));
-                // additional setting defined in the node settings:
-                assertThat(response.getIndexTemplates().get(0).getSettings().get("index.key1"), equalTo("value"));
-            }
+        assertBusy(() -> {
+            GetIndexTemplatesResponse response = client().admin().indices()
+                    .prepareGetTemplates(WatcherIndexTemplateRegistry.HISTORY_TEMPLATE_NAME).get();
+            assertThat(response.getIndexTemplates().size(), equalTo(1));
+            // setting from the file on the classpath:
+            assertThat(response.getIndexTemplates().get(0).getSettings().getAsBoolean("index.mapper.dynamic", null), is(false));
+            // additional setting defined in the node settings:
+            assertThat(response.getIndexTemplates().get(0).getSettings().get("index.key1"), equalTo("value"));
         });
 
         // Now delete the index template and verify the index template gets added back:
         assertAcked(client().admin().indices().prepareDeleteTemplate(WatcherIndexTemplateRegistry.HISTORY_TEMPLATE_NAME).get());
 
-        assertBusy(new Runnable() {
-            @Override
-            public void run() {
-                GetIndexTemplatesResponse response = client().admin().indices()
-                        .prepareGetTemplates(WatcherIndexTemplateRegistry.HISTORY_TEMPLATE_NAME).get();
-                assertThat(response.getIndexTemplates().size(), equalTo(1));
-                // setting from the file on the classpath:
-                assertThat(response.getIndexTemplates().get(0).getSettings().getAsBoolean("index.mapper.dynamic", null), is(false));
-                // additional setting defined in the node settings:
-                assertThat(response.getIndexTemplates().get(0).getSettings().get("index.key1"), equalTo("value"));
-            }
+        assertBusy(() -> {
+            GetIndexTemplatesResponse response = client().admin().indices()
+                    .prepareGetTemplates(WatcherIndexTemplateRegistry.HISTORY_TEMPLATE_NAME).get();
+            assertThat(response.getIndexTemplates().size(), equalTo(1));
+            // setting from the file on the classpath:
+            assertThat(response.getIndexTemplates().get(0).getSettings().getAsBoolean("index.mapper.dynamic", null), is(false));
+            // additional setting defined in the node settings:
+            assertThat(response.getIndexTemplates().get(0).getSettings().get("index.key1"), equalTo("value"));
         });
     }
 

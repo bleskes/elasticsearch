@@ -388,24 +388,20 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
 
         stopWatcher();
         startWatcher();
-        assertBusy(new Runnable() {
+        assertBusy(() -> {
+            // We need to wait until all the records are processed from the internal execution queue, only then we can assert
+            // that numRecords watch records have been processed as part of starting up.
+            WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
+            assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
+            assertThat(response.getThreadPoolQueueSize(), equalTo(0L));
 
-            @Override
-            public void run() {
-                // We need to wait until all the records are processed from the internal execution queue, only then we can assert
-                // that numRecords watch records have been processed as part of starting up.
-                WatcherStatsResponse response = watcherClient().prepareWatcherStats().get();
-                assertThat(response.getWatcherState(), equalTo(WatcherState.STARTED));
-                assertThat(response.getThreadPoolQueueSize(), equalTo(0L));
-
-                // but even then since the execution of the watch record is async it may take a little bit before
-                // the actual documents are in the output index
-                refresh();
-                SearchResponse searchResponse = client().prepareSearch(watchRecordIndex).setSize(numRecords).get();
-                assertThat(searchResponse.getHits().getTotalHits(), Matchers.equalTo((long) numRecords));
-                for (int i = 0; i < numRecords; i++) {
-                    assertThat(searchResponse.getHits().getAt(i).getSource().get("state"), Matchers.equalTo("executed_multiple_times"));
-                }
+            // but even then since the execution of the watch record is async it may take a little bit before
+            // the actual documents are in the output index
+            refresh();
+            SearchResponse searchResponse = client().prepareSearch(watchRecordIndex).setSize(numRecords).get();
+            assertThat(searchResponse.getHits().getTotalHits(), Matchers.equalTo((long) numRecords));
+            for (int i = 0; i < numRecords; i++) {
+                assertThat(searchResponse.getHits().getAt(i).getSource().get("state"), Matchers.equalTo("executed_multiple_times"));
             }
         });
     }
