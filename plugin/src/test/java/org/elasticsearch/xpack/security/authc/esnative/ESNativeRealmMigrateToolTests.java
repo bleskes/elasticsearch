@@ -88,12 +88,12 @@ public class ESNativeRealmMigrateToolTests extends CommandTestCase {
         }
 
         terminalLogger.log(Level.ERROR, "logging an error");
-        assertEquals("logging an error" + System.lineSeparator(), terminal.getOutput());
+        assertEquals("logging an error\n", terminal.getOutput());
         terminal.reset();
         assertThat(terminal.getOutput(), isEmptyString());
 
         terminalLogger.log(Level.FATAL, "logging a fatal message");
-        assertEquals("logging a fatal message" + System.lineSeparator(), terminal.getOutput());
+        assertEquals("logging a fatal message\n", terminal.getOutput());
         terminal.reset();
         assertThat(terminal.getOutput(), isEmptyString());
 
@@ -103,7 +103,7 @@ public class ESNativeRealmMigrateToolTests extends CommandTestCase {
         loggingLevels.remove(Level.OFF);
         for (Level level : loggingLevels) {
             terminalLogger.log(level, "this level should log " + level.name());
-            assertEquals("this level should log " + level.name() + System.lineSeparator(), terminal.getOutput());
+            assertEquals("this level should log " + level.name() + "\n", terminal.getOutput());
             terminal.reset();
             assertThat(terminal.getOutput(), isEmptyString());
         }
