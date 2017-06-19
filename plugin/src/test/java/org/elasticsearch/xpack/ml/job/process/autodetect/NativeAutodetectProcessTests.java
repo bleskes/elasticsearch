@@ -62,7 +62,7 @@ public class NativeAutodetectProcessTests extends ESTestCase {
         InputStream logStream = mock(InputStream.class);
         when(logStream.read(new byte[1024])).thenReturn(-1);
         try (NativeAutodetectProcess process = new NativeAutodetectProcess("foo", logStream,
-                mock(OutputStream.class), mock(InputStream.class),
+                mock(OutputStream.class), mock(InputStream.class), mock(OutputStream.class),
                 NUMBER_ANALYSIS_FIELDS, null,
                 new AutodetectResultsParser(Settings.EMPTY), mock(Runnable.class))) {
             process.start(executorService, mock(StateProcessor.class), mock(InputStream.class));
@@ -83,7 +83,7 @@ public class NativeAutodetectProcessTests extends ESTestCase {
         String[] record = {"r1", "r2", "r3", "r4", "r5"};
         ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
         try (NativeAutodetectProcess process = new NativeAutodetectProcess("foo", logStream,
-                bos, mock(InputStream.class), NUMBER_ANALYSIS_FIELDS, Collections.emptyList(),
+                bos, mock(InputStream.class), mock(OutputStream.class), NUMBER_ANALYSIS_FIELDS, Collections.emptyList(),
                 new AutodetectResultsParser(Settings.EMPTY), mock(Runnable.class))) {
             process.start(executorService, mock(StateProcessor.class), mock(InputStream.class));
 
@@ -115,7 +115,7 @@ public class NativeAutodetectProcessTests extends ESTestCase {
         when(logStream.read(new byte[1024])).thenReturn(-1);
         ByteArrayOutputStream bos = new ByteArrayOutputStream(ControlMsgToProcessWriter.FLUSH_SPACES_LENGTH + 1024);
         try (NativeAutodetectProcess process = new NativeAutodetectProcess("foo", logStream,
-                bos, mock(InputStream.class), NUMBER_ANALYSIS_FIELDS, Collections.emptyList(),
+                bos, mock(InputStream.class), mock(OutputStream.class), NUMBER_ANALYSIS_FIELDS, Collections.emptyList(),
                 new AutodetectResultsParser(Settings.EMPTY), mock(Runnable.class))) {
             process.start(executorService, mock(StateProcessor.class), mock(InputStream.class));
 
@@ -132,7 +132,7 @@ public class NativeAutodetectProcessTests extends ESTestCase {
         when(logStream.read(new byte[1024])).thenReturn(-1);
         ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
         try (NativeAutodetectProcess process = new NativeAutodetectProcess("foo", logStream,
-                bos, mock(InputStream.class), NUMBER_ANALYSIS_FIELDS, Collections.emptyList(),
+                bos, mock(InputStream.class), mock(OutputStream.class), NUMBER_ANALYSIS_FIELDS, Collections.emptyList(),
                 new AutodetectResultsParser(Settings.EMPTY), mock(Runnable.class))) {
             process.start(executorService, mock(StateProcessor.class), mock(InputStream.class));
 
@@ -150,7 +150,7 @@ public class NativeAutodetectProcessTests extends ESTestCase {
         when(logStream.read(new byte[1024])).thenReturn(-1);
         ByteArrayOutputStream bos = new ByteArrayOutputStream(1024);
         try (NativeAutodetectProcess process = new NativeAutodetectProcess("foo", logStream,
-                bos, mock(InputStream.class), NUMBER_ANALYSIS_FIELDS, Collections.emptyList(),
+                bos, mock(InputStream.class), mock(OutputStream.class), NUMBER_ANALYSIS_FIELDS, Collections.emptyList(),
                 new AutodetectResultsParser(Settings.EMPTY), mock(Runnable.class))) {
             process.start(executorService, mock(StateProcessor.class), mock(InputStream.class));
 

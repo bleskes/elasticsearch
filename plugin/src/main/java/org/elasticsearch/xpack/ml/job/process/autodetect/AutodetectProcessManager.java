@@ -43,6 +43,7 @@ import org.elasticsearch.xpack.ml.job.persistence.JobDataCountsPersister;
 import org.elasticsearch.xpack.ml.job.persistence.JobProvider;
 import org.elasticsearch.xpack.ml.job.persistence.JobRenormalizedResultsPersister;
 import org.elasticsearch.xpack.ml.job.persistence.JobResultsPersister;
+import org.elasticsearch.xpack.ml.job.persistence.StateStreamer;
 import org.elasticsearch.xpack.ml.job.process.DataCountsReporter;
 import org.elasticsearch.xpack.ml.job.process.autodetect.output.AutoDetectResultProcessor;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.AutodetectParams;
@@ -273,7 +274,7 @@ public class AutodetectProcessManager extends AbstractComponent {
                     try {
                         AutodetectCommunicator communicator = autoDetectCommunicatorByJob.computeIfAbsent(jobTask.getAllocationId(),
                                 id -> create(jobTask, params, ignoreDowntime, handler));
-                        communicator.writeJobInputHeader();
+                        communicator.init(params.modelSnapshot());
                         setJobState(jobTask, JobState.OPENED);
                     } catch (Exception e1) {
                         // No need to log here as the persistent task framework will log it
@@ -348,8 +349,8 @@ public class AutodetectProcessManager extends AbstractComponent {
             }
             throw e;
         }
-        return new AutodetectCommunicator(job, jobTask, process, dataCountsReporter, processor, handler, xContentRegistry,
-                autodetectWorkerExecutor);
+        return new AutodetectCommunicator(job, jobTask, process, new StateStreamer(client), dataCountsReporter, processor, handler,
+                xContentRegistry, autodetectWorkerExecutor);
 
     }
 
