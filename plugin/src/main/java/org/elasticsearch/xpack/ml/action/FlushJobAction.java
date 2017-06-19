@@ -199,6 +199,7 @@ public class FlushJobAction extends Action<FlushJobAction.Request, FlushJobActio
         private boolean flushed;
 
         Response() {
+            super(null, null);
         }
 
         Response(boolean flushed) {

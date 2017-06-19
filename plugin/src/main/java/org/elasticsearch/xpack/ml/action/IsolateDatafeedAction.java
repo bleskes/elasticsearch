@@ -177,10 +177,12 @@ public class IsolateDatafeedAction
         }
 
         public Response(StreamInput in) throws IOException {
+            super(null, null);
             readFrom(in);
         }
 
-        public Response() {
+        Response() {
+            super(null, null);
         }
 
         @Override
