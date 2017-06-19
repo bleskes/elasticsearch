@@ -66,7 +66,6 @@ public class ExecutableSearchInput extends ExecutableInput<SearchInput, SearchIn
         try {
             Script template = input.getRequest().getOrCreateTemplate();
             BytesReference renderedTemplate = searchTemplateService.renderTemplate(template, ctx, payload);
-            // We need to make a copy, so that we don't modify the original instance that we keep around in a watch:
             request = new WatcherSearchTemplateRequest(input.getRequest(), renderedTemplate);
             return doExecute(ctx, request);
         } catch (Exception e) {
@@ -81,7 +80,6 @@ public class ExecutableSearchInput extends ExecutableInput<SearchInput, SearchIn
         }
 
         SearchResponse response = client.search(searchTemplateService.toSearchRequest(request), timeout);
-
         if (logger.isDebugEnabled()) {
             logger.debug("[{}] found [{}] hits", ctx.id(), response.getHits().getTotalHits());
             for (SearchHit hit : response.getHits()) {

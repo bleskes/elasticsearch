@@ -24,6 +24,7 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -66,7 +67,7 @@ public class WatcherSearchTemplateRequest implements ToXContentObject {
         // Here we convert a watch search request body into an inline search template,
         // this way if any Watcher related context variables are used, they will get resolved.
         this.template = new Script(ScriptType.INLINE, Script.DEFAULT_TEMPLATE_LANG, searchSource.utf8ToString(), Collections.emptyMap());
-        this.searchSource = null;
+        this.searchSource = BytesArray.EMPTY;
     }
 
     public WatcherSearchTemplateRequest(String[] indices, String[] types, SearchType searchType, IndicesOptions indicesOptions,
@@ -77,7 +78,7 @@ public class WatcherSearchTemplateRequest implements ToXContentObject {
         this.searchType = searchType;
         this.indicesOptions = indicesOptions;
         this.template = template;
-        this.searchSource = null;
+        this.searchSource = BytesArray.EMPTY;
     }
 
     public WatcherSearchTemplateRequest(WatcherSearchTemplateRequest original, BytesReference source) {
@@ -120,7 +121,6 @@ public class WatcherSearchTemplateRequest implements ToXContentObject {
         return indicesOptions;
     }
 
-    @Nullable
     public BytesReference getSearchSource() {
         return searchSource;
     }
@@ -145,7 +145,7 @@ public class WatcherSearchTemplateRequest implements ToXContentObject {
         if (types != null) {
             builder.array(TYPES_FIELD.getPreferredName(), types);
         }
-        if (searchSource != null) {
+        if (searchSource != null && searchSource.length() > 0) {
             builder.rawField(BODY_FIELD.getPreferredName(), searchSource);
         }
         if (indicesOptions != DEFAULT_INDICES_OPTIONS) {
@@ -305,6 +305,10 @@ public class WatcherSearchTemplateRequest implements ToXContentObject {
             } else {
                 throw new ElasticsearchParseException("could not read search request. unexpected token [" + token + "]");
             }
+        }
+
+        if (searchSource == null) {
+            searchSource = BytesArray.EMPTY;
         }
 
         return new WatcherSearchTemplateRequest(indices.toArray(new String[0]), types.toArray(new String[0]), searchType,
