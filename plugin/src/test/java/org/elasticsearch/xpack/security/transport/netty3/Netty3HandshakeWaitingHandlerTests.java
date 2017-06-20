@@ -84,6 +84,7 @@ public class Netty3HandshakeWaitingHandlerTests extends ESTestCase {
                 .put("xpack.ssl.keystore.path",
                         getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/testnode.jks"))
                 .put("xpack.ssl.keystore.password", "testnode")
+                .put("xpack.ssl.supported_protocols", "TLSv1.2")
                 .build();
         Environment env = new Environment(Settings.builder().put("path.home", createTempDir()).build());
         sslService = new SSLService(settings, env);
@@ -264,11 +265,9 @@ public class Netty3HandshakeWaitingHandlerTests extends ESTestCase {
 
             // Do not call handshake before writing as it will most likely succeed before a write begins
             // in the test
-            ChannelFuture handshakeFuture = null;
-            for (int i = 0; i < 100; i++) {
-                if (handshakeFuture == null) {
-                    handshakeFuture = channel.getPipeline().get(SslHandler.class).handshake();
-                }
+            channel.write(buffer);
+            final ChannelFuture handshakeFuture = channel.getPipeline().get(SslHandler.class).handshake();
+            for (int i = 0; i < 99; i++) {
                 channel.write(buffer);
             }
 
