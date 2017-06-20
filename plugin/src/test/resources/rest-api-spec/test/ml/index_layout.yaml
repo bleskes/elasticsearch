@@ -569,7 +569,10 @@
       indices.refresh: {}
 
   - do:
-      count:
+      search:
         index: .ml-state
-  - match: {count: 0}
+        body:
+          query:
+            match_all: {}
+  - match: {hits.total: 0}
 
