@@ -23,11 +23,12 @@ import org.elasticsearch.test.ESIntegTestCase;
 import org.elasticsearch.test.junit.annotations.TestLogging;
 import org.elasticsearch.xpack.watcher.support.WatcherIndexTemplateRegistry;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
+import org.junit.Before;
 
 import static org.elasticsearch.test.ESIntegTestCase.Scope.TEST;
 import static org.elasticsearch.test.hamcrest.ElasticsearchAssertions.assertAcked;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.Is.is;
 
 @TestLogging("org.elasticsearch.cluster:DEBUG,org.elasticsearch.action.admin.cluster.settings:DEBUG,org.elasticsearch.xpack.watcher:DEBUG")
@@ -35,14 +36,19 @@ import static org.hamcrest.core.Is.is;
         supportsDedicatedMasters = false, numDataNodes = 1)
 public class HistoryStoreSettingsTests extends AbstractWatcherIntegrationTestCase {
 
+    @Before
+    public void ensureHistoryTemplateHasBeenAdded() throws Exception {
+        assertBusy(() -> {
+            GetIndexTemplatesResponse response = client().admin().indices()
+                    .prepareGetTemplates(WatcherIndexTemplateRegistry.HISTORY_TEMPLATE_NAME).get();
+            assertThat(response.getIndexTemplates(), hasSize(1));
+
+            assertThat(response.getIndexTemplates().get(0).getSettings().get("index.number_of_shards"), equalTo("1"));
+            assertThat(response.getIndexTemplates().get(0).getSettings().getAsBoolean("index.mapper.dynamic", null), is(false));
+        });
+    }
+
     public void testChangeSettings() throws Exception {
-        GetIndexTemplatesResponse response = client().admin().indices()
-                .prepareGetTemplates(WatcherIndexTemplateRegistry.HISTORY_TEMPLATE_NAME).get();
-        assertThat(response.getIndexTemplates().get(0).getSettings().get("index.number_of_shards"), equalTo("1"));
-        // this isn't defined in the template, so we rely on ES's default, which is zero
-        assertThat(response.getIndexTemplates().get(0).getSettings().get("index.number_of_replicas"), nullValue());
-        // this isn't defined in the template, so we rely on ES's default, which is 1s
-        assertThat(response.getIndexTemplates().get(0).getSettings().get("index.refresh_interval"), nullValue());
         assertAcked(
                 client().admin().cluster().prepareUpdateSettings()
                         .setTransientSettings(Settings.builder()
@@ -63,11 +69,6 @@ public class HistoryStoreSettingsTests extends AbstractWatcherIntegrationTestCas
     }
 
     public void testChangeSettingsIgnoringForbiddenSetting() throws Exception {
-        GetIndexTemplatesResponse response = client().admin().indices()
-                .prepareGetTemplates(WatcherIndexTemplateRegistry.HISTORY_TEMPLATE_NAME).get();
-        assertThat(response.getIndexTemplates().get(0).getSettings().get("index.number_of_shards"), equalTo("1"));
-        assertThat(response.getIndexTemplates().get(0).getSettings().getAsBoolean("index.mapper.dynamic", null), is(false));
-
         assertAcked(
                 client().admin().cluster().prepareUpdateSettings()
                 .setTransientSettings(Settings.builder()
@@ -84,5 +85,4 @@ public class HistoryStoreSettingsTests extends AbstractWatcherIntegrationTestCas
             assertThat(response1.getIndexTemplates().get(0).getSettings().getAsBoolean("index.mapper.dynamic", null), is(false));
         });
     }
-
 }
