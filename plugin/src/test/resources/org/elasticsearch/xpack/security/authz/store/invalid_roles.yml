@@ -7,7 +7,7 @@ valid_role:
         - ALL
 
 # invalid role name
-"$dlk39":
+"fóóbár":
   cluster: all
 
 # invalid role deifnition
