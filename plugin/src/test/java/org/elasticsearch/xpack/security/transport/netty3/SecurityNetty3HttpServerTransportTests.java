@@ -195,10 +195,10 @@ public class SecurityNetty3HttpServerTransportTests extends ESTestCase {
                 .build();
         env = new Environment(settings);
         sslService = new SSLService(settings, env);
-        SecurityNetty3HttpServerTransport transport = new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
+        IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
+                () -> new SecurityNetty3HttpServerTransport(settings, mock(NetworkService.class),
                 mock(BigArrays.class), mock(IPFilter.class), sslService, mock(ThreadPool.class), xContentRegistry(),
-                new NullDispatcher());
-        IllegalArgumentException e = expectThrows(IllegalArgumentException.class, transport::configureServerChannelPipelineFactory);
+                new NullDispatcher()));
         assertThat(e.getMessage(), containsString("key must be provided"));
         assertWarnings("http type [security3] is deprecated");
     }

@@ -38,7 +38,6 @@ import org.elasticsearch.xpack.security.authc.Authentication;
 import org.elasticsearch.xpack.security.authc.Authentication.RealmRef;
 import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.user.XPackUser;
-import org.elasticsearch.xpack.ssl.SSLService;
 import org.junit.Before;
 import org.mockito.ArgumentCaptor;
 
@@ -73,8 +72,8 @@ public class SecurityRestFilterTests extends ESTestCase {
         licenseState = mock(XPackLicenseState.class);
         when(licenseState.isAuthAllowed()).thenReturn(true);
         restHandler = mock(RestHandler.class);
-        filter = new SecurityRestFilter(Settings.EMPTY, licenseState, mock(SSLService.class),
-                new ThreadContext(Settings.EMPTY), authcService, restHandler);
+        filter = new SecurityRestFilter(licenseState,
+                new ThreadContext(Settings.EMPTY), authcService, restHandler, false);
     }
 
     public void testProcess() throws Exception {
@@ -150,8 +149,7 @@ public class SecurityRestFilterTests extends ESTestCase {
             callback.onResponse(new Authentication(XPackUser.INSTANCE, new RealmRef("test", "test", "t"), null));
             return Void.TYPE;
         }).when(authcService).authenticate(any(RestRequest.class), any(ActionListener.class));
-        filter = new SecurityRestFilter(Settings.EMPTY, licenseState, mock(SSLService.class),
-                new ThreadContext(Settings.EMPTY), authcService, restHandler);
+        filter = new SecurityRestFilter(licenseState, new ThreadContext(Settings.EMPTY), authcService, restHandler, false);
 
         filter.handleRequest(restRequest, channel, null);
 

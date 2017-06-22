@@ -70,7 +70,8 @@ public class SecurityNetty3TransportTests extends ESTestCase {
     }
 
     public void testThatSSLCanBeDisabledByProfile() throws Exception {
-        Settings settings = Settings.builder().put("xpack.security.transport.ssl.enabled", true).build();
+        Settings settings = Settings.builder().put("xpack.security.transport.ssl.enabled", true)
+                .put("transport.profiles.client.xpack.security.ssl.enabled", false).build();
         SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class), mock(NetworkService.class),
                 mock(BigArrays.class), null, sslService, mock(NamedWriteableRegistry.class),
                 mock(CircuitBreakerService.class));
@@ -81,7 +82,8 @@ public class SecurityNetty3TransportTests extends ESTestCase {
     }
 
     public void testThatSSLCanBeEnabledByProfile() throws Exception {
-        Settings settings = Settings.builder().put("xpack.security.transport.ssl.enabled", false).build();
+        Settings settings = Settings.builder().put("xpack.security.transport.ssl.enabled", false)
+                .put("transport.profiles.client.xpack.security.ssl.enabled", true).build();
         SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class), mock(NetworkService.class),
                 mock(BigArrays.class), null, sslService, mock(NamedWriteableRegistry.class),
                 mock(CircuitBreakerService.class));
@@ -92,7 +94,8 @@ public class SecurityNetty3TransportTests extends ESTestCase {
     }
 
     public void testThatProfileTakesDefaultSSLSetting() throws Exception {
-        Settings settings = Settings.builder().put("xpack.security.transport.ssl.enabled", true).build();
+        Settings settings = Settings.builder().put("xpack.security.transport.ssl.enabled", true)
+                .put("transport.profiles.client.type", "client").build();
         SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class), mock(NetworkService.class),
                 mock(BigArrays.class), null, sslService, mock(NamedWriteableRegistry.class),
                 mock(CircuitBreakerService.class));
@@ -102,7 +105,8 @@ public class SecurityNetty3TransportTests extends ESTestCase {
     }
 
     public void testDefaultClientAuth() throws Exception {
-        Settings settings = Settings.builder().put("xpack.security.transport.ssl.enabled", true).build();
+        Settings settings = Settings.builder().put("xpack.security.transport.ssl.enabled", true)
+                .put("transport.profiles.client.type", "client").build();
         SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class), mock(NetworkService.class),
                 mock(BigArrays.class), null, sslService, mock(NamedWriteableRegistry.class),
                 mock(CircuitBreakerService.class));
@@ -116,6 +120,7 @@ public class SecurityNetty3TransportTests extends ESTestCase {
         String value = randomFrom(SSLClientAuth.REQUIRED.name(), SSLClientAuth.REQUIRED.name().toLowerCase(Locale.ROOT));
         Settings settings = Settings.builder()
                 .put(env.settings())
+                .put("transport.profiles.client.type", "client")
                 .put("xpack.security.transport.ssl.enabled", true)
                 .put("xpack.ssl.client_authentication", value)
                 .build();
@@ -134,7 +139,8 @@ public class SecurityNetty3TransportTests extends ESTestCase {
         Settings settings = Settings.builder()
                 .put(env.settings())
                 .put("xpack.security.transport.ssl.enabled", true)
-                .put("xpack.ssl.client_authentication", value).build();
+                .put("xpack.ssl.client_authentication", value)
+                .put("transport.profiles.client.type", "client").build();
         sslService = new SSLService(settings, env);
         SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class), mock(NetworkService.class),
                 mock(BigArrays.class), null, sslService, mock(NamedWriteableRegistry.class),
@@ -150,7 +156,8 @@ public class SecurityNetty3TransportTests extends ESTestCase {
         Settings settings = Settings.builder()
                 .put(env.settings())
                 .put("xpack.security.transport.ssl.enabled", true)
-                .put("xpack.ssl.client_authentication", value).build();
+                .put("xpack.ssl.client_authentication", value)
+                .put("transport.profiles.client.type", "client").build();
         sslService = new SSLService(settings, env);
         SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class), mock(NetworkService.class),
                 mock(BigArrays.class), null, sslService, mock(NamedWriteableRegistry.class),
@@ -167,6 +174,7 @@ public class SecurityNetty3TransportTests extends ESTestCase {
                 .put(env.settings())
                 .put("xpack.security.transport.ssl.enabled", true)
                 .put("transport.profiles.client.xpack.security.ssl.client_authentication", value)
+                .put("transport.profiles.client.type", "client")
                 .build();
         sslService = new SSLService(settings, env);
         SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class), mock(NetworkService.class),
@@ -225,11 +233,10 @@ public class SecurityNetty3TransportTests extends ESTestCase {
                 .build();
         env = new Environment(settings);
         sslService = new SSLService(settings, env);
-        SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class),
-                mock(NetworkService.class), mock(BigArrays.class), null, sslService,
-                mock(NamedWriteableRegistry.class), mock(CircuitBreakerService.class));
         IllegalArgumentException e = expectThrows(IllegalArgumentException.class,
-                () -> transport.configureServerChannelPipelineFactory(randomAlphaOfLength(6), Settings.EMPTY));
+                () -> new SecurityNetty3Transport(settings, mock(ThreadPool.class),
+                        mock(NetworkService.class), mock(BigArrays.class), null, sslService,
+                        mock(NamedWriteableRegistry.class), mock(CircuitBreakerService.class)));
         assertThat(e.getMessage(), containsString("key must be provided"));
     }
 
@@ -243,10 +250,27 @@ public class SecurityNetty3TransportTests extends ESTestCase {
                 .build();
         env = new Environment(settings);
         sslService = new SSLService(settings, env);
+        new SecurityNetty3Transport(settings, mock(ThreadPool.class),
+                mock(NetworkService.class), mock(BigArrays.class), null, sslService,
+                mock(NamedWriteableRegistry.class), mock(CircuitBreakerService.class)); // validation happens here
+    }
+
+    public void testUnknownProfile() throws Exception {
+        Settings settings = Settings.builder()
+                .put("xpack.ssl.truststore.path",
+                        getDataPath("/org/elasticsearch/xpack/security/transport/ssl/certs/simple/testnode.jks"))
+                .put("xpack.ssl.truststore.password", "testnode")
+                .put(XPackSettings.TRANSPORT_SSL_ENABLED.getKey(), false)
+                .put("path.home", createTempDir())
+                .build();
+        env = new Environment(settings);
+        sslService = new SSLService(settings, env);
         SecurityNetty3Transport transport = new SecurityNetty3Transport(settings, mock(ThreadPool.class),
                 mock(NetworkService.class), mock(BigArrays.class), null, sslService,
                 mock(NamedWriteableRegistry.class), mock(CircuitBreakerService.class));
-        assertNotNull(transport.configureServerChannelPipelineFactory(randomAlphaOfLength(6), Settings.EMPTY));
+        IllegalStateException ise = expectThrows(IllegalStateException.class,
+                () -> transport.configureServerChannelPipelineFactory("boom", Settings.EMPTY));
+        assertEquals("unknown profile: boom", ise.getMessage());
     }
 
     public void testTransportSSLOverridesGlobalSSL() throws Exception {

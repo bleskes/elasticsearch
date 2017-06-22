@@ -19,7 +19,6 @@ package org.elasticsearch.xpack.security.transport.netty3;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
-import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.inject.internal.Nullable;
 import org.elasticsearch.common.io.stream.NamedWriteableRegistry;
@@ -29,6 +28,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.indices.breaker.CircuitBreakerService;
 import org.elasticsearch.transport.TransportSettings;
+import org.elasticsearch.xpack.ssl.SSLConfiguration;
 import org.elasticsearch.xpack.ssl.SSLService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.netty3.Netty3Transport;
@@ -44,6 +44,11 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static org.elasticsearch.xpack.security.Security.setting;
 import static org.elasticsearch.xpack.security.transport.SSLExceptionHelper.isCloseDuringHandshakeException;
@@ -56,8 +61,9 @@ public class SecurityNetty3Transport extends Netty3Transport {
 
     private final SSLService sslService;
     @Nullable private final IPFilter authenticator;
-    private final Settings transportSSLSettings;
-    private final boolean ssl;
+    private final boolean defaultTransportSslEnabled;
+    private final SSLConfiguration sslConfiguration;
+    private final Map<String, SSLConfiguration> profileConfiguration;
 
     @Inject
     public SecurityNetty3Transport(Settings settings, ThreadPool threadPool, NetworkService networkService, BigArrays bigArrays,
@@ -65,9 +71,48 @@ public class SecurityNetty3Transport extends Netty3Transport {
                                    CircuitBreakerService circuitBreakerService) {
         super(settings, threadPool, networkService, bigArrays, namedWriteableRegistry, circuitBreakerService);
         this.authenticator = authenticator;
-        this.ssl = TRANSPORT_SSL_ENABLED.get(settings);
+        this.defaultTransportSslEnabled = TRANSPORT_SSL_ENABLED.get(settings);
         this.sslService = sslService;
-        this.transportSSLSettings = settings.getByPrefix(setting("transport.ssl."));
+        final Settings transportSSLSettings = settings.getByPrefix(setting("transport.ssl."));
+        sslConfiguration = defaultTransportSslEnabled ? sslService.sslConfiguration(transportSSLSettings, Settings.EMPTY) : null;
+
+        Map<String, Settings> profileSettingsMap = settings.getGroups("transport.profiles.", true);
+        Map<String, SSLConfiguration> profileConfiguration = new HashMap<>(profileSettingsMap.size() + 1);
+
+        if (sslConfiguration != null) {
+            validateProfileSettings(sslService, transportSSLSettings, TransportSettings.DEFAULT_PROFILE, transportSSLSettings);
+            profileConfiguration.put(TransportSettings.DEFAULT_PROFILE, sslConfiguration);
+        } else {
+            profileConfiguration.put(TransportSettings.DEFAULT_PROFILE, null);
+        }
+        for (Map.Entry<String, Settings> entry : profileSettingsMap.entrySet()) {
+            Settings profileSettings = entry.getValue();
+            String name = entry.getKey();
+            if (isProfileSSLEnabled(profileSettings, defaultTransportSslEnabled)) {
+                final Settings profileSslSettings = profileSettings.getByPrefix(setting("ssl."));
+                SSLConfiguration configuration =  sslService.sslConfiguration(profileSslSettings, transportSSLSettings);
+                validateProfileSettings(sslService, transportSSLSettings, name, profileSslSettings);
+                profileConfiguration.put(name, configuration);
+            } else {
+                profileConfiguration.put(name, null);
+            }
+        }
+        this.profileConfiguration = Collections.unmodifiableMap(profileConfiguration);
+    }
+
+    void validateProfileSettings(SSLService sslService, Settings transportSSLSettings, String name, Settings profileSslSettings) {
+        if (NetworkService.NETWORK_SERVER.get(settings)) { // only validate this if we run as a server
+            if (sslService.isConfigurationValidForServerUsage(profileSslSettings, transportSSLSettings) == false) {
+                if (TransportSettings.DEFAULT_PROFILE.equals(name)) {
+                    throw new IllegalArgumentException("a key must be provided to run as a server." +
+                            " the key should be configured using the [xpack.security.transport.ssl.key]" +
+                            " or [xpack.security.transport.ssl.keystore.path] setting");
+                }
+                throw new IllegalArgumentException("a key must be provided to run as a server. the key should be configured using the "
+                        + "[transport.profiles." + name + ".xpack.security.ssl.key] or [transport.profiles." + name
+                        + ".xpack.security.ssl.keystore.path] setting");
+            }
+        }
     }
 
     @Override
@@ -85,12 +130,17 @@ public class SecurityNetty3Transport extends Netty3Transport {
 
     @Override
     public ChannelPipelineFactory configureClientChannelPipelineFactory() {
-        return new SslClientChannelPipelineFactory(this);
+        return new SslClientChannelPipelineFactory();
     }
 
     @Override
     public ChannelPipelineFactory configureServerChannelPipelineFactory(String name, Settings profileSettings) {
-        return new SslServerChannelPipelineFactory(this, name, settings, profileSettings);
+        if (profileConfiguration.containsKey(name) == false) {
+            // we have null values for non-ssl profiles
+            throw new IllegalStateException("unknown profile: " + name);
+        }
+        SSLConfiguration configuration = profileConfiguration.get(name);
+        return new SslServerChannelPipelineFactory(name, settings, configuration);
     }
 
     @Override
@@ -121,30 +171,18 @@ public class SecurityNetty3Transport extends Netty3Transport {
     }
 
     private class SslServerChannelPipelineFactory extends ServerChannelPipelineFactory {
+        private final SSLConfiguration configuration;
 
-        private final boolean profileSsl;
-        private final Settings profileSslSettings;
-
-        SslServerChannelPipelineFactory(Netty3Transport nettyTransport, String name, Settings settings, Settings profileSettings) {
-            super(nettyTransport, name, settings);
-            this.profileSsl = isProfileSSLEnabled(profileSettings, ssl);
-            this.profileSslSettings = profileSslSettings(profileSettings);
-            if (profileSsl && sslService.isConfigurationValidForServerUsage(profileSslSettings, transportSSLSettings) == false) {
-                if (TransportSettings.DEFAULT_PROFILE.equals(name)) {
-                    throw new IllegalArgumentException("a key must be provided to run as a server. the key should be configured using the "
-                            + "[xpack.security.transport.ssl.key] or [xpack.security.transport.ssl.keystore.path] setting");
-                }
-                throw new IllegalArgumentException("a key must be provided to run as a server. the key should be configured using the "
-                        + "[transport.profiles." + name + ".xpack.security.ssl.key] or [transport.profiles." + name
-                        + ".xpack.security.ssl.keystore.path] setting");
-            }
+        SslServerChannelPipelineFactory(String name, Settings settings, SSLConfiguration configuration) {
+            super(SecurityNetty3Transport.this, name, settings);
+            this.configuration = configuration;
         }
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = super.getPipeline();
-            if (profileSsl) {
-                final SSLEngine serverEngine = sslService.createSSLEngine(profileSslSettings, transportSSLSettings);
+            if (configuration != null) {
+                final SSLEngine serverEngine = sslService.createSSLEngine(configuration, null, -1);
                 serverEngine.setUseClientMode(false);
                 pipeline.addFirst("ssl", new SslHandler(serverEngine));
             }
@@ -157,18 +195,14 @@ public class SecurityNetty3Transport extends Netty3Transport {
 
     private class SslClientChannelPipelineFactory extends ClientChannelPipelineFactory {
 
-        private final boolean hostnameVerificationEnabled;
-
-        SslClientChannelPipelineFactory(Netty3Transport transport) {
-            super(transport);
-            this.hostnameVerificationEnabled =
-                    sslService.getVerificationMode(transportSSLSettings, Settings.EMPTY).isHostnameVerificationEnabled();
+        SslClientChannelPipelineFactory() {
+            super(SecurityNetty3Transport.this);
         }
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = super.getPipeline();
-            if (ssl) {
+            if (sslConfiguration != null) {
                 pipeline.addFirst("sslInitializer", new ClientSslHandlerInitializer());
             }
             return pipeline;
@@ -183,13 +217,13 @@ public class SecurityNetty3Transport extends Netty3Transport {
             @Override
             public void connectRequested(ChannelHandlerContext ctx, ChannelStateEvent e) {
                 SSLEngine sslEngine;
-                if (hostnameVerificationEnabled) {
+                if (sslConfiguration.verificationMode().isHostnameVerificationEnabled()) {
                     InetSocketAddress inetSocketAddress = (InetSocketAddress) e.getValue();
                     // we create the socket based on the name given. don't reverse DNS
-                    sslEngine = sslService.createSSLEngine(transportSSLSettings, Settings.EMPTY, inetSocketAddress.getHostString(),
+                    sslEngine = sslService.createSSLEngine(sslConfiguration, inetSocketAddress.getHostString(),
                             inetSocketAddress.getPort());
                 } else {
-                    sslEngine = sslService.createSSLEngine(transportSSLSettings, Settings.EMPTY);
+                    sslEngine = sslService.createSSLEngine(sslConfiguration, null, -1);
                 }
 
                 sslEngine.setUseClientMode(true);

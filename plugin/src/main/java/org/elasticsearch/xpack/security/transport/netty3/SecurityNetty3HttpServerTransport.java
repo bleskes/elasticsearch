@@ -26,6 +26,7 @@ import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.http.HttpServerTransport;
 import org.elasticsearch.http.netty3.Netty3HttpServerTransport;
 import org.elasticsearch.transport.netty3.Netty3Utils;
+import org.elasticsearch.xpack.ssl.SSLConfiguration;
 import org.elasticsearch.xpack.ssl.SSLService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.xpack.security.transport.filter.IPFilter;
@@ -45,16 +46,28 @@ import static org.elasticsearch.xpack.XPackSettings.HTTP_SSL_ENABLED;
 public class SecurityNetty3HttpServerTransport extends Netty3HttpServerTransport {
 
     private final IPFilter ipFilter;
+    private final Settings sslSettings;
     private final SSLService sslService;
-    private final boolean ssl;
+    private final SSLConfiguration sslConfiguration;
+
 
     public SecurityNetty3HttpServerTransport(Settings settings, NetworkService networkService, BigArrays bigArrays, IPFilter ipFilter,
                                              SSLService sslService, ThreadPool threadPool, NamedXContentRegistry xContentRegistry,
                                              HttpServerTransport.Dispatcher dispatcher) {
         super(settings, networkService, bigArrays, threadPool, xContentRegistry, dispatcher);
         this.ipFilter = ipFilter;
+        final boolean ssl = HTTP_SSL_ENABLED.get(settings);
         this.sslService =  sslService;
-        this.ssl = HTTP_SSL_ENABLED.get(settings);
+        this.sslSettings = SSLService.getHttpTransportSSLSettings(settings);
+        if (ssl) {
+            if (sslService.isConfigurationValidForServerUsage(sslSettings, Settings.EMPTY) == false) {
+                throw new IllegalArgumentException("a key must be provided to run as a server. the key should be configured using the " +
+                        "[xpack.security.http.ssl.key] or [xpack.security.http.ssl.keystore.path] setting");
+            }
+            this.sslConfiguration = sslService.sslConfiguration(sslSettings, Settings.EMPTY);
+        } else {
+            this.sslConfiguration = null;
+        }
     }
 
     @Override
@@ -106,23 +119,18 @@ public class SecurityNetty3HttpServerTransport extends Netty3HttpServerTransport
 
     private class HttpSslChannelPipelineFactory extends HttpChannelPipelineFactory {
 
-        private final Settings sslSettings;
 
         HttpSslChannelPipelineFactory(Netty3HttpServerTransport transport) {
             super(transport, detailedErrorsEnabled, threadPool.getThreadContext());
-            this.sslSettings = SSLService.getHttpTransportSSLSettings(settings);
-            if (ssl && sslService.isConfigurationValidForServerUsage(sslSettings, Settings.EMPTY) == false) {
-                throw new IllegalArgumentException("a key must be provided to run as a server. the key should be configured using the " +
-                        "[xpack.security.http.ssl.key] or [xpack.security.http.ssl.keystore.path] setting");
-            }
         }
 
         @Override
         public ChannelPipeline getPipeline() throws Exception {
             ChannelPipeline pipeline = super.getPipeline();
-            if (ssl) {
-                SSLEngine engine = sslService.createSSLEngine(sslSettings, Settings.EMPTY);
-                pipeline.addFirst("ssl", new SslHandler(engine));
+            if (sslConfiguration != null) {
+                final SSLEngine sslEngine = sslService.createSSLEngine(sslConfiguration, null, -1);
+                sslEngine.setUseClientMode(false);
+                pipeline.addFirst("ssl", new SslHandler(sslEngine));
             }
             pipeline.addFirst("ipfilter", new IPFilterNetty3UpstreamHandler(ipFilter, IPFilter.HTTP_PROFILE_NAME));
             return pipeline;

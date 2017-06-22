@@ -23,7 +23,6 @@ import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.logging.ESLoggerFactory;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.concurrent.ThreadContext;
 import org.elasticsearch.http.netty3.Netty3HttpRequest;
 import org.elasticsearch.http.netty4.Netty4HttpRequest;
@@ -35,7 +34,6 @@ import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestRequest.Method;
 import org.elasticsearch.xpack.security.authc.AuthenticationService;
 import org.elasticsearch.xpack.security.authc.pki.PkiRealm;
-import org.elasticsearch.xpack.ssl.SSLService;
 import org.jboss.netty.handler.ssl.SslHandler;
 
 import javax.net.ssl.SSLEngine;
@@ -43,9 +41,8 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
-import java.io.IOException;
 
-import static org.elasticsearch.xpack.XPackSettings.HTTP_SSL_ENABLED;
+import java.io.IOException;
 
 public class SecurityRestFilter implements RestHandler {
 
@@ -57,15 +54,13 @@ public class SecurityRestFilter implements RestHandler {
     private final ThreadContext threadContext;
     private final boolean extractClientCertificate;
 
-    public SecurityRestFilter(Settings settings, XPackLicenseState licenseState, SSLService sslService,
-                              ThreadContext threadContext, AuthenticationService service, RestHandler restHandler) {
+    public SecurityRestFilter(XPackLicenseState licenseState, ThreadContext threadContext, AuthenticationService service,
+                              RestHandler restHandler, boolean extractClientCertificate) {
         this.restHandler = restHandler;
         this.service = service;
         this.licenseState = licenseState;
         this.threadContext = threadContext;
-        final boolean ssl = HTTP_SSL_ENABLED.get(settings);
-        Settings httpSSLSettings = SSLService.getHttpTransportSSLSettings(settings);
-        this.extractClientCertificate = ssl && sslService.isSSLClientAuthEnabled(httpSSLSettings);
+        this.extractClientCertificate = extractClientCertificate;
     }
 
     @Override
