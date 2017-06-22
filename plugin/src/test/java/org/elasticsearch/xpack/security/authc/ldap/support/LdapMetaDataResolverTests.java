@@ -98,6 +98,7 @@ public class LdapMetaDataResolverTests extends ESTestCase {
     }
 
     @Network
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/1823")
     public void testResolveSingleValuedAttributeFromConnection() throws Exception {
         resolver = new LdapMetaDataResolver(Arrays.asList("givenName", "sn"), true);
         setupOpenLdapConnection();
@@ -108,6 +109,7 @@ public class LdapMetaDataResolverTests extends ESTestCase {
     }
 
     @Network
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/1823")
     public void testResolveMultiValuedAttributeFromConnection() throws Exception {
         resolver = new LdapMetaDataResolver(Arrays.asList("objectClass"), true);
         setupOpenLdapConnection();
@@ -118,6 +120,7 @@ public class LdapMetaDataResolverTests extends ESTestCase {
     }
 
     @Network
+    @AwaitsFix(bugUrl = "https://github.com/elastic/x-pack-elasticsearch/issues/1823")
     public void testResolveMissingAttributeFromConnection() throws Exception {
         resolver = new LdapMetaDataResolver(Arrays.asList("alias"), true);
         setupOpenLdapConnection();
