@@ -55,7 +55,7 @@
             },
             "condition" : {
               "script" : {
-                "inline" : "if (ctx.payload.hits.total < 1) return false; def rows = ctx.payload.hits.hits; if (ctx.payload.aggregations.minutes.buckets.size() < 12) return false; def last60Seconds = ctx.payload.aggregations.minutes.buckets[-12..-1]; return last60Seconds.every { it.status.buckets.every { s -> s.key == 'red' } }",
+                "source" : "if (ctx.payload.hits.total < 1) return false; def rows = ctx.payload.hits.hits; if (ctx.payload.aggregations.minutes.buckets.size() < 12) return false; def last60Seconds = ctx.payload.aggregations.minutes.buckets[-12..-1]; return last60Seconds.every { it.status.buckets.every { s -> s.key == 'red' } }",
                 "lang": "groovy"
               }
             },

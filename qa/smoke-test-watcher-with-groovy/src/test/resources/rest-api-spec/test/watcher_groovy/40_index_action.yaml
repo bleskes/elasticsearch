@@ -58,7 +58,7 @@
             "input" : { "simple" : { "foo": "bar" } },
             "actions" : {
               "index_action" : {
-                "transform" : { "script" : { "inline": "return [ '_doc' : ctx.payload ]" } },
+                "transform" : { "script" : { "source": "return [ '_doc' : ctx.payload ]" } },
                 "index" : {
                   "index" : "idx",
                   "doc_type" : "type",
@@ -109,7 +109,7 @@
             "input" : { "simple" : { "foo": "bar" } },
             "actions" : {
               "index_action" : {
-                "transform" : { "script" : { "inline": "return [ '_doc' : 1 ]" } },
+                "transform" : { "script" : { "source": "return [ '_doc' : 1 ]" } },
                 "index" : {
                   "index" : "idx",
                   "doc_type" : "type",
@@ -200,7 +200,7 @@
             },
             "actions" : {
               "index_action" : {
-                "transform" : { "script" : { "inline": "return [ '_doc' : ctx.payload.aggregations.trend.buckets]" } },
+                "transform" : { "script" : { "source": "return [ '_doc' : ctx.payload.aggregations.trend.buckets]" } },
                 "index" : {
                   "index" : "idx",
                   "doc_type" : "bucket",
