@@ -38,6 +38,7 @@ import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.transport.TransportRequest;
+import org.elasticsearch.xpack.graph.action.GraphExploreRequest;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -197,7 +198,8 @@ public class IndicesAndAliasesResolver {
     }
 
     private static boolean allowsRemoteIndices(IndicesRequest indicesRequest) {
-        return indicesRequest instanceof SearchRequest || indicesRequest instanceof FieldCapabilitiesRequest;
+        return indicesRequest instanceof SearchRequest || indicesRequest instanceof FieldCapabilitiesRequest
+                || indicesRequest instanceof GraphExploreRequest;
     }
 
     private List<String> loadAuthorizedAliases(List<String> authorizedIndices, MetaData metaData) {

@@ -59,6 +59,8 @@ import org.elasticsearch.search.internal.ShardSearchTransportRequest;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.TransportRequest;
+import org.elasticsearch.xpack.graph.action.GraphExploreAction;
+import org.elasticsearch.xpack.graph.action.GraphExploreRequest;
 import org.elasticsearch.xpack.security.SecurityLifecycleService;
 import org.elasticsearch.xpack.security.audit.AuditTrailService;
 import org.elasticsearch.xpack.security.authc.DefaultAuthenticationFailureHandler;
@@ -1079,7 +1081,8 @@ public class IndicesAndAliasesResolverTests extends ESTestCase {
         IndicesOptions options = IndicesOptions.fromOptions(true, false, false, false);
         Tuple<TransportRequest, String> tuple = randomFrom(
                 new Tuple<>(new SearchRequest("remote:foo").indicesOptions(options), SearchAction.NAME),
-                new Tuple<>(new FieldCapabilitiesRequest().indices("remote:foo").indicesOptions(options), FieldCapabilitiesAction.NAME)
+                new Tuple<>(new FieldCapabilitiesRequest().indices("remote:foo").indicesOptions(options), FieldCapabilitiesAction.NAME),
+                new Tuple<>(new GraphExploreRequest().indices("remote:foo").indicesOptions(options), GraphExploreAction.NAME)
         );
         final Set<String> resolved = defaultIndicesResolver.resolve(tuple.v1(), metaData, buildAuthorizedIndices(user, tuple.v2()));
         assertThat(resolved, containsInAnyOrder("remote:foo"));
