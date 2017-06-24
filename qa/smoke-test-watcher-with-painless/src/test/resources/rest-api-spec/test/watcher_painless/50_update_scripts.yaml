@@ -52,7 +52,7 @@
 # this is only to ensure that indexing id and stored works in 5.x
   - do:
       warnings:
-        - 'Deprecated field [id] used, expected [stored] instead'
+        - 'Deprecated field [stored] used, expected [id] instead'
       xpack.watcher.put_watch:
         id: "my_watch"
         body:  >
@@ -67,7 +67,7 @@
             },
             "transform": {
               "script": {
-                "id": "transform-script"
+                "stored": "transform-script"
               }
             },
             "actions": {
@@ -160,7 +160,7 @@
 # this is only to ensure that id and store works in 5.x
   - do:
       warnings:
-        - 'Deprecated field [id] used, expected [stored] instead'
+        - 'Deprecated field [stored] used, expected [id] instead'
       xpack.watcher.put_watch:
         id: "my_watch"
         body:  >
@@ -175,7 +175,7 @@
             },
             "condition": {
               "script": {
-                "id": "condition-script"
+                "stored": "condition-script"
               }
             },
             "actions": {
