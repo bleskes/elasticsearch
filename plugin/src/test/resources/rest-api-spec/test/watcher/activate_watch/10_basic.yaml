@@ -58,7 +58,7 @@
         index: .watches
         body: { "query": { "term": { "_id": "my_watch" } } }
   - match: { hits.total: 1 }
-  - match: { hits.hits.0._source._status.state.active: false }
+  - match: { hits.hits.0._source.status.state.active: false }
 
   - do:
       xpack.watcher.get_watch:
@@ -78,7 +78,7 @@
         index: .watches
         body: { "query": { "term": { "_id": "my_watch" } } }
   - match: { hits.total: 1 }
-  - match: { hits.hits.0._source._status.state.active: true }
+  - match: { hits.hits.0._source.status.state.active: true }
 
   - do:
       xpack.watcher.get_watch:

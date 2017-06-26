@@ -21,7 +21,10 @@ import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.cluster.ClusterState;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.metrics.MeanMetric;
@@ -45,8 +48,8 @@ import org.elasticsearch.xpack.watcher.watch.WatchStore;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -186,49 +189,45 @@ public final class ExecutionService extends AbstractComponent {
         if (!started.get()) {
             throw new IllegalStateException("not started");
         }
-        final LinkedList<TriggeredWatch> triggeredWatches = new LinkedList<>();
-        final LinkedList<TriggeredExecutionContext> contexts = new LinkedList<>();
 
-        DateTime now = clock.now(DateTimeZone.UTC);
-        for (TriggerEvent event : events) {
-            Watch watch = watchStore.get(event.jobName());
-            if (watch == null) {
-                logger.warn("unable to find watch [{}] in the watch store, perhaps it has been deleted", event.jobName());
-                continue;
-            }
-            TriggeredExecutionContext ctx = new TriggeredExecutionContext(watch, now, event, defaultThrottlePeriod);
-            contexts.add(ctx);
-            triggeredWatches.add(new TriggeredWatch(ctx.id(), event));
-        }
+        Tuple<List<TriggeredWatch>, List<TriggeredExecutionContext>> watchesAndContext = createTriggeredWatchesAndContext(events);
+        List<TriggeredWatch> triggeredWatches = watchesAndContext.v1();
 
         logger.debug("saving watch records [{}]", triggeredWatches.size());
-
-        triggeredWatchStore.putAll(triggeredWatches, new ActionListener<BitSet>() {
-            @Override
-            public void onResponse(BitSet slots) {
-                int slot = 0;
-                while ((slot = slots.nextSetBit(slot)) != -1) {
-                    executeAsync(contexts.get(slot), triggeredWatches.get(slot));
-                    slot++;
+        triggeredWatchStore.putAll(triggeredWatches, ActionListener.wrap(
+                response -> executeTriggeredWatches(response, watchesAndContext),
+                e -> {
+                    Throwable cause = ExceptionsHelper.unwrapCause(e);
+                    if (cause instanceof EsRejectedExecutionException) {
+                        logger.debug("failed to store watch records due to overloaded threadpool [{}]",
+                                ExceptionsHelper.detailedMessage(e));
+                    } else {
+                        logger.warn("failed to store watch records", e);
+                    }
                 }
-            }
-
-            @Override
-            public void onFailure(Exception e) {
-                Throwable cause = ExceptionsHelper.unwrapCause(e);
-                if (cause instanceof EsRejectedExecutionException) {
-                    logger.debug("failed to store watch records due to overloaded threadpool [{}]", ExceptionsHelper.detailedMessage(e));
-                } else {
-                    logger.warn("failed to store watch records", e);
-                }
-            }
-        });
+            ));
     }
 
-    void processEventsSync(Iterable<TriggerEvent> events) throws Exception {
+    void processEventsSync(Iterable<TriggerEvent> events) throws IOException {
         if (!started.get()) {
             throw new IllegalStateException("not started");
         }
+
+        Tuple<List<TriggeredWatch>, List<TriggeredExecutionContext>> watchesAndContext = createTriggeredWatchesAndContext(events);
+        List<TriggeredWatch> triggeredWatches = watchesAndContext.v1();
+
+        logger.debug("saving watch records [{}]", triggeredWatches.size());
+        BulkResponse bulkResponse = triggeredWatchStore.putAll(triggeredWatches);
+        executeTriggeredWatches(bulkResponse, watchesAndContext);
+    }
+
+    /**
+     * Create a tuple of triggered watches and their corresponding contexts, usable for sync and async processing
+     *
+     * @param events The iterable list of trigger events to create the two lists from
+     * @return       Two linked lists that contain the triggered watches and contexts
+     */
+    private Tuple<List<TriggeredWatch>, List<TriggeredExecutionContext>> createTriggeredWatchesAndContext(Iterable<TriggerEvent> events) {
         final LinkedList<TriggeredWatch> triggeredWatches = new LinkedList<>();
         final LinkedList<TriggeredExecutionContext> contexts = new LinkedList<>();
 
@@ -244,16 +243,24 @@ public final class ExecutionService extends AbstractComponent {
             triggeredWatches.add(new TriggeredWatch(ctx.id(), event));
         }
 
-        logger.debug("saving watch records [{}]", triggeredWatches.size());
-        if (triggeredWatches.size() == 0) {
-            return;
-        }
+        return Tuple.tuple(triggeredWatches, contexts);
+    }
 
-        BitSet slots = triggeredWatchStore.putAll(triggeredWatches);
-        int slot = 0;
-        while ((slot = slots.nextSetBit(slot)) != -1) {
-            executeAsync(contexts.get(slot), triggeredWatches.get(slot));
-            slot++;
+    /**
+     * Execute triggered watches, which have been successfully indexed into the triggered watches index
+     *
+     * @param response            The bulk response containing the response of indexing triggered watches
+     * @param watchesAndContext   The triggered watches and context objects needed for execution
+     */
+    private void executeTriggeredWatches(final BulkResponse response,
+                                         final Tuple<List<TriggeredWatch>, List<TriggeredExecutionContext>> watchesAndContext) {
+        for (int i = 0; i < response.getItems().length; i++) {
+            BulkItemResponse itemResponse = response.getItems()[i];
+            if (itemResponse.isFailed()) {
+                logger.error("could not store triggered watch with id [{}]: [{}]", itemResponse.getId(), itemResponse.getFailureMessage());
+            } else {
+                executeAsync(watchesAndContext.v2().get(i), watchesAndContext.v1().get(i));
+            }
         }
     }
 

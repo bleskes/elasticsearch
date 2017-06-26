@@ -30,6 +30,7 @@ import org.elasticsearch.xpack.watcher.rest.WatcherRestHandler;
 import org.elasticsearch.xpack.watcher.support.xcontent.WatcherParams;
 import org.elasticsearch.xpack.watcher.transport.actions.get.GetWatchRequest;
 import org.elasticsearch.xpack.watcher.transport.actions.get.GetWatchResponse;
+import org.elasticsearch.xpack.watcher.watch.Watch;
 import org.elasticsearch.xpack.watcher.watch.WatchStatus;
 
 import java.io.IOException;
@@ -60,7 +61,8 @@ public class RestGetWatchAction extends WatcherRestHandler {
                             WatcherParams params = WatcherParams.builder(request)
                                     .put(WatchStatus.INCLUDE_VERSION_KEY, true)
                                     .build();
-                            builder.field("_status", response.getStatus(), params);
+                            builder.field(Watch.Field.STATUS.getPreferredName(), response.getStatus(), params);
+                            builder.field(Watch.Field.STATUS_V5.getPreferredName(), response.getStatus(), params);
                             builder.field("watch", response.getSource(), params);
                         }
                         builder.endObject();

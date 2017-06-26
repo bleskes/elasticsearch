@@ -41,6 +41,7 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
  * The rest action to de/activate a watch
  */
 public class RestActivateWatchAction extends WatcherRestHandler {
+
     public RestActivateWatchAction(Settings settings, RestController controller) {
         super(settings);
 
@@ -65,6 +66,7 @@ public class RestActivateWatchAction extends WatcherRestHandler {
                     @Override
                     public RestResponse buildResponse(ActivateWatchResponse response, XContentBuilder builder) throws Exception {
                         return new BytesRestResponse(RestStatus.OK, builder.startObject()
+                                .field(Watch.Field.STATUS_V5.getPreferredName(), response.getStatus(), WatcherParams.HIDE_SECRETS)
                                 .field(Watch.Field.STATUS.getPreferredName(), response.getStatus(), WatcherParams.HIDE_SECRETS)
                                 .endObject());
                     }
@@ -85,6 +87,7 @@ public class RestActivateWatchAction extends WatcherRestHandler {
                         @Override
                         public RestResponse buildResponse(ActivateWatchResponse response, XContentBuilder builder) throws Exception {
                             return new BytesRestResponse(RestStatus.OK, builder.startObject()
+                                    .field(Watch.Field.STATUS_V5.getPreferredName(), response.getStatus(), WatcherParams.HIDE_SECRETS)
                                     .field(Watch.Field.STATUS.getPreferredName(), response.getStatus(), WatcherParams.HIDE_SECRETS)
                                     .endObject());
                         }

@@ -67,16 +67,17 @@ public class HistoryTemplateTimeMappingsTests extends AbstractWatcherIntegration
 
         // the action should fail as no email server is available
         assertWatchWithMinimumActionsCount("_id", ExecutionState.EXECUTED, 1);
-        refresh();
+
         assertBusy(() -> {
             GetMappingsResponse mappingsResponse = client().admin().indices().prepareGetMappings().get();
             assertThat(mappingsResponse, notNullValue());
             assertThat(mappingsResponse.getMappings().isEmpty(), is(false));
             for (ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>> metadatas : mappingsResponse.getMappings()) {
-                if (!metadatas.key.startsWith(".watcher-history")) {
+                if (!metadatas.key.startsWith(HistoryStore.INDEX_PREFIX)) {
                     continue;
                 }
-                MappingMetaData metadata = metadatas.value.get("watch_record");
+                MappingMetaData metadata = metadatas.value.get("doc");
+
                 assertThat(metadata, notNullValue());
                 try {
                     Map<String, Object> source = metadata.getSourceAsMap();
@@ -91,6 +92,5 @@ public class HistoryTemplateTimeMappingsTests extends AbstractWatcherIntegration
                 }
             }
         });
-
     }
 }

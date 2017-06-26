@@ -50,16 +50,20 @@ import java.util.regex.Pattern;
 
 import static java.util.Collections.unmodifiableMap;
 
-/**
- */
 public class WatcherIndexTemplateRegistry extends AbstractComponent implements ClusterStateListener {
 
     private static final String FORBIDDEN_INDEX_SETTING = "index.mapper.dynamic";
-    public static final String INDEX_TEMPLATE_VERSION = "3";
 
-    public static final String HISTORY_TEMPLATE_NAME = "watch_history_" + INDEX_TEMPLATE_VERSION;
-    public static final String TRIGGERED_TEMPLATE_NAME = "triggered_watches";
-    public static final String WATCHES_TEMPLATE_NAME = "watches";
+    // history (please add a comment why you increased the version here)
+    // version 1: initial
+    // version 2: added mappings for jira action
+    // version 3: include watch status in history
+    // version 6: upgrade to ES 6, removal of _status field
+    // Note: if you change this, also inform the kibana team around the watcher-ui
+    public static final String INDEX_TEMPLATE_VERSION = "6";
+    public static final String HISTORY_TEMPLATE_NAME = ".watch-history-" + INDEX_TEMPLATE_VERSION;
+    public static final String TRIGGERED_TEMPLATE_NAME = ".triggered_watches";
+    public static final String WATCHES_TEMPLATE_NAME = ".watches";
 
     public static final Setting<Settings> HISTORY_TEMPLATE_SETTING = Setting.groupSetting("xpack.watcher.history.index.",
             Setting.Property.Dynamic, Setting.Property.NodeScope);
@@ -68,9 +72,9 @@ public class WatcherIndexTemplateRegistry extends AbstractComponent implements C
     public static final Setting<Settings> WATCHES_TEMPLATE_SETTING = Setting.groupSetting("xpack.watcher.watches.index.",
             Setting.Property.Dynamic, Setting.Property.NodeScope);
     public static final TemplateConfig[] TEMPLATE_CONFIGS = new TemplateConfig[]{
-            new TemplateConfig(TRIGGERED_TEMPLATE_NAME, TRIGGERED_TEMPLATE_SETTING),
-            new TemplateConfig(HISTORY_TEMPLATE_NAME, "watch_history", HISTORY_TEMPLATE_SETTING),
-            new TemplateConfig(WATCHES_TEMPLATE_NAME, WATCHES_TEMPLATE_SETTING)
+            new TemplateConfig(TRIGGERED_TEMPLATE_NAME, "triggered-watches", TRIGGERED_TEMPLATE_SETTING),
+            new TemplateConfig(HISTORY_TEMPLATE_NAME, "watch-history", HISTORY_TEMPLATE_SETTING),
+            new TemplateConfig(WATCHES_TEMPLATE_NAME, "watches", WATCHES_TEMPLATE_SETTING)
     };
 
     private final WatcherClientProxy client;
@@ -119,16 +123,7 @@ public class WatcherIndexTemplateRegistry extends AbstractComponent implements C
         addTemplatesIfMissing(state, false);
     }
 
-    /**
-     * Adds the registered index templates if missing to the cluster.
-     */
-    public void addTemplatesIfMissing() {
-        // to be sure that the templates exist after this method call, we should wait until the put index templates calls
-        // have returned if the templates were missing
-        addTemplatesIfMissing(clusterService.state(), true);
-    }
-
-    void addTemplatesIfMissing(ClusterState state, boolean wait) {
+    private void addTemplatesIfMissing(ClusterState state, boolean wait) {
         for (TemplateConfig template : indexTemplates) {
             final String templateName = template.getTemplateName();
             final AtomicBoolean creationCheck = templateCreationsInProgress.computeIfAbsent(templateName, key -> new AtomicBoolean(false));
@@ -232,10 +227,6 @@ public class WatcherIndexTemplateRegistry extends AbstractComponent implements C
         private final String templateName;
         private String fileName;
         private final Setting<Settings> setting;
-
-        public TemplateConfig(String templateName, Setting<Settings> setting) {
-            this(templateName, templateName, setting);
-        }
 
         public TemplateConfig(String templateName, String fileName, Setting<Settings> setting) {
             this.templateName = templateName;

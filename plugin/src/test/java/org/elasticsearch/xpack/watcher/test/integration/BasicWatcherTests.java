@@ -31,6 +31,7 @@ import org.elasticsearch.xpack.watcher.client.WatchSourceBuilder;
 import org.elasticsearch.xpack.watcher.client.WatcherClient;
 import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
 import org.elasticsearch.xpack.watcher.condition.CompareCondition;
+import org.elasticsearch.xpack.watcher.history.HistoryStore;
 import org.elasticsearch.xpack.watcher.support.search.WatcherSearchTemplateRequest;
 import org.elasticsearch.xpack.watcher.support.xcontent.XContentSource;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
@@ -252,10 +253,16 @@ public class BasicWatcherTests extends AbstractWatcherIntegrationTestCase {
 
         // Wait one second to be sure that the scheduler engine has executed any previous job instance of the watch
         Thread.sleep(1000);
-        long before = historyRecordsCount("_name");
+        refresh();
+        long hitsBeforeWait = client().prepareSearch(HistoryStore.INDEX_PREFIX_WITH_TEMPLATE + "*")
+                .setSize(0)
+                .setQuery(matchQuery("watch_id", "_name")).get().getHits().getTotalHits();
         Thread.sleep(5000);
-        assertThat("Watch has been updated to 100s interval, so no new records should have been added.", historyRecordsCount("_name"),
-                equalTo(before));
+        long hitsAfterWait = client().prepareSearch(HistoryStore.INDEX_PREFIX_WITH_TEMPLATE + "*")
+                .setSize(0)
+                .setQuery(matchQuery("watch_id", "_name")).get().getHits().getTotalHits();
+        assertThat("Watch has been updated to 100s interval, so no new records should have been added.", hitsBeforeWait,
+                equalTo(hitsAfterWait));
     }
 
     public void testConditionSearchWithSource() throws Exception {

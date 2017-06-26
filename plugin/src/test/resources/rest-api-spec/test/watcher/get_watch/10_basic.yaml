@@ -59,4 +59,5 @@ teardown:
   - match: { found : true}
   - match: { _id: "my_watch" }
   - is_true:  _status.version
+  - is_true:  status.version
   - is_false: watch.status

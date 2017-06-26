@@ -20,9 +20,12 @@ package org.elasticsearch.xpack.watcher.watch;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.ClearScrollResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.cluster.ClusterName;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.AliasMetaData;
@@ -41,9 +44,11 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.Index;
+import org.elasticsearch.index.engine.DocumentMissingException;
 import org.elasticsearch.index.shard.ShardId;
-import org.elasticsearch.search.SearchHitField;
+import org.elasticsearch.indices.TypeMissingException;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.test.VersionUtils;
@@ -71,12 +76,15 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -524,6 +532,88 @@ public class WatchStoreTests extends ESTestCase {
         csBuilder.metaData(metaDataBuilder);
 
         assertThat(watchStore.validate(csBuilder.build()), Matchers.is(false));
+    }
+
+    public void testWatchStoreTriesToWriteNewWatchFirst() throws Exception {
+        ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
+        ClusterState cs = csBuilder.build();
+        assertThat(watchStore.validate(cs), is(true));
+        watchStore.start(cs);
+        assertThat(watchStore.started(), is(true));
+
+        Watch watch = mock(Watch.class);
+        WatchStatus watchStatus = mock(WatchStatus.class);
+        when(watchStatus.dirty()).thenReturn(true);
+        when(watch.status()).thenReturn(watchStatus);
+        boolean refresh = randomBoolean();
+
+        UpdateResponse response = mock(UpdateResponse.class);
+        when(response.getVersion()).thenReturn(10L);
+        when(clientProxy.update(anyObject()))
+                .thenThrow(new DocumentMissingException(new ShardId(new Index(WatchStore.INDEX, "uuid"), 0), "doc", "bar"))
+                .thenReturn(response);
+
+        watchStore.updateStatus(watch, refresh);
+
+        verify(watchStatus).version(eq(10L));
+        verify(watchStatus).resetDirty();
+        verify(watch).version(eq(10L));
+    }
+
+    public void testThatWatchStoreUsesDocTypeByDefault() throws Exception {
+        ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
+        ClusterState cs = csBuilder.build();
+        assertThat(watchStore.validate(cs), is(true));
+        watchStore.start(cs);
+        assertThat(watchStore.started(), is(true));
+
+        Watch watch = mock(Watch.class);
+        when(watch.id()).thenReturn(randomAlphaOfLength(10));
+        WatchStatus watchStatus = mock(WatchStatus.class);
+        when(watch.status()).thenReturn(watchStatus);
+        when(watch.toXContent(any(), any())).thenReturn(jsonBuilder());
+
+        doAnswer(invocation -> {
+            IndexRequest request = (IndexRequest) invocation.getArguments()[0];
+            ShardId shardId = new ShardId(new Index(request.index(), "uuid"), 0);
+            IndexResponse response = new IndexResponse(shardId, request.type(), request.id(), 1, true);
+            return response;
+        }).when(clientProxy).index(any(), any(TimeValue.class));
+
+        WatchStore.WatchPut watchPut = watchStore.put(watch);
+        verify(clientProxy, times(1)).index(any(), any(TimeValue.class));
+        assertThat(watchPut.indexResponse().getType(), is(WatchStore.DOC_TYPE));
+        assertThat(watchPut.current(), is(watch));
+        assertThat(watchPut.previous(), is(nullValue()));
+    }
+
+    public void testThatWatchStoreUsesLegacyDocType() throws Exception {
+        ClusterState.Builder csBuilder = new ClusterState.Builder(new ClusterName("_name"));
+        ClusterState cs = csBuilder.build();
+        assertThat(watchStore.validate(cs), is(true));
+        watchStore.start(cs);
+        assertThat(watchStore.started(), is(true));
+
+        Watch watch = mock(Watch.class);
+        when(watch.id()).thenReturn(randomAlphaOfLength(10));
+        WatchStatus watchStatus = mock(WatchStatus.class);
+        when(watch.status()).thenReturn(watchStatus);
+        when(watch.toXContent(any(), any())).thenReturn(jsonBuilder());
+
+        doAnswer(invocation -> {
+            IndexRequest request = (IndexRequest) invocation.getArguments()[0];
+            Index index = new Index(request.index(), "uuid");
+            if (WatchStore.LEGACY_DOC_TYPE.equals(request.type()) == false) {
+                throw new TypeMissingException(index, request.type());
+            }
+            return new IndexResponse(new ShardId(index, 0), request.type(), request.id(), 1, true);
+        }).when(clientProxy).index(any(), any(TimeValue.class));
+
+        WatchStore.WatchPut watchPut = watchStore.put(watch);
+        verify(clientProxy, times(2)).index(any(), any(TimeValue.class));
+        assertThat(watchPut.indexResponse().getType(), is(WatchStore.LEGACY_DOC_TYPE));
+        assertThat(watchPut.current(), is(watch));
+        assertThat(watchPut.previous(), is(nullValue()));
     }
 
     /**

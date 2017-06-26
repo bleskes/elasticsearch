@@ -19,26 +19,31 @@ package org.elasticsearch.xpack.watcher.execution;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
+import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.PlainActionFuture;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.IndexNotFoundException;
+import org.elasticsearch.indices.TypeMissingException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
@@ -48,32 +53,27 @@ import org.elasticsearch.xpack.watcher.watch.WatchStoreUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.BitSet;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.elasticsearch.xpack.watcher.support.Exceptions.illegalState;
-import static org.elasticsearch.xpack.watcher.support.Exceptions.ioException;
 
 public class TriggeredWatchStore extends AbstractComponent {
 
     public static final String INDEX_NAME = ".triggered_watches";
-    public static final String DOC_TYPE = "triggered_watch";
+    public static final String DOC_TYPE = "doc";
+    public static final String LEGACY_DOC_TYPE = "triggered_watch";
 
     private final int scrollSize;
     private final WatcherClientProxy client;
     private final TimeValue scrollTimeout;
     private final TriggeredWatch.Parser triggeredWatchParser;
 
-    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    private final Lock accessLock = readWriteLock.readLock();
-    private final Lock stopLock = readWriteLock.writeLock();
     private final AtomicBoolean started = new AtomicBoolean(false);
+    private final TimeValue defaultBulkTimeout;
 
     @Inject
     public TriggeredWatchStore(Settings settings, InternalClient client, TriggeredWatch.Parser triggeredWatchParser) {
@@ -86,6 +86,7 @@ public class TriggeredWatchStore extends AbstractComponent {
         this.client = client;
         this.scrollTimeout = settings.getAsTime("xpack.watcher.execution.scroll.timeout", TimeValue.timeValueSeconds(30));
         this.triggeredWatchParser = triggeredWatchParser;
+        this.defaultBulkTimeout = settings.getAsTime("xpack.watcher.internal.ops.bulk.default_timeout", TimeValue.timeValueSeconds(120));
     }
 
     public void start() {
@@ -112,154 +113,75 @@ public class TriggeredWatchStore extends AbstractComponent {
     }
 
     public void stop() {
-        stopLock.lock(); // This will block while put or update actions are underway
-        try {
-            started.set(false);
-        } finally {
-            stopLock.unlock();
-        }
+        started.set(false);
     }
 
-    public void put(TriggeredWatch triggeredWatch) throws Exception {
-        ensureStarted();
-        accessLock.lock();
-        try {
-            IndexRequest request = new IndexRequest(INDEX_NAME, DOC_TYPE, triggeredWatch.id().value())
-                    .source(XContentFactory.jsonBuilder().value(triggeredWatch))
-                    .opType(IndexRequest.OpType.CREATE);
-            client.index(request, (TimeValue) null);
-        } catch (IOException e) {
-            throw ioException("failed to persist triggered watch [{}]", e, triggeredWatch);
-        } finally {
-            accessLock.unlock();
-        }
-    }
-
-    public void put(final TriggeredWatch triggeredWatch, final ActionListener<Boolean> listener) throws Exception {
-        ensureStarted();
-        try {
-            IndexRequest request = new IndexRequest(INDEX_NAME, DOC_TYPE, triggeredWatch.id().value())
-                    .source(XContentFactory.jsonBuilder().value(triggeredWatch))
-                    .opType(IndexRequest.OpType.CREATE);
-            client.index(request, new ActionListener<IndexResponse>() {
-                @Override
-                public void onResponse(IndexResponse response) {
-                    listener.onResponse(true);
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                    listener.onFailure(e);
-                }
-            });
-        } catch (IOException e) {
-            throw ioException("failed to persist triggered watch [{}]", e, triggeredWatch);
-        }
-    }
-
-    public void putAll(final List<TriggeredWatch> triggeredWatches, final ActionListener<BitSet> listener) throws Exception {
-
+    public void putAll(final List<TriggeredWatch> triggeredWatches, final ActionListener<BulkResponse> listener) throws IOException {
         if (triggeredWatches.isEmpty()) {
-            listener.onResponse(new BitSet(0));
-            return;
-        }
-
-        if (triggeredWatches.size() == 1) {
-            put(triggeredWatches.get(0), new ActionListener<Boolean>() {
-                @Override
-                public void onResponse(Boolean success) {
-                    BitSet bitSet = new BitSet(1);
-                    bitSet.set(0);
-                    listener.onResponse(bitSet);
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                    listener.onFailure(e);
-                }
-            });
+            listener.onResponse(new BulkResponse(new BulkItemResponse[]{}, 0));
             return;
         }
 
         ensureStarted();
-        try {
-            BulkRequest request = new BulkRequest();
-            for (TriggeredWatch triggeredWatch : triggeredWatches) {
-                IndexRequest indexRequest = new IndexRequest(INDEX_NAME, DOC_TYPE, triggeredWatch.id().value());
-                try (XContentBuilder xContentBuilder = XContentFactory.jsonBuilder()) {
-                    indexRequest.source(xContentBuilder.value(triggeredWatch));
-                }
-                indexRequest.opType(IndexRequest.OpType.CREATE);
-                request.add(indexRequest);
+        // have a read lock to tell the rw-lock that there is a current access, so that stopping waits until all write operations
+        // are finished. This also means, that the lock requires unlock on all cases, no matter if success or failure
+        BulkRequest request = createBulkRequest(triggeredWatches, DOC_TYPE);
+        client.bulk(request, ActionListener.wrap(r -> {
+            if (containsTypeMissingException(r)) {
+                client.bulk(createBulkRequest(triggeredWatches, LEGACY_DOC_TYPE), listener);
+            } else {
+                listener.onResponse(r);
             }
-            client.bulk(request, new ActionListener<BulkResponse>() {
-                @Override
-                public void onResponse(BulkResponse response) {
-                    BitSet successFullSlots = new BitSet(triggeredWatches.size());
-                    for (int i = 0; i < response.getItems().length; i++) {
-                        BulkItemResponse itemResponse = response.getItems()[i];
-                        if (itemResponse.isFailed()) {
-                            logger.error("could store triggered watch with id [{}], because failed [{}]", itemResponse.getId(),
-                                    itemResponse.getFailureMessage());
-                        } else {
-                            successFullSlots.set(i);
-                        }
-                    }
-                    listener.onResponse(successFullSlots);
-                }
-
-                @Override
-                public void onFailure(Exception e) {
-                    listener.onFailure(e);
-                }
-            });
-        } catch (IOException e) {
-            throw ioException("failed to persist triggered watches", e);
-        }
+        }, listener::onFailure));
     }
 
-    public BitSet putAll(final List<TriggeredWatch> triggeredWatches) throws Exception {
-        ensureStarted();
-        try {
-            BulkRequest request = new BulkRequest();
-            for (TriggeredWatch triggeredWatch : triggeredWatches) {
-                IndexRequest indexRequest = new IndexRequest(INDEX_NAME, DOC_TYPE, triggeredWatch.id().value());
-                try (XContentBuilder xContentBuilder = XContentFactory.jsonBuilder()) {
-                    indexRequest.source(xContentBuilder.value(triggeredWatch));
-                }
-                indexRequest.opType(IndexRequest.OpType.CREATE);
-                request.add(indexRequest);
+    public BulkResponse putAll(final List<TriggeredWatch> triggeredWatches) throws IOException {
+        PlainActionFuture<BulkResponse> future = PlainActionFuture.newFuture();
+        putAll(triggeredWatches, future);
+        return future.actionGet(defaultBulkTimeout);
+    }
+
+    /**
+     * Check if there is any type missing exception in the response
+     * @param response  The BulkResponse to check for
+     * @return          true if any bulk response item contains the above mentioned exception
+     */
+    private boolean containsTypeMissingException(BulkResponse response) {
+        return response.hasFailures() && Arrays.stream(response.getItems()).anyMatch(item -> item.isFailed() && ExceptionsHelper
+                .unwrapCause(item.getFailure().getCause()) instanceof TypeMissingException);
+    }
+
+    /**
+     * Create a bulk request from the triggered watches with a specified document type
+     * @param triggeredWatches  The list of triggered watches
+     * @param docType           The document type to use, either the current one or legacy
+     * @return                  The bulk request for the triggered watches
+     * @throws IOException      If a triggered watch could not be parsed to JSON, this exception is thrown
+     */
+    private BulkRequest createBulkRequest(final List<TriggeredWatch> triggeredWatches, String docType) throws IOException {
+        BulkRequest request = new BulkRequest();
+        for (TriggeredWatch triggeredWatch : triggeredWatches) {
+            IndexRequest indexRequest = new IndexRequest(INDEX_NAME, docType, triggeredWatch.id().value());
+            try (XContentBuilder builder = XContentFactory.jsonBuilder()) {
+                triggeredWatch.toXContent(builder, ToXContent.EMPTY_PARAMS);
+                indexRequest.source(builder);
             }
-            BulkResponse response = client.bulk(request, (TimeValue) null);
-            BitSet successFullSlots = new BitSet(triggeredWatches.size());
-            for (int i = 0; i < response.getItems().length; i++) {
-                BulkItemResponse itemResponse = response.getItems()[i];
-                if (itemResponse.isFailed()) {
-                    logger.error("could store triggered watch with id [{}], because failed [{}]", itemResponse.getId(),
-                            itemResponse.getFailureMessage());
-                } else {
-                    successFullSlots.set(i);
-                }
-            }
-            return successFullSlots;
-        } catch (IOException e) {
-            throw ioException("failed to persist triggered watches", e);
+            indexRequest.opType(IndexRequest.OpType.CREATE);
+            request.add(indexRequest);
         }
+        return request;
     }
 
     public void delete(Wid wid) {
         ensureStarted();
-        accessLock.lock();
-        try {
-            DeleteRequest request = new DeleteRequest(INDEX_NAME, DOC_TYPE, wid.value());
-            client.delete(request);
-            logger.trace("successfully deleted triggered watch with id [{}]", wid);
-        } finally {
-            accessLock.unlock();
+        DeleteResponse response = client.delete(new DeleteRequest(INDEX_NAME, DOC_TYPE, wid.value()));
+        if (response.getResult() == DocWriteResponse.Result.NOT_FOUND) {
+            client.delete(new DeleteRequest(INDEX_NAME, LEGACY_DOC_TYPE, wid.value()));
         }
+        logger.trace("successfully deleted triggered watch with id [{}]", wid);
     }
 
-    public Collection<TriggeredWatch> loadTriggeredWatches(ClusterState state) {
+    Collection<TriggeredWatch> loadTriggeredWatches(ClusterState state) {
         IndexMetaData indexMetaData;
         try {
             indexMetaData = WatchStoreUtils.getConcreteIndex(INDEX_NAME, state.metaData());
@@ -288,12 +210,12 @@ public class TriggeredWatchStore extends AbstractComponent {
                         response.getSuccessfulShards());
             }
 
-            while (response.getHits().hits().length != 0) {
+            while (response.getHits().getHits().length != 0) {
                 for (SearchHit sh : response.getHits()) {
                     String id = sh.getId();
                     try {
-                        TriggeredWatch triggeredWatch = triggeredWatchParser.parse(id, sh.version(), sh.getSourceRef());
-                        logger.trace("loaded triggered watch [{}/{}/{}]", sh.index(), sh.type(), sh.id());
+                        TriggeredWatch triggeredWatch = triggeredWatchParser.parse(id, sh.getVersion(), sh.getSourceRef());
+                        logger.trace("loaded triggered watch [{}/{}/{}]", sh.getIndex(), sh.getType(), sh.getId());
                         triggeredWatches.add(triggeredWatch);
                     } catch (Exception e) {
                         logger.error(
@@ -316,7 +238,6 @@ public class TriggeredWatchStore extends AbstractComponent {
 
         SearchRequest searchRequest = new SearchRequest(INDEX_NAME);
         searchRequest.source(sourceBuilder);
-        searchRequest.types(DOC_TYPE);
         searchRequest.scroll(scrollTimeout);
         searchRequest.preference("_primary");
         return searchRequest;

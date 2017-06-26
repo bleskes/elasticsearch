@@ -109,17 +109,17 @@ public class HistoryIntegrationTests extends AbstractWatcherIntegrationTestCase 
         assertHitCount(searchResponse, 1);
 
         // as fields with dots are allowed in 5.0 again, the mapping must be checked in addition
-        GetMappingsResponse response = client().admin().indices().prepareGetMappings(".watcher-history*").addTypes("watch_record").get();
-        byte[] bytes = response.getMappings().values().iterator().next().value.get("watch_record").source().uncompressed();
+        GetMappingsResponse response = client().admin().indices().prepareGetMappings(".watcher-history*").addTypes("doc").get();
+        byte[] bytes = response.getMappings().values().iterator().next().value.get("doc").source().uncompressed();
         XContentSource source = new XContentSource(new BytesArray(bytes), XContentType.JSON);
         // lets make sure the body fields are disabled
         if (useChained) {
-            String chainedPath = "watch_record.properties.result.properties.input.properties.chain.properties.chained.properties.search" +
+            String chainedPath = "doc.properties.result.properties.input.properties.chain.properties.chained.properties.search" +
                     ".properties.request.properties.body.enabled";
             assertThat(source.getValue(chainedPath), is(false));
         } else {
             String path =
-                    "watch_record.properties.result.properties.input.properties.search.properties.request.properties.body.enabled";
+                    "doc.properties.result.properties.input.properties.search.properties.request.properties.body.enabled";
             assertThat(source.getValue(path), is(false));
         }
     }
@@ -148,16 +148,16 @@ public class HistoryIntegrationTests extends AbstractWatcherIntegrationTestCase 
         assertHitCount(searchResponse, 1);
 
         // as fields with dots are allowed in 5.0 again, the mapping must be checked in addition
-        GetMappingsResponse response = client().admin().indices().prepareGetMappings(".watcher-history*").addTypes("watch_record").get();
-        byte[] bytes = response.getMappings().values().iterator().next().value.get("watch_record").source().uncompressed();
+        GetMappingsResponse response = client().admin().indices().prepareGetMappings(".watcher-history*").addTypes("doc").get();
+        byte[] bytes = response.getMappings().values().iterator().next().value.get("doc").source().uncompressed();
         XContentSource source = new XContentSource(new BytesArray(bytes), XContentType.JSON);
 
         // lets make sure the body fields are disabled
         if (useChained) {
-            String path = "watch_record.properties.result.properties.input.properties.chain.properties.chained.properties.payload.enabled";
+            String path = "doc.properties.result.properties.input.properties.chain.properties.chained.properties.payload.enabled";
             assertThat(source.getValue(path), is(false));
         } else {
-            String path = "watch_record.properties.result.properties.input.properties.payload.enabled";
+            String path = "doc.properties.result.properties.input.properties.payload.enabled";
             assertThat(source.getValue(path), is(false));
         }
     }
@@ -181,28 +181,28 @@ public class HistoryIntegrationTests extends AbstractWatcherIntegrationTestCase 
 
         XContentSource source = new XContentSource(hit.getSourceRef(), XContentType.JSON);
 
-        Boolean active = source.getValue("_status.state.active");
+        Boolean active = source.getValue("status.state.active");
         assertThat(active, is(status.state().isActive()));
 
-        String timestamp = source.getValue("_status.state.timestamp");
+        String timestamp = source.getValue("status.state.timestamp");
         assertThat(timestamp, is(status.state().getTimestamp().toString()));
 
-        String lastChecked = source.getValue("_status.last_checked");
+        String lastChecked = source.getValue("status.last_checked");
         assertThat(lastChecked, is(status.lastChecked().toString()));
 
         ActionStatus actionStatus = status.actionStatus("_logger");
-        String ackStatusState = source.getValue("_status.actions._logger.ack.state").toString().toUpperCase(Locale.ROOT);
+        String ackStatusState = source.getValue("status.actions._logger.ack.state").toString().toUpperCase(Locale.ROOT);
         assertThat(ackStatusState, is(actionStatus.ackStatus().state().toString()));
 
-        Boolean lastExecutionSuccesful = source.getValue("_status.actions._logger.last_execution.successful");
+        Boolean lastExecutionSuccesful = source.getValue("status.actions._logger.last_execution.successful");
         assertThat(lastExecutionSuccesful, is(actionStatus.lastExecution().successful()));
 
-        // also ensure that the _status field is disabled in the watch history
-        GetMappingsResponse response = client().admin().indices().prepareGetMappings(".watcher-history*").addTypes("watch_record").get();
-        byte[] bytes = response.getMappings().values().iterator().next().value.get("watch_record").source().uncompressed();
+        // also ensure that the status field is disabled in the watch history
+        GetMappingsResponse response = client().admin().indices().prepareGetMappings(".watcher-history*").addTypes("doc").get();
+        byte[] bytes = response.getMappings().values().iterator().next().value.get("doc").source().uncompressed();
         XContentSource mappingSource = new XContentSource(new BytesArray(bytes), XContentType.JSON);
-        assertThat(mappingSource.getValue("watch_record.properties._status.enabled"), is(false));
-        assertThat(mappingSource.getValue("watch_record.properties._status.properties.status"), is(nullValue()));
-        assertThat(mappingSource.getValue("watch_record.properties._status.properties.status.properties.active"), is(nullValue()));
+        assertThat(mappingSource.getValue("doc.properties.status.enabled"), is(false));
+        assertThat(mappingSource.getValue("doc.properties.status.properties.status"), is(nullValue()));
+        assertThat(mappingSource.getValue("doc.properties.status.properties.status.properties.active"), is(nullValue()));
     }
 }

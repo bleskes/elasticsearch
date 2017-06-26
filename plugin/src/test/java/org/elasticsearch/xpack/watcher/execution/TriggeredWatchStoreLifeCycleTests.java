@@ -17,10 +17,11 @@
 
 package org.elasticsearch.xpack.watcher.execution;
 
-import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.get.MultiGetItemResponse;
+import org.elasticsearch.action.get.MultiGetRequest;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.xpack.watcher.condition.Condition;
 import org.elasticsearch.xpack.watcher.condition.AlwaysCondition;
+import org.elasticsearch.xpack.watcher.condition.Condition;
 import org.elasticsearch.xpack.watcher.input.none.ExecutableNoneInput;
 import org.elasticsearch.xpack.watcher.test.AbstractWatcherIntegrationTestCase;
 import org.elasticsearch.xpack.watcher.trigger.schedule.ScheduleTriggerEvent;
@@ -28,16 +29,17 @@ import org.elasticsearch.xpack.watcher.watch.Watch;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
-/**
- */
 public class TriggeredWatchStoreLifeCycleTests extends AbstractWatcherIntegrationTestCase {
+
     public void testPutLoadUpdate() throws Exception {
         Condition condition = AlwaysCondition.INSTANCE;
         TriggeredWatchStore triggeredWatchStore = getInstanceFromMaster(TriggeredWatchStore.class);
@@ -50,12 +52,16 @@ public class TriggeredWatchStoreLifeCycleTests extends AbstractWatcherIntegratio
             ScheduleTriggerEvent event = new ScheduleTriggerEvent(watch.id(), dateTime, dateTime);
             Wid wid = new Wid("record_" + i, DateTime.now(DateTimeZone.UTC));
             triggeredWatches[i] = new TriggeredWatch(wid, event);
-            triggeredWatchStore.put(triggeredWatches[i]);
-            GetResponse getResponse = client().prepareGet(TriggeredWatchStore.INDEX_NAME, TriggeredWatchStore.DOC_TYPE,
-                    triggeredWatches[i].id().value())
-                    .setVersion(1)
-                    .get();
-            assertThat(getResponse.isExists(), equalTo(true));
+        }
+        triggeredWatchStore.putAll(Arrays.asList(triggeredWatches));
+
+        MultiGetRequest request = new MultiGetRequest();
+        for (int i = 0; i < triggeredWatches.length; i++) {
+            request.add(TriggeredWatchStore.INDEX_NAME, TriggeredWatchStore.DOC_TYPE, triggeredWatches[i].id().value());
+        }
+        Iterator<MultiGetItemResponse> iterator = client().multiGet(request).get().iterator();
+        while (iterator.hasNext()) {
+            assertThat(iterator.next().getResponse().isExists(), equalTo(true));
         }
 
         // Load the stored watch records
@@ -65,14 +71,16 @@ public class TriggeredWatchStoreLifeCycleTests extends AbstractWatcherIntegratio
         assertThat(loadedTriggeredWatches, hasSize(triggeredWatches.length));
 
         // Change the state to executed and update the watch records and then verify if the changes have been persisted too
+        request = new MultiGetRequest();
         for (TriggeredWatch triggeredWatch : triggeredWatches) {
             assertThat(loadedTriggeredWatches.contains(triggeredWatch), is(true));
             triggeredWatchStore.delete(triggeredWatch.id());
-            GetResponse getResponse = client().prepareGet(TriggeredWatchStore.INDEX_NAME, TriggeredWatchStore.DOC_TYPE,
-                    triggeredWatch.id().value())
-                    .setVersion(2L)
-                    .get();
-            assertThat(getResponse.isExists(), equalTo(false));
+            request.add(TriggeredWatchStore.INDEX_NAME, TriggeredWatchStore.DOC_TYPE, triggeredWatch.id().value());
+        }
+
+        iterator = client().multiGet(request).get().iterator();
+        while (iterator.hasNext()) {
+            assertThat(iterator.next().getResponse().isExists(), equalTo(false));
         }
 
         // try to load watch records, but none are in the await state, so no watch records are loaded.

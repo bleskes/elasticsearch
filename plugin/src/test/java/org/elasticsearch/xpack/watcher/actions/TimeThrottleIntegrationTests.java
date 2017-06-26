@@ -85,7 +85,6 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
         assertThat(putWatchResponse.isCreated(), is(true));
 
         timeWarp().clock().setTime(DateTime.now(DateTimeZone.UTC));
-
         timeWarp().scheduler().trigger(id);
         refresh();
 
@@ -111,7 +110,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
 
         SearchResponse response = client().prepareSearch(HistoryStore.INDEX_PREFIX_WITH_TEMPLATE + "*")
                 .setSource(new SearchSourceBuilder().query(QueryBuilders.boolQuery()
-                        .must(matchQuery(WatchRecord.Field.STATE.getPreferredName(), ExecutionState.THROTTLED.id()))
+                        .must(matchQuery(WatchRecord.STATE.getPreferredName(), ExecutionState.THROTTLED.id()))
                         .must(termQuery("watch_id", id))))
                 .get();
         assertHitCount(response, 1L);
@@ -157,7 +156,7 @@ public class TimeThrottleIntegrationTests extends AbstractWatcherIntegrationTest
 
         SearchResponse searchResponse = client().prepareSearch(HistoryStore.INDEX_PREFIX_WITH_TEMPLATE + "*")
                 .setSource(new SearchSourceBuilder().query(QueryBuilders.boolQuery()
-                        .must(matchQuery(WatchRecord.Field.STATE.getPreferredName(), ExecutionState.THROTTLED.id()))
+                        .must(matchQuery(WatchRecord.STATE.getPreferredName(), ExecutionState.THROTTLED.id()))
                         .must(termQuery("watch_id", id))))
                 .get();
         assertHitCount(searchResponse, 1);

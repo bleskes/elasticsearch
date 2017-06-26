@@ -226,5 +226,4 @@ public class WatcherLifeCycleServiceTests extends ESTestCase {
         verify(watcherService, never()).stop();
         verify(watcherService, times(1)).watchIndexDeletedOrClosed();
     }
-
 }

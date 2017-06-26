@@ -44,6 +44,16 @@ import java.util.Objects;
 
 public abstract class WatchRecord implements ToXContentObject {
 
+    public static final ParseField STATE = new ParseField("state");
+    public static final ParseField TRIGGER_EVENT = new ParseField("trigger_event");
+    private static final ParseField WATCH_ID = new ParseField("watch_id");
+    private static final ParseField MESSAGES = new ParseField("messages");
+    private static final ParseField STATUS = new ParseField("status");
+    private static final ParseField VARS = new ParseField("vars");
+    private static final ParseField METADATA = new ParseField("metadata");
+    private static final ParseField EXECUTION_RESULT = new ParseField("result");
+    private static final ParseField EXCEPTION = new ParseField("exception");
+
     protected final Wid id;
     protected final Watch watch;
     protected final TriggerEvent triggerEvent;
@@ -137,18 +147,18 @@ public abstract class WatchRecord implements ToXContentObject {
     @Override
     public final XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
         builder.startObject();
-        builder.field(Field.WATCH_ID.getPreferredName(), id.watchId());
-        builder.field(Field.STATE.getPreferredName(), state.id());
+        builder.field(WATCH_ID.getPreferredName(), id.watchId());
+        builder.field(STATE.getPreferredName(), state.id());
 
         if (watch != null && watch.status() != null) {
-            builder.field("_status", watch.status(), params);
+            builder.field(STATUS.getPreferredName(), watch.status(), params);
         }
 
-        builder.field(Field.TRIGGER_EVENT.getPreferredName());
+        builder.field(TRIGGER_EVENT.getPreferredName());
         triggerEvent.recordXContent(builder, params);
 
         if (!vars.isEmpty() && WatcherParams.debug(params)) {
-            builder.field(Field.VARS.getPreferredName(), vars);
+            builder.field(VARS.getPreferredName(), vars);
         }
 
         if (input != null) {
@@ -162,10 +172,10 @@ public abstract class WatchRecord implements ToXContentObject {
                     .endObject();
         }
         if (metadata != null) {
-            builder.field(Field.METADATA.getPreferredName(), metadata);
+            builder.field(METADATA.getPreferredName(), metadata);
         }
         if (executionResult != null) {
-            builder.field(Field.EXECUTION_RESULT.getPreferredName(), executionResult, params);
+            builder.field(EXECUTION_RESULT.getPreferredName(), executionResult, params);
         }
         innerToXContent(builder, params);
         builder.endObject();
@@ -191,18 +201,6 @@ public abstract class WatchRecord implements ToXContentObject {
     @Override
     public String toString() {
         return id.toString();
-    }
-
-    public interface Field {
-        ParseField WATCH_ID = new ParseField("watch_id");
-        ParseField TRIGGER_EVENT = new ParseField("trigger_event");
-        ParseField MESSAGES = new ParseField("messages");
-        ParseField STATE = new ParseField("state");
-        ParseField STATUS = new ParseField("_status");
-        ParseField VARS = new ParseField("vars");
-        ParseField METADATA = new ParseField("metadata");
-        ParseField EXECUTION_RESULT = new ParseField("result");
-        ParseField EXCEPTION = new ParseField("exception");
     }
 
     public static class MessageWatchRecord extends WatchRecord {
@@ -257,7 +255,7 @@ public abstract class WatchRecord implements ToXContentObject {
         @Override
         void innerToXContent(XContentBuilder builder, Params params) throws IOException {
             if (messages != null) {
-                builder.array(Field.MESSAGES.getPreferredName(), messages);
+                builder.array(MESSAGES.getPreferredName(), messages);
             }
         }
     }
@@ -294,12 +292,12 @@ public abstract class WatchRecord implements ToXContentObject {
             if (exception != null) {
                 if (exception instanceof ElasticsearchException) {
                     ElasticsearchException elasticsearchException = (ElasticsearchException) exception;
-                    builder.startObject(Field.EXCEPTION.getPreferredName());
+                    builder.startObject(EXCEPTION.getPreferredName());
                     Params delegatingParams = new DelegatingMapParams(STACK_TRACE_ENABLED_PARAMS, params);
                     elasticsearchException.toXContent(builder, delegatingParams);
                     builder.endObject();
                 } else {
-                    builder.startObject(Field.EXCEPTION.getPreferredName())
+                    builder.startObject(EXCEPTION.getPreferredName())
                             .field("type", ElasticsearchException.getExceptionName(exception))
                             .field("reason", exception.getMessage())
                             .endObject();

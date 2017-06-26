@@ -119,7 +119,6 @@ public class WatcherClientProxy extends ClientProxy {
     }
 
     public void putTemplate(PutIndexTemplateRequest request, ActionListener<PutIndexTemplateResponse> listener) {
-        preProcess(request);
-        client.admin().indices().putTemplate(request, listener);
+        client.admin().indices().putTemplate(preProcess(request), listener);
     }
 }

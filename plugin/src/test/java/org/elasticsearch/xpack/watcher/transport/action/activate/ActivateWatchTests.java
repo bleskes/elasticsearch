@@ -91,13 +91,13 @@ public class ActivateWatchTests extends AbstractWatcherIntegrationTestCase {
 
         flush();
         refresh();
-        long count1 = docCount(".watcher-history*", "watch_record", matchAllQuery());
+        long count1 = docCount(".watcher-history*", "doc", matchAllQuery());
 
         Thread.sleep(10000);
 
         flush();
         refresh();
-        long count2 = docCount(".watcher-history*", "watch_record", matchAllQuery());
+        long count2 = docCount(".watcher-history*", "doc", matchAllQuery());
 
         assertThat(count2, is(count1));
 
@@ -111,8 +111,10 @@ public class ActivateWatchTests extends AbstractWatcherIntegrationTestCase {
         assertThat(getWatchResponse, notNullValue());
         assertThat(getWatchResponse.getStatus().state().isActive(), is(true));
 
-        Thread.sleep(10000);
-        long count3 = docCount(".watcher-history*", "watch_record", matchAllQuery());
+        logger.info("Sleeping for another five seconds, ensuring that watch is executed");
+        Thread.sleep(5000);
+        refresh();
+        long count3 = docCount(".watcher-history*", "doc", matchAllQuery());
         assertThat(count3, greaterThan(count1));
     }
 
@@ -135,7 +137,7 @@ public class ActivateWatchTests extends AbstractWatcherIntegrationTestCase {
         assertThat(getWatchResponse, notNullValue());
         assertThat(getWatchResponse.getStatus().state().isActive(), is(true));
 
-        GetResponse getResponse = client().prepareGet(".watches", "watch", "_id").get();
+        GetResponse getResponse = client().prepareGet(".watches", "doc", "_id").get();
         XContentSource source = new XContentSource(getResponse.getSourceAsBytesRef(), XContentType.JSON);
 
         Set<String> filters = Sets.newHashSet(
@@ -155,7 +157,7 @@ public class ActivateWatchTests extends AbstractWatcherIntegrationTestCase {
         source.toXContent(builder, ToXContent.EMPTY_PARAMS);
 
         // now that we filtered out the watch status state, lets put it back in
-        IndexResponse indexResponse = client().prepareIndex(".watches", "watch", "_id")
+        IndexResponse indexResponse = client().prepareIndex(".watches", "doc", "_id")
                 .setSource(builder.bytes(), XContentType.JSON)
                 .get();
         assertThat(indexResponse.getId(), is("_id"));

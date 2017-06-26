@@ -18,8 +18,16 @@
 package org.elasticsearch.xpack.watcher.execution;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.DocWriteRequest;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.ClearScrollResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -41,24 +49,34 @@ import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.Index;
 import org.elasticsearch.index.shard.ShardId;
-import org.elasticsearch.search.SearchShardTarget;
+import org.elasticsearch.indices.TypeMissingException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.SearchShardTarget;
 import org.elasticsearch.search.internal.InternalSearchResponse;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.transport.RemoteTransportException;
 import org.elasticsearch.xpack.watcher.support.init.proxy.WatcherClientProxy;
+import org.elasticsearch.xpack.watcher.trigger.schedule.ScheduleTriggerEvent;
 import org.hamcrest.core.IsNull;
+import org.joda.time.DateTime;
 import org.junit.Before;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.joda.time.DateTimeZone.UTC;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -380,6 +398,80 @@ public class TriggeredWatchStoreTests extends ESTestCase {
 
         assertThat(triggeredWatchStore.validate(csBuilder.build()), is(false));
     }
+
+    public void testPutWorksIfDocTypeExists() throws Exception {
+        DateTime now = DateTime.now(UTC);
+        TriggeredWatch triggeredWatch = new TriggeredWatch(new Wid("watch_id", now), new ScheduleTriggerEvent("watch_id", now, now));
+
+        doAnswer(invocation -> {
+            BulkRequest request = (BulkRequest) invocation.getArguments()[0];
+            ActionListener<BulkResponse> listener = (ActionListener<BulkResponse>) invocation.getArguments()[1];
+            List<BulkItemResponse> responses = request.requests().stream().map(docRequest -> {
+                DocWriteResponse writeResponse = new IndexResponse(new ShardId(new Index("name", "uuid"), 0),
+                        "triggered_watch", "watch_id", 1, true);
+                return new BulkItemResponse(1, DocWriteRequest.OpType.CREATE, writeResponse);
+            }).collect(Collectors.toList());
+            listener.onResponse(new BulkResponse(responses.toArray(new BulkItemResponse[]{}), 1234));
+            return listener;
+        }).when(clientProxy).bulk(any(BulkRequest.class), any(ActionListener.class));
+
+        DocWriteResponse docWriteResponse = new IndexResponse(new ShardId(new Index("name", "uuid"), 0), "doc", "watch_id", 1, true);
+        BulkItemResponse bulkItemResponse = new BulkItemResponse(1, DocWriteRequest.OpType.CREATE, docWriteResponse);
+        BulkResponse response = new BulkResponse(new BulkItemResponse[] { bulkItemResponse }, 1234);
+        when(clientProxy.bulk(any(), any(TimeValue.class))).thenReturn(response);
+
+        triggeredWatchStore.putAll(Collections.singletonList(triggeredWatch));
+
+        verify(clientProxy, times(1)).bulk(anyObject(), any(ActionListener.class));
+    }
+
+    public void testPutWorksIfLegacyDocTypeExists() throws Exception {
+        DateTime now = DateTime.now(UTC);
+        TriggeredWatch triggeredWatch = new TriggeredWatch(new Wid("watch_id", now), new ScheduleTriggerEvent("watch_id", now, now));
+
+        doAnswer(invocation -> {
+            BulkRequest request = (BulkRequest) invocation.getArguments()[0];
+            ActionListener<BulkResponse> listener = (ActionListener<BulkResponse>) invocation.getArguments()[1];
+            List<BulkItemResponse> responses = request.requests().stream().map(docRequest -> {
+                if ("doc".equals(docRequest.type())) {
+                    Exception exception = new TypeMissingException(new Index(TriggeredWatchStore.INDEX_NAME, "uuid"), "doc");
+                    if (randomBoolean()) {
+                        exception = new RemoteTransportException("anything", exception);
+                    }
+
+                    BulkItemResponse.Failure failure = new BulkItemResponse.Failure(TriggeredWatchStore.INDEX_NAME, "doc", "watch_id",
+                            exception);
+                    return new BulkItemResponse(1, DocWriteRequest.OpType.CREATE, failure);
+                } else {
+                    DocWriteResponse writeResponse = new IndexResponse(new ShardId(new Index("name", "uuid"), 0),
+                            "triggered_watch", "watch_id", 1, true);
+                    return new BulkItemResponse(1, DocWriteRequest.OpType.CREATE, writeResponse);
+                }
+            }).collect(Collectors.toList());
+            listener.onResponse(new BulkResponse(responses.toArray(new BulkItemResponse[]{}), 1234));
+            return listener;
+        }).when(clientProxy).bulk(any(BulkRequest.class), any(ActionListener.class));
+
+        triggeredWatchStore.putAll(Collections.singletonList(triggeredWatch));
+
+        verify(clientProxy, times(2)).bulk(anyObject(), any(ActionListener.class));
+    }
+
+    public void testDeleteWorksIfDocTypeWasNotFound() throws Exception {
+        when(clientProxy.delete(any()))
+                .thenReturn(new DeleteResponse(new ShardId(new Index("name", "uuid"), 0), "doc", "watch_id", 1, false))
+                .thenReturn(new DeleteResponse());
+        triggeredWatchStore.delete(new Wid("watch_id", DateTime.now(UTC)));
+        verify(clientProxy, times(2)).delete(any());
+    }
+
+    public void testDeleteWorksIfDocTypeWasFound() throws Exception {
+        when(clientProxy.delete(any()))
+                .thenReturn(new DeleteResponse());
+        triggeredWatchStore.delete(new Wid("watch_id", DateTime.now(UTC)));
+        verify(clientProxy, times(1)).delete(any());
+    }
+
 
     private RefreshResponse mockRefreshResponse(int total, int successful) {
         RefreshResponse refreshResponse = mock(RefreshResponse.class);

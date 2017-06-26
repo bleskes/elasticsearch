@@ -74,7 +74,6 @@ public class WatcherService extends AbstractComponent {
         if (state.compareAndSet(WatcherState.STOPPED, WatcherState.STARTING)) {
             try {
                 logger.debug("starting watch service...");
-                watcherIndexTemplateRegistry.addTemplatesIfMissing();
 
                 // Try to load watch store before the execution service, b/c action depends on watch store
                 watchStore.start(clusterState);

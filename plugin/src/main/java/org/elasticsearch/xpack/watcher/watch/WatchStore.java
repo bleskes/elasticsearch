@@ -21,6 +21,7 @@ import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.util.Supplier;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -34,6 +35,7 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
+import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
@@ -48,6 +50,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.IndexNotFoundException;
 import org.elasticsearch.index.engine.DocumentMissingException;
+import org.elasticsearch.indices.TypeMissingException;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
@@ -55,6 +58,7 @@ import org.elasticsearch.xpack.common.stats.Counters;
 import org.elasticsearch.xpack.security.InternalClient;
 import org.elasticsearch.xpack.watcher.actions.ActionWrapper;
 import org.elasticsearch.xpack.watcher.support.init.proxy.WatcherClientProxy;
+import org.elasticsearch.xpack.watcher.support.xcontent.WatcherParams;
 import org.elasticsearch.xpack.watcher.trigger.schedule.Schedule;
 import org.elasticsearch.xpack.watcher.trigger.schedule.ScheduleTrigger;
 
@@ -66,12 +70,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.xpack.watcher.support.Exceptions.illegalState;
 
 public class WatchStore extends AbstractComponent {
 
     public static final String INDEX = ".watches";
-    public static final String DOC_TYPE = "watch";
+    public static final String DOC_TYPE = "doc";
+    public static final String LEGACY_DOC_TYPE = "watch";
 
     private final WatcherClientProxy client;
     private final Watch.Parser watchParser;
@@ -159,12 +165,32 @@ public class WatchStore extends AbstractComponent {
      */
     public WatchPut put(Watch watch) throws IOException {
         ensureStarted();
-        IndexRequest indexRequest = createIndexRequest(watch.id(), watch.getAsBytes(), Versions.MATCH_ANY);
-        IndexResponse response = client.index(indexRequest, (TimeValue) null);
+        IndexResponse response;
+        try {
+            IndexRequest indexRequest = createIndexRequest(DOC_TYPE, watch);
+            response = client.index(indexRequest, (TimeValue) null);
+        } catch (TypeMissingException e) {
+            // this exception indicates the watch index was not updated yet and is not using the new doc type, so we try to store
+            // with the old 'watch' document type
+            IndexRequest indexRequest = createIndexRequest(LEGACY_DOC_TYPE, watch);
+            response = client.index(indexRequest, (TimeValue) null);
+        }
+
         watch.status().version(response.getVersion());
         watch.version(response.getVersion());
         Watch previous = watches.put(watch.id(), watch);
         return new WatchPut(previous, watch, response);
+    }
+
+    private IndexRequest createIndexRequest(String docType, Watch watch) throws IOException {
+        IndexRequest indexRequest = new IndexRequest(INDEX, docType, watch.id());
+        boolean useOldStatus = LEGACY_DOC_TYPE.equals(docType);
+        BytesReference source = watch.toXContent(jsonBuilder(), WatcherParams.builder().put(Watch.INCLUDE_STATUS_KEY, true)
+                .put(Watch.WRITE_STATUS_WITH_UNDERSCORE, useOldStatus).build()).bytes();
+        indexRequest.source(BytesReference.toBytes(source), XContentType.JSON);
+        indexRequest.version(Versions.MATCH_ANY);
+        indexRequest.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+        return indexRequest;
     }
 
     /**
@@ -176,6 +202,9 @@ public class WatchStore extends AbstractComponent {
 
     /**
      * Updates and persists the status of the given watch
+     *
+     * at the moment we store the status together with the watch,
+     * so we just need to update the watch itself
      */
     public void updateStatus(Watch watch, boolean refresh) throws IOException {
         ensureStarted();
@@ -183,29 +212,43 @@ public class WatchStore extends AbstractComponent {
             return;
         }
 
-        // at the moment we store the status together with the watch,
-        // so we just need to update the watch itself
-        XContentBuilder source = JsonXContent.contentBuilder().
-                startObject()
-                .field(Watch.Field.STATUS.getPreferredName(), watch.status(), ToXContent.EMPTY_PARAMS)
-                .endObject();
-
-        UpdateRequest updateRequest = new UpdateRequest(INDEX, DOC_TYPE, watch.id());
-        updateRequest.doc(source);
-        updateRequest.version(watch.version());
-        if (refresh) {
-            updateRequest.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
-        }
+        UpdateResponse response = null;
         try {
-            UpdateResponse response = client.update(updateRequest);
-            watch.status().version(response.getVersion());
-            watch.version(response.getVersion());
-            watch.status().resetDirty();
+            try {
+                response = client.update(createUpdateRequest(watch, DOC_TYPE, Watch.Field.STATUS, refresh));
+            } catch (DocumentMissingException e) {
+                // this means the mapping has changed and we can try to write with the old type 'watch'
+                // and thus we retry to write the status in the old fashion
+                response = client.update(createUpdateRequest(watch, LEGACY_DOC_TYPE, Watch.Field.STATUS_V5, refresh));
+            }
         } catch (DocumentMissingException e) {
             // do not rethrow an exception, otherwise the watch history will contain an exception
             // even though the execution might has been fine
             logger.warn("Watch [{}] was deleted during watch execution, not updating watch status", watch.id());
         }
+
+        if (response != null) {
+            watch.status().version(response.getVersion());
+            watch.version(response.getVersion());
+            watch.status().resetDirty();
+        }
+    }
+
+    private UpdateRequest createUpdateRequest(Watch watch, String type, ParseField statusFieldName, boolean refresh) throws IOException {
+        XContentBuilder source = JsonXContent.contentBuilder().
+                startObject()
+                .field(statusFieldName.getPreferredName(), watch.status(), ToXContent.EMPTY_PARAMS)
+                .endObject();
+
+        UpdateRequest updateRequest = new UpdateRequest(INDEX, type, watch.id());
+        updateRequest.doc(source);
+        updateRequest.version(watch.version());
+
+        if (refresh) {
+            updateRequest.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+        }
+
+        return updateRequest;
     }
 
     /**
@@ -216,9 +259,14 @@ public class WatchStore extends AbstractComponent {
         Watch watch = watches.remove(id);
         // even if the watch was not found in the watch map, we should still try to delete it
         // from the index, just to make sure we don't leave traces of it
-        DeleteRequest request = new DeleteRequest(INDEX, DOC_TYPE, id);
-        request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+        DeleteRequest request = new DeleteRequest(INDEX, DOC_TYPE, id).setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
         DeleteResponse response = client.delete(request);
+        // if the deletion failed because the document does not exist, try to run another delete operation
+        // using the legacy document type - only if both are deleted we can be sure the watch is not persisted anymore during
+        // the transition phase
+        if (response.getResult() == DocWriteResponse.Result.NOT_FOUND) {
+            response = client.delete(new DeleteRequest(INDEX, LEGACY_DOC_TYPE, id).setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE));
+        }
         // Another operation may hold the Watch instance, so lets set the version for consistency:
         if (watch != null) {
             watch.version(response.getVersion());
@@ -302,14 +350,6 @@ public class WatchStore extends AbstractComponent {
         }
     }
 
-    IndexRequest createIndexRequest(String id, BytesReference source, long version) {
-        IndexRequest indexRequest = new IndexRequest(INDEX, DOC_TYPE, id);
-        indexRequest.source(BytesReference.toBytes(source));
-        indexRequest.version(version);
-        indexRequest.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
-        return indexRequest;
-    }
-
     /**
      * scrolls all the watch documents in the watches index, parses them, and loads them into
      * the given map.
@@ -326,7 +366,6 @@ public class WatchStore extends AbstractComponent {
 
         int count = 0;
         SearchRequest searchRequest = new SearchRequest(INDEX)
-                .types(DOC_TYPE)
                 .preference("_primary")
                 .scroll(scrollTimeout)
                 .source(new SearchSourceBuilder()
@@ -346,8 +385,8 @@ public class WatchStore extends AbstractComponent {
                         final BytesReference source = hit.getSourceRef();
                         Watch watch =
                                 watchParser.parse(id, true, source, XContentFactory.xContentType(source), upgradeSource);
-                        watch.status().version(hit.version());
-                        watch.version(hit.version());
+                        watch.status().version(hit.getVersion());
+                        watch.version(hit.getVersion());
                         watches.put(id, watch);
                         count++;
                     } catch (Exception e) {

@@ -148,7 +148,6 @@
   - do:
       search:
         index: .watcher-history-*
-        type: watch_record
       body: >
         {
           "query" : {

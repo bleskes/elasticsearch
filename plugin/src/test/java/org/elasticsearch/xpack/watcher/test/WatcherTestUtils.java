@@ -76,6 +76,7 @@ import org.elasticsearch.xpack.watcher.watch.WatchStatus;
 import org.hamcrest.Matcher;
 import org.joda.time.DateTime;
 
+import javax.mail.internet.AddressException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,9 +85,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.mail.internet.AddressException;
-
-import static com.carrotsearch.randomizedtesting.RandomizedTest.randomInt;
 import static java.util.Collections.emptyMap;
 import static org.apache.lucene.util.LuceneTestCase.createTempDir;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;

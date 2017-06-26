@@ -34,6 +34,21 @@ Response:
       }
     }
   },
+  "status": { <2>
+    "version": 1,
+    "state": {
+      "active": true,
+      "timestamp": "2015-05-26T18:21:08.630Z"
+    },
+    "actions": {
+      "test_index": {
+        "ack": {
+          "timestamp": "2015-05-26T18:21:08.630Z",
+          "state": "awaits_successful_execution"
+        }
+      }
+    }
+  },
   "watch": {
     "input": {
       "simple": {
@@ -65,3 +80,4 @@ Response:
 --------------------------------------------------
 // TESTRESPONSE[s/"timestamp": "2015-05-26T18:21:08.630Z"/"timestamp": "$body._status.state.timestamp"/]
 <1> The current status of the watch
+<2> The same current status of the watch, but under a different field name (in order to cater for upgrades)

@@ -27,12 +27,14 @@ GET _xpack/watcher/watch/my_watch
     "version": 1,
     "actions": ...
   },
+  "status": ...,
   "watch": ...
 }
 --------------------------------------------------
 // TESTRESPONSE[s/2015-08-20T12:21:32.734Z/$body._status.state.timestamp/]
 // TESTRESPONSE[s/"actions": \.\.\./"actions": "$body._status.actions"/]
 // TESTRESPONSE[s/"watch": \.\.\./"watch": "$body.watch"/]
+// TESTRESPONSE[s/"status": \.\.\./"status": "$body._status"/]
 
 You can deactivate the watch by executing the following API call:
 
@@ -54,8 +56,10 @@ The new state of the watch is returned as part of its overall status:
       "timestamp" : "2015-09-04T08:39:46.816Z"
     },
     "actions": ...
-  }
+  },
+  "status": ...
 }
 --------------------------------------------------
 // TESTRESPONSE[s/2015-09-04T08:39:46.816Z/$body._status.state.timestamp/]
 // TESTRESPONSE[s/"actions": \.\.\./"actions": "$body._status.actions"/]
+// TESTRESPONSE[s/"status": \.\.\./"status": "$body._status"/]

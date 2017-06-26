@@ -140,7 +140,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
         String index = HistoryStore.getHistoryIndexNameForTime(now);
         client().prepareIndex(index, HistoryStore.DOC_TYPE, wid.value())
                 .setSource(jsonBuilder().startObject()
-                        .startObject(WatchRecord.Field.TRIGGER_EVENT.getPreferredName())
+                        .startObject(WatchRecord.TRIGGER_EVENT.getPreferredName())
                         .field(event.type(), event)
                         .endObject()
                         .startObject(Watch.Field.CONDITION.getPreferredName())
@@ -158,7 +158,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
         wid = new Wid("_id", now);
         client().prepareIndex(index, HistoryStore.DOC_TYPE, wid.value())
                 .setSource(jsonBuilder().startObject()
-                        .startObject(WatchRecord.Field.TRIGGER_EVENT.getPreferredName())
+                        .startObject(WatchRecord.TRIGGER_EVENT.getPreferredName())
                         .field(event.type(), event)
                         .endObject()
                         .startObject(Watch.Field.CONDITION.getPreferredName())
@@ -176,7 +176,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
         wid = new Wid("_id", now);
         client().prepareIndex(index, HistoryStore.DOC_TYPE, wid.value())
                 .setSource(jsonBuilder().startObject()
-                        .startObject(WatchRecord.Field.TRIGGER_EVENT.getPreferredName())
+                        .startObject(WatchRecord.TRIGGER_EVENT.getPreferredName())
                             .startObject("unknown").endObject()
                         .endObject()
                         .startObject(Watch.Field.CONDITION.getPreferredName())
@@ -204,7 +204,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
         ScheduleTriggerEvent event = new ScheduleTriggerEvent("_id", now, now);
         client().prepareIndex(TriggeredWatchStore.INDEX_NAME, TriggeredWatchStore.DOC_TYPE, wid.value())
                 .setSource(jsonBuilder().startObject()
-                        .startObject(WatchRecord.Field.TRIGGER_EVENT.getPreferredName())
+                        .startObject(WatchRecord.TRIGGER_EVENT.getPreferredName())
                         .field(event.type(), event)
                         .endObject()
                         .endObject())
@@ -219,7 +219,7 @@ public class BootStrapTests extends AbstractWatcherIntegrationTestCase {
         SearchResponse searchResponse = client().prepareSearch(HistoryStore.INDEX_PREFIX_WITH_TEMPLATE + "*").get();
         assertHitCount(searchResponse, 1);
         assertThat(searchResponse.getHits().getAt(0).id(), Matchers.equalTo(wid.value()));
-        assertThat(searchResponse.getHits().getAt(0).sourceAsMap().get(WatchRecord.Field.STATE.getPreferredName()).toString(),
+        assertThat(searchResponse.getHits().getAt(0).sourceAsMap().get(WatchRecord.STATE.getPreferredName()).toString(),
                 equalTo(ExecutionState.NOT_EXECUTED_WATCH_MISSING.toString()));
     }
 

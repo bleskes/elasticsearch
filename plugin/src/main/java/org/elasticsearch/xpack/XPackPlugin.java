@@ -481,8 +481,6 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         security.onIndexModule(module);
     }
 
-
-
     public static void bindFeatureSet(Binder binder, Class<? extends XPackFeatureSet> featureSet) {
         binder.bind(featureSet).asEagerSingleton();
         Multibinder<XPackFeatureSet> featureSetBinder = Multibinder.newSetBinder(binder, XPackFeatureSet.class);

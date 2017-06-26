@@ -3,7 +3,7 @@
 
 <<actions-ack-throttle, Acknowledging>> a watch enables you to manually throttle
 execution of the watch's actions. An action's _acknowledgement state_ is stored
-in the `_status.actions.<id>.ack.state` structure.
+in the `status.actions.<id>.ack.state` structure.
 
 To demonstrate let's create a new watch:
 
@@ -58,7 +58,7 @@ The action state of a newly-created watch is `awaits_successful_execution`:
 {
   "found": true,
   "_id": "my_watch",
-  "_status": {
+  "status": {
     "version": 1,
     "actions": {
       "test_index": {
@@ -70,12 +70,14 @@ The action state of a newly-created watch is `awaits_successful_execution`:
     },
     "state": ...
   },
+  "_status": ...,
   "watch": ...
 }
 --------------------------------------------------
-// TESTRESPONSE[s/"state": \.\.\./"state": "$body._status.state"/]
+// TESTRESPONSE[s/"state": \.\.\./"state": "$body.status.state"/]
+// TESTRESPONSE[s/"_status": \.\.\./"_status": "$body._status"/]
 // TESTRESPONSE[s/"watch": \.\.\./"watch": "$body.watch"/]
-// TESTRESPONSE[s/"timestamp": "2015-05-26T18:04:27.723Z"/"timestamp": "$body._status.actions.test_index.ack.timestamp"/]
+// TESTRESPONSE[s/"timestamp": "2015-05-26T18:04:27.723Z"/"timestamp": "$body.status.actions.test_index.ack.timestamp"/]
 
 When the watch executes and the condition matches, the value of the `ack.state`
 changes to `ackable`. Let's force execution of the watch and fetch it again to
@@ -100,7 +102,7 @@ and the action is now in `ackable` state:
 {
   "found": true,
   "_id": "my_watch",
-  "_status": {
+  "status": {
     "version": 2,
     "actions": {
       "test_index": {
@@ -122,10 +124,12 @@ and the action is now in `ackable` state:
     "last_checked": ...,
     "last_met_condition": ...
   },
+  "_status": ...,
   "watch": ...
 }
 --------------------------------------------------
 // TESTRESPONSE[s/"state": \.\.\./"state": "$body._status.state"/]
+// TESTRESPONSE[s/"_status": \.\.\./"_status": "$body._status"/]
 // TESTRESPONSE[s/"watch": \.\.\./"watch": "$body.watch"/]
 // TESTRESPONSE[s/"last_checked": \.\.\./"last_checked": "$body._status.last_checked"/]
 // TESTRESPONSE[s/"last_met_condition": \.\.\./"last_met_condition": "$body._status.last_met_condition"/]
@@ -147,7 +151,7 @@ GET _xpack/watcher/watch/my_watch
 {
   "found": true,
   "_id": "my_watch",
-  "_status": {
+  "status": {
     "version": 3,
     "actions": {
       "test_index": {
@@ -169,11 +173,13 @@ GET _xpack/watcher/watch/my_watch
     "last_checked": ...,
     "last_met_condition": ...
   },
+  "_status": ...,
   "watch": ...
 }
 --------------------------------------------------
 // TESTRESPONSE[s/"state": \.\.\./"state": "$body._status.state"/]
 // TESTRESPONSE[s/"watch": \.\.\./"watch": "$body.watch"/]
+// TESTRESPONSE[s/"_status": \.\.\./"_status": "$body._status"/]
 // TESTRESPONSE[s/"last_checked": \.\.\./"last_checked": "$body._status.last_checked"/]
 // TESTRESPONSE[s/"last_met_condition": \.\.\./"last_met_condition": "$body._status.last_met_condition"/]
 // TESTRESPONSE[s/"timestamp": "2015-05-26T18:04:27.723Z"/"timestamp": "$body._status.actions.test_index.ack.timestamp"/]

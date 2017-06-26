@@ -17,6 +17,7 @@
 
 package org.elasticsearch.xpack.watcher.history;
 
+import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.common.component.AbstractComponent;
 import org.elasticsearch.common.inject.Inject;
@@ -48,7 +49,7 @@ public class HistoryStore extends AbstractComponent {
 
     public static final String INDEX_PREFIX = ".watcher-history-";
     public static final String INDEX_PREFIX_WITH_TEMPLATE = INDEX_PREFIX + WatcherIndexTemplateRegistry.INDEX_TEMPLATE_VERSION + "-";
-    public static final String DOC_TYPE = "watch_record";
+    public static final String DOC_TYPE = "doc";
 
     static final DateTimeFormatter indexTimeFormat = DateTimeFormat.forPattern("YYYY.MM.dd");
 
@@ -91,19 +92,24 @@ public class HistoryStore extends AbstractComponent {
         if (!started.get()) {
             throw new IllegalStateException("unable to persist watch record history store is not ready");
         }
-        String index = getHistoryIndexNameForTime(watchRecord.triggerEvent().triggeredTime());
         putUpdateLock.lock();
-        try (XContentBuilder builder = XContentFactory.jsonBuilder()) {
-            watchRecord.toXContent(builder, WatcherParams.builder().hideSecrets(true).build());
-
-            IndexRequest request = new IndexRequest(index, DOC_TYPE, watchRecord.id().value())
-                    .source(builder)
-                    .opType(IndexRequest.OpType.CREATE);
-            client.index(request, (TimeValue) null);
+        try {
+            client.index(createWatchRecordIndexRequest(watchRecord), (TimeValue) null);
         } catch (IOException ioe) {
             throw ioException("failed to persist watch record [{}]", ioe, watchRecord);
         } finally {
             putUpdateLock.unlock();
+        }
+    }
+
+    private IndexRequest createWatchRecordIndexRequest(WatchRecord watchRecord) throws IOException {
+        String index = getHistoryIndexNameForTime(watchRecord.triggerEvent().triggeredTime());
+        try (XContentBuilder builder = XContentFactory.jsonBuilder()) {
+            watchRecord.toXContent(builder, WatcherParams.builder().hideSecrets(true).build());
+
+            return new IndexRequest(index, DOC_TYPE, watchRecord.id().value())
+                    .source(builder)
+                    .opType(OpType.CREATE);
         }
     }
 
@@ -117,13 +123,8 @@ public class HistoryStore extends AbstractComponent {
         }
         String index = getHistoryIndexNameForTime(watchRecord.triggerEvent().triggeredTime());
         putUpdateLock.lock();
-        try (XContentBuilder builder = XContentFactory.jsonBuilder()) {
-            watchRecord.toXContent(builder, WatcherParams.builder().hideSecrets(true).build());
-
-            IndexRequest request = new IndexRequest(index, DOC_TYPE, watchRecord.id().value())
-                    .source(builder)
-                    .opType(IndexRequest.OpType.CREATE);
-            client.index(request, (TimeValue) null);
+        try {
+            client.index(createWatchRecordIndexRequest(watchRecord), (TimeValue) null);
         } catch (VersionConflictEngineException vcee) {
             watchRecord = new WatchRecord.MessageWatchRecord(watchRecord, ExecutionState.EXECUTED_MULTIPLE_TIMES,
                     "watch record [{ " + watchRecord.id() + " }] has been stored before, previous state [" + watchRecord.state() + "]");

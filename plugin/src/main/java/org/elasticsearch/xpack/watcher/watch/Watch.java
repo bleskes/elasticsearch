@@ -68,7 +68,8 @@ import static org.joda.time.DateTimeZone.UTC;
 public class Watch implements TriggerEngine.Job, ToXContentObject {
 
     public static final String ALL_ACTIONS_ID = "_all";
-    public static final String INCLUDE_STATUS_KEY = "include_status";
+    static final String INCLUDE_STATUS_KEY = "include_status";
+    static final String WRITE_STATUS_WITH_UNDERSCORE = "write_status_with_underscore";
 
     private final String id;
     private final Trigger trigger;
@@ -199,16 +200,14 @@ public class Watch implements TriggerEngine.Job, ToXContentObject {
             builder.field(Field.METADATA.getPreferredName(), metadata);
         }
         if (params.paramAsBoolean(INCLUDE_STATUS_KEY, false)) {
-            builder.field(Field.STATUS.getPreferredName(), status, params);
+            if (params.paramAsBoolean(WRITE_STATUS_WITH_UNDERSCORE, false)) {
+                builder.field(Field.STATUS_V5.getPreferredName(), status, params);
+            } else {
+                builder.field(Field.STATUS.getPreferredName(), status, params);
+            }
         }
         builder.endObject();
         return builder;
-    }
-
-    public BytesReference getAsBytes() throws IOException {
-        // we don't want to cache this and instead rebuild it every time on demand. The watch is in
-        // memory and we don't need this redundancy
-        return toXContent(jsonBuilder(), WatcherParams.builder().put(Watch.INCLUDE_STATUS_KEY, true).build()).bytes();
     }
 
     public static class Parser extends AbstractComponent {
@@ -331,7 +330,7 @@ public class Watch implements TriggerEngine.Job, ToXContentObject {
                     actions = actionRegistry.parseActions(id, parser, upgradeWatchSource);
                 } else if (Field.METADATA.match(currentFieldName)) {
                     metatdata = parser.map();
-                } else if (Field.STATUS.match(currentFieldName)) {
+                } else if (Field.STATUS_V5.match(currentFieldName) || Field.STATUS.match(currentFieldName)) {
                     if (includeStatus) {
                         status = WatchStatus.parse(id, parser);
                     } else {
@@ -377,6 +376,7 @@ public class Watch implements TriggerEngine.Job, ToXContentObject {
         ParseField THROTTLE_PERIOD = new ParseField("throttle_period_in_millis");
         ParseField THROTTLE_PERIOD_HUMAN = new ParseField("throttle_period");
         ParseField METADATA = new ParseField("metadata");
-        ParseField STATUS = new ParseField("_status");
+        ParseField STATUS = new ParseField("status");
+        ParseField STATUS_V5 = new ParseField("_status");
     }
 }

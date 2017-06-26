@@ -143,11 +143,7 @@ public class WatcherLifeCycleService extends AbstractComponent implements Cluste
                 final ClusterState state = event.state();
                 threadPool.executor(ThreadPool.Names.GENERIC).execute(() -> start(state, false));
             } else {
-                boolean isWatchIndexDeleted = event.indicesDeleted().stream()
-                        .filter(index -> WatchStore.INDEX.equals(index.getName()))
-                        .findAny()
-                        .isPresent();
-
+                boolean isWatchIndexDeleted = event.indicesDeleted().stream().anyMatch(index -> WatchStore.INDEX.equals(index.getName()));
                 boolean isWatchIndexOpenInPreviousClusterState = event.previousState().metaData().hasIndex(WatchStore.INDEX) &&
                         event.previousState().metaData().index(WatchStore.INDEX).getState() == IndexMetaData.State.OPEN;
                 boolean isWatchIndexClosedInCurrentClusterState = event.state().metaData().hasIndex(WatchStore.INDEX) &&
@@ -155,7 +151,7 @@ public class WatcherLifeCycleService extends AbstractComponent implements Cluste
                 boolean hasWatcherIndexBeenClosed = isWatchIndexOpenInPreviousClusterState && isWatchIndexClosedInCurrentClusterState;
 
                 if (isWatchIndexDeleted || hasWatcherIndexBeenClosed) {
-                    threadPool.executor(ThreadPool.Names.GENERIC).execute(() -> watcherService.watchIndexDeletedOrClosed());
+                    threadPool.executor(ThreadPool.Names.GENERIC).execute(watcherService::watchIndexDeletedOrClosed);
                 }
             }
         }
@@ -223,5 +219,4 @@ public class WatcherLifeCycleService extends AbstractComponent implements Cluste
             Thread.currentThread().interrupt();
         }
     }
-
 }

@@ -41,6 +41,7 @@ import static org.elasticsearch.rest.RestRequest.Method.PUT;
  * The rest action to ack a watch
  */
 public class RestAckWatchAction extends WatcherRestHandler {
+
     public RestAckWatchAction(Settings settings, RestController controller) {
         super(settings);
         // @deprecated Remove deprecations in 6.0
@@ -77,6 +78,7 @@ public class RestAckWatchAction extends WatcherRestHandler {
             @Override
             public RestResponse buildResponse(AckWatchResponse response, XContentBuilder builder) throws Exception {
                 return new BytesRestResponse(RestStatus.OK, builder.startObject()
+                        .field(Watch.Field.STATUS_V5.getPreferredName(), response.getStatus(), WatcherParams.HIDE_SECRETS)
                         .field(Watch.Field.STATUS.getPreferredName(), response.getStatus(), WatcherParams.HIDE_SECRETS)
                         .endObject());
 
