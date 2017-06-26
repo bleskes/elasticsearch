@@ -197,7 +197,7 @@ public class IndicesAndAliasesResolver {
         return Collections.unmodifiableSet(indices);
     }
 
-    private static boolean allowsRemoteIndices(IndicesRequest indicesRequest) {
+    public static boolean allowsRemoteIndices(IndicesRequest indicesRequest) {
         return indicesRequest instanceof SearchRequest || indicesRequest instanceof FieldCapabilitiesRequest
                 || indicesRequest instanceof GraphExploreRequest;
     }
