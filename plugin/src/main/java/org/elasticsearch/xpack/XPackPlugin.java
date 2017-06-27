@@ -75,6 +75,7 @@ import org.elasticsearch.xpack.common.http.auth.HttpAuthRegistry;
 import org.elasticsearch.xpack.common.http.auth.basic.BasicAuth;
 import org.elasticsearch.xpack.common.http.auth.basic.BasicAuthFactory;
 import org.elasticsearch.xpack.common.text.TextTemplateEngine;
+import org.elasticsearch.xpack.deprecation.Deprecation;
 import org.elasticsearch.xpack.extensions.XPackExtension;
 import org.elasticsearch.xpack.extensions.XPackExtensionsService;
 import org.elasticsearch.xpack.graph.Graph;
@@ -147,6 +148,9 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
     /** Name constant for the machine learning feature. */
     public static final String MACHINE_LEARNING = "ml";
 
+    /** Name constant for the Deprecation API feature. */
+    public static final String DEPRECATION = "deprecation";
+
     // inside of YAML settings we still use xpack do not having handle issues with dashes
     private static final String SETTINGS_NAME = "xpack";
 
@@ -196,6 +200,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
     protected Watcher watcher;
     protected Graph graph;
     protected MachineLearning machineLearning;
+    protected Deprecation deprecation;
 
     public XPackPlugin(Settings settings) throws IOException, GeneralSecurityException {
         this.settings = settings;
@@ -210,6 +215,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         this.watcher = new Watcher(settings);
         this.graph = new Graph(settings);
         this.machineLearning = new MachineLearning(settings, env, licenseState);
+        this.deprecation = new Deprecation();
         // Check if the node is a transport client.
         if (transportClientMode == false) {
             this.extensionsService = new XPackExtensionsService(settings, resolveXPackExtensionsFile(env), getExtensions());
@@ -411,6 +417,7 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
         actions.addAll(watcher.getActions());
         actions.addAll(graph.getActions());
         actions.addAll(machineLearning.getActions());
+        actions.addAll(deprecation.getActions());
         return actions;
     }
 
@@ -444,6 +451,8 @@ public class XPackPlugin extends Plugin implements ScriptPlugin, ActionPlugin, I
                 indexNameExpressionResolver, nodesInCluster));
         handlers.addAll(machineLearning.getRestHandlers(settings, restController, clusterSettings, indexScopedSettings, settingsFilter,
                 indexNameExpressionResolver, nodesInCluster));
+        handlers.addAll(deprecation.getRestHandlers(settings, restController, clusterSettings, indexScopedSettings, settingsFilter,
+            indexNameExpressionResolver, nodesInCluster));
         return handlers;
     }
 

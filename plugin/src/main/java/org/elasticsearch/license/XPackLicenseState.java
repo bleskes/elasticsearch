@@ -60,6 +60,9 @@ public class XPackLicenseState {
         messages.put(XPackPlugin.MACHINE_LEARNING, new String[] {
             "Machine learning APIs are disabled"
         });
+        messages.put(XPackPlugin.DEPRECATION, new String[] {
+            "Deprecation APIs are disabled"
+        });
         EXPIRATION_MESSAGES = Collections.unmodifiableMap(messages);
     }
 
@@ -415,5 +418,13 @@ public class XPackLicenseState {
         boolean licensed = operationMode == OperationMode.TRIAL || operationMode == OperationMode.PLATINUM;
 
         return licensed && localStatus.active;
+    }
+
+    /**
+     * Deprecation APIs are always allowed as long as there is an active license
+     * @return {@code true} as long as there is a valid license
+     */
+    public boolean isDeprecationAllowed() {
+        return status.active;
     }
 }
