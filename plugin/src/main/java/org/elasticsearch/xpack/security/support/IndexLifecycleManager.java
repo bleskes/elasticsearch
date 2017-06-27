@@ -321,7 +321,7 @@ public class IndexLifecycleManager extends AbstractComponent {
                 return Version.V_2_3_0;
             }
             return Version.fromString((String) meta.get(SECURITY_VERSION_STRING));
-        } catch (IOException e) {
+        } catch (ElasticsearchParseException e) {
             logger.error(new ParameterizedMessage(
                     "Cannot parse the mapping for index [{}]", indexName), e);
             throw new ElasticsearchException(
