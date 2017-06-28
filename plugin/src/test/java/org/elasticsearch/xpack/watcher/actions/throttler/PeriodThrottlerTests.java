@@ -19,13 +19,13 @@ package org.elasticsearch.xpack.watcher.actions.throttler;
 
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.support.clock.SystemClock;
 import org.elasticsearch.xpack.watcher.actions.ActionStatus;
 import org.elasticsearch.xpack.watcher.execution.WatchExecutionContext;
-import org.elasticsearch.xpack.support.clock.SystemClock;
+import org.elasticsearch.xpack.watcher.watch.Payload;
 import org.elasticsearch.xpack.watcher.watch.WatchStatus;
 import org.joda.time.PeriodType;
 
-import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.EMPTY_PAYLOAD;
 import static org.elasticsearch.xpack.watcher.test.WatcherTestUtils.mockExecutionContext;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.is;
@@ -43,7 +43,7 @@ public class PeriodThrottlerTests extends ESTestCase {
         TimeValue period = TimeValue.timeValueSeconds(randomIntBetween(2, 5));
         PeriodThrottler throttler = new PeriodThrottler(SystemClock.INSTANCE, period, periodType);
 
-        WatchExecutionContext ctx = mockExecutionContext("_name", EMPTY_PAYLOAD);
+        WatchExecutionContext ctx = mockExecutionContext("_name", Payload.EMPTY);
         ActionStatus actionStatus = mock(ActionStatus.class);
         when(actionStatus.lastSuccessfulExecution())
                 .thenReturn(ActionStatus.Execution.successful(SystemClock.INSTANCE.nowUTC().minusSeconds((int) period.seconds() - 1)));
@@ -64,7 +64,7 @@ public class PeriodThrottlerTests extends ESTestCase {
         TimeValue period = TimeValue.timeValueSeconds(randomIntBetween(2, 5));
         PeriodThrottler throttler = new PeriodThrottler(SystemClock.INSTANCE, period, periodType);
 
-        WatchExecutionContext ctx = mockExecutionContext("_name", EMPTY_PAYLOAD);
+        WatchExecutionContext ctx = mockExecutionContext("_name", Payload.EMPTY);
         ActionStatus actionStatus = mock(ActionStatus.class);
         when(actionStatus.lastSuccessfulExecution())
                 .thenReturn(ActionStatus.Execution.successful(SystemClock.INSTANCE.nowUTC().minusSeconds((int) period.seconds() + 1)));
