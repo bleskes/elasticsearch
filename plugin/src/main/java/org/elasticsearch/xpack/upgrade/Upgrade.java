@@ -65,7 +65,7 @@ import java.util.function.Supplier;
 
 public class Upgrade implements ActionPlugin {
 
-    public static final Version UPGRADE_INTRODUCED = Version.V_5_5_0; // TODO: Probably will need to change this to 5.6.0
+    public static final Version UPGRADE_INTRODUCED = Version.V_5_6_0_UNRELEASED;
 
     private final Settings settings;
     private final List<BiFunction<InternalClient, ClusterService, IndexUpgradeCheck>> upgradeCheckFactories;
@@ -172,7 +172,7 @@ public class Upgrade implements ActionPlugin {
     private static void preWatcherUpgrade(Client client, ActionListener<Boolean> listener) {
         new WatcherClient(client).watcherStats(new WatcherStatsRequest(), ActionListener.wrap(
                 stats -> {
-                    if (stats.watcherMetaData().manuallyStopped()) {
+                    if (stats.getWatcherMetaData().manuallyStopped()) {
                         // don't start the watcher after upgrade
                         listener.onResponse(false);
                     } else {
