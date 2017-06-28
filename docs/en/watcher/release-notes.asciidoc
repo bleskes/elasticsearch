@@ -207,8 +207,8 @@ October 28, 2015
 * Added new <<actions-hipchat, HipChat Action>>
 * Added new <<actions-slack, Slack Action>>
 * Watches now have an <<watch-active-state, active state>>. In addition, a new
-  API was added to {ref}/watcher-api-activate-watch.html[activate]
-  /{ref}watcher-api-deactivate-watch.html[deactivate] registered watches.
+  API was added to {ref}/watcher-api-activate-watch.html[activate] or
+  {ref}/watcher-api-deactivate-watch.html[deactivate] registered watches.
 * Added new <<condition-array-compare, array_compare>>, that can compare an array
   of values in the <<watch-execution-context, Watch Execution Context Model>>
   to a given value.
