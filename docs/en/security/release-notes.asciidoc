@@ -84,7 +84,7 @@ March 30, 2016
 .New Features
 * <<native-realm,Native realm>> with support for
 {ref}/security-api-users.html[user management APIs].
-* <<security-api-roles,Role management APIs>> have been added.
+* {ref}/security-api-roles.html[Role management APIs] have been added.
 
 .Bug Fixes
 * When evaluating permissions for multiple roles that have document level security enabled for the same index, Shield performed an `AND`
