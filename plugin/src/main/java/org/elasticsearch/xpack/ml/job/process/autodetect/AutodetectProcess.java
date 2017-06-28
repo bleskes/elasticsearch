@@ -20,7 +20,7 @@ import org.elasticsearch.xpack.ml.job.persistence.JobProvider;
 import org.elasticsearch.xpack.ml.job.persistence.StateStreamer;
 import org.elasticsearch.xpack.ml.job.process.NativeController;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.DataLoadParams;
-import org.elasticsearch.xpack.ml.job.process.autodetect.params.InterimResultsParams;
+import org.elasticsearch.xpack.ml.job.process.autodetect.params.FlushJobParams;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSnapshot;
 import org.elasticsearch.xpack.ml.job.results.AutodetectResult;
 
@@ -89,11 +89,12 @@ public interface AutodetectProcess extends Closeable {
      * in a flush acknowledgment by the autodetect process once the flush has
      * been processed.
      *
-     * @param params Should interim results be generated
+     * @param params Parameters describing the controls that will accompany the flushing
+     *               (e.g. calculating interim results, time control, etc.)
      * @return The flush Id
      * @throws IOException If the flush failed
      */
-    String flushJob(InterimResultsParams params) throws IOException;
+    String flushJob(FlushJobParams params) throws IOException;
 
     /**
      * Flush the output data stream
@@ -118,7 +119,7 @@ public interface AutodetectProcess extends Closeable {
 
     /**
      * Returns true if the process still running.
-     * Methods such as {@link #flushJob(InterimResultsParams)} are essentially
+     * Methods such as {@link #flushJob(FlushJobParams)} are essentially
      * asynchronous the command will be continue to execute in the process after
      * the call has returned. This method tests whether something catastrophic
      * occurred in the process during its execution.

@@ -43,7 +43,7 @@ import org.elasticsearch.xpack.ml.job.persistence.JobProvider;
 import org.elasticsearch.xpack.ml.job.persistence.JobResultsPersister;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.AutodetectParams;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.DataLoadParams;
-import org.elasticsearch.xpack.ml.job.process.autodetect.params.InterimResultsParams;
+import org.elasticsearch.xpack.ml.job.process.autodetect.params.FlushJobParams;
 import org.elasticsearch.xpack.ml.job.process.autodetect.params.TimeRange;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.DataCounts;
 import org.elasticsearch.xpack.ml.job.process.autodetect.state.ModelSizeStats;
@@ -316,7 +316,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         manager.processData(jobTask, inputStream, randomFrom(XContentType.values()),
                 mock(DataLoadParams.class), (dataCounts1, e) -> {});
 
-        InterimResultsParams params = InterimResultsParams.builder().build();
+        FlushJobParams params = FlushJobParams.builder().build();
         manager.flushJob(jobTask, params, e -> {});
 
         verify(communicator).flushJob(same(params), any());
@@ -326,7 +326,7 @@ public class AutodetectProcessManagerTests extends ESTestCase {
         AutodetectCommunicator communicator = mock(AutodetectCommunicator.class);
         AutodetectProcessManager manager = createManagerAndCallProcessData(communicator, "foo");
 
-        InterimResultsParams params = InterimResultsParams.builder().build();
+        FlushJobParams params = FlushJobParams.builder().build();
         doAnswer(invocationOnMock -> {
             BiConsumer<Void, Exception> handler = (BiConsumer<Void, Exception>) invocationOnMock.getArguments()[1];
             handler.accept(null, new IOException("blah"));
