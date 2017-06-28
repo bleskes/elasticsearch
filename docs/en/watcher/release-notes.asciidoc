@@ -265,7 +265,7 @@ June 25, 2015
 * You must now explicitly specify the unit when configuring any time value.
   (Numeric-only values are no longer supported.)
 * Cleaned up the {ref}/watcher-api-get-watch.html[Get Watch API] response.
-* Cleaned up the <<watcher-api-stats, Stats API>> response.
+* Cleaned up the {ref}/watcher-api-stats.html[Stats API] response.
 
 
 [float]
@@ -273,7 +273,7 @@ June 25, 2015
 June 19, 2015
 
 .New Features
-* Added <<watcher-api-execute-inline-watch, inline watch>> support to the Execute API
+* Added {ref}/watcher-api-execute-watch.html#watcher-api-execute-inline-watch[inline watch] support to the Execute API
 
 .Enhancements
 * Added execution context <<watch-execution-context, variables>> support.
@@ -290,14 +290,15 @@ June 10, 2015
   level rather than the watch level.
 * Added support for <<anatomy-actions-index-multi-doc-support, multi-doc>>
   indexing to the index action.
-* Added a queued watches metric that's accessible via the <<watcher-api-stats, Stats API>>.
+* Added a queued watches metric that's accessible via the
+{ref}/watcher-api-stats.html[Stats API].
 * Added a currently-executing watches metric that's accessible via the
-  <<watcher-api-stats, Stats API>>.
+{ref}/watcher-api-stats.html[Stats API].
 
 .Enhancements
 * The <<condition-compare, compare condition>> result now includes the value of
   each field that was referenced in the comparison.
-* The <<watcher-api-execute-watch, Execute API>> now supports a default trigger
+* The {ref}/watcher-api-execute-watch.html[Execute API] now supports a default trigger
   event (**breaking change**).
 * The `watch_record` document structure in the `.watch_history-*` indices has
   changed significantly (**breaking change**).
