@@ -43,6 +43,16 @@ import java.util.Collections;
  */
 public class NodeStatsCollector extends Collector {
 
+    private static final CommonStatsFlags FLAGS =
+            new CommonStatsFlags(CommonStatsFlags.Flag.Docs,
+                                 CommonStatsFlags.Flag.FieldData,
+                                 CommonStatsFlags.Flag.Store,
+                                 CommonStatsFlags.Flag.Indexing,
+                                 CommonStatsFlags.Flag.QueryCache,
+                                 CommonStatsFlags.Flag.RequestCache,
+                                 CommonStatsFlags.Flag.Search,
+                                 CommonStatsFlags.Flag.Segments);
+
     private final Client client;
 
     public NodeStatsCollector(Settings settings, ClusterService clusterService,
@@ -55,7 +65,7 @@ public class NodeStatsCollector extends Collector {
     @Override
     protected Collection<MonitoringDoc> doCollect() throws Exception {
         NodesStatsRequest request = new NodesStatsRequest("_local");
-        request.indices(CommonStatsFlags.ALL);
+        request.indices(FLAGS);
         request.os(true);
         request.jvm(true);
         request.process(true);
@@ -79,4 +89,5 @@ public class NodeStatsCollector extends Collector {
 
         return Collections.singletonList(nodeStatsDoc);
     }
+
 }
