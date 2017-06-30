@@ -21,8 +21,7 @@ The {security} uses the following files:
   <<logging-file, here>>).
 
 * `CONFIG_DIR/x-pack/system_key` holds a cluster secret key that's used to
-  authenticate messages during node to node communication. For more information,
-  see <<enable-message-authentication, Enabling Message Authentication>>.
+  authenticate messages during node to node communication.
 
 [[security-files-location]]
 

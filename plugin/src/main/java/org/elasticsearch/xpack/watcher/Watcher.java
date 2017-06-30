@@ -36,12 +36,14 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.common.regex.Regex;
 import org.elasticsearch.common.settings.ClusterSettings;
 import org.elasticsearch.common.settings.IndexScopedSettings;
+import org.elasticsearch.common.settings.SecureSetting;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.SettingsFilter;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.util.concurrent.EsExecutors;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.license.XPackLicenseState;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.ScriptPlugin;
@@ -64,6 +66,7 @@ import org.elasticsearch.xpack.notification.jira.JiraService;
 import org.elasticsearch.xpack.notification.pagerduty.PagerDutyService;
 import org.elasticsearch.xpack.notification.slack.SlackService;
 import org.elasticsearch.xpack.security.InternalClient;
+import org.elasticsearch.xpack.security.crypto.CryptoService;
 import org.elasticsearch.xpack.support.clock.Clock;
 import org.elasticsearch.xpack.watcher.actions.ActionFactory;
 import org.elasticsearch.xpack.watcher.actions.ActionRegistry;
@@ -138,6 +141,7 @@ import org.elasticsearch.xpack.watcher.watch.WatchStore;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -159,6 +163,7 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
             new Setting<>("index.xpack.watcher.template.version", "", Function.identity(), Setting.Property.IndexScope);
     public static final Setting<Boolean> ENCRYPT_SENSITIVE_DATA_SETTING =
             Setting.boolSetting("xpack.watcher.encrypt_sensitive_data", false, Setting.Property.NodeScope);
+    public static final Setting<InputStream> ENCRYPTION_KEY_SETTING = SecureSetting.secureFile("xpack.watcher.encryption_key", null);
     public static final Setting<TimeValue> MAX_STOP_TIMEOUT_SETTING =
         Setting.timeSetting("xpack.watcher.stop.timeout", TimeValue.timeValueSeconds(30), Setting.Property.NodeScope);
     private static final String SETTING_KEY_AUTO_CREATE_INDEX = "action.auto_create_index";
@@ -195,6 +200,12 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
         this.enabled = XPackSettings.WATCHER_ENABLED.get(settings);
         if (enabled && transportClient == false) {
             validAutoCreateIndex(settings);
+        }
+        if (ENCRYPT_SENSITIVE_DATA_SETTING.get(settings) && ENCRYPTION_KEY_SETTING.exists(settings) == false) {
+            DEPRECATION_LOGGER.deprecated("The use of the system_key file for encrypting sensitive values is deprecated. In order to " +
+                    "continue using watches with encrypted data, execute the following command to store the key in the secure settings " +
+                    "store: 'bin/elasticsearch-keystore add-file {} {}' on all of your nodes.", ENCRYPTION_KEY_SETTING.getKey(),
+                    CryptoService.resolveSystemKey(new Environment(settings)));
         }
     }
 
@@ -280,6 +291,7 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
         settings.add(Setting.intSetting("xpack.watcher.execution.scroll.size", 0, Setting.Property.NodeScope));
         settings.add(Setting.intSetting("xpack.watcher.watch.scroll.size", 0, Setting.Property.NodeScope));
         settings.add(ENCRYPT_SENSITIVE_DATA_SETTING);
+        settings.add(ENCRYPTION_KEY_SETTING);
 
         settings.add(Setting.simpleString("xpack.watcher.internal.ops.search.default_timeout", Setting.Property.NodeScope));
         settings.add(Setting.simpleString("xpack.watcher.internal.ops.bulk.default_timeout", Setting.Property.NodeScope));
@@ -327,8 +339,9 @@ public class Watcher implements ActionPlugin, ScriptPlugin {
 
     @Override
     public List<RestHandler> getRestHandlers(Settings settings, RestController restController, ClusterSettings clusterSettings,
-            IndexScopedSettings indexScopedSettings, SettingsFilter settingsFilter, IndexNameExpressionResolver indexNameExpressionResolver,
-            Supplier<DiscoveryNodes> nodesInCluster) {
+                                             IndexScopedSettings indexScopedSettings, SettingsFilter settingsFilter,
+                                             IndexNameExpressionResolver indexNameExpressionResolver,
+                                             Supplier<DiscoveryNodes> nodesInCluster) {
         if (false == enabled) {
             return emptyList();
         }

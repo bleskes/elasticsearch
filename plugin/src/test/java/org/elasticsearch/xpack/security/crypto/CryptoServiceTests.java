@@ -25,10 +25,12 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 import org.elasticsearch.Version;
+import org.elasticsearch.common.settings.MockSecureSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
 import org.elasticsearch.xpack.XPackPlugin;
+import org.elasticsearch.xpack.watcher.Watcher;
 import org.junit.Before;
 
 import static org.hamcrest.Matchers.containsString;
@@ -64,6 +66,7 @@ public class CryptoServiceTests extends ESTestCase {
         String text = randomAlphaOfLength(10);
         String signed = service.sign(text, Version.CURRENT);
         assertThat(service.isSigned(signed), is(true));
+        assertWarnings("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
     }
 
     public void testSignAndUnsign() throws Exception {
@@ -79,6 +82,7 @@ public class CryptoServiceTests extends ESTestCase {
         assertEquals(signed, signedOld);
         String unsigned = service.unsignAndVerify(signedOld, Version.V_5_2_0);
         assertEquals(text, unsigned);
+        assertWarnings("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
     }
 
     public void testSignAndUnsignNoKeyFile() throws Exception {
@@ -111,6 +115,7 @@ public class CryptoServiceTests extends ESTestCase {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
             assertThat(e.getCause(), is(nullValue()));
         }
+        assertWarnings("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
     }
 
     public void testTamperedSignatureOneChar() throws Exception {
@@ -130,6 +135,7 @@ public class CryptoServiceTests extends ESTestCase {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
             assertThat(e.getCause(), is(nullValue()));
         }
+        assertWarnings("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
     }
 
     public void testTamperedSignatureLength() throws Exception {
@@ -157,11 +163,12 @@ public class CryptoServiceTests extends ESTestCase {
             assertThat(e.getMessage(), is(equalTo("tampered signed text")));
             assertThat(e.getCause(), is(nullValue()));
         }
+        assertWarnings("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
     }
 
     public void testEncryptionAndDecryptionChars() throws Exception {
         CryptoService service = new CryptoService(settings, env);
-                assertThat(service.isEncryptionEnabled(), is(true));
+        assertThat(service.isEncryptionEnabled(), is(true));
         final char[] chars = randomAlphaOfLengthBetween(0, 1000).toCharArray();
         final char[] encrypted = service.encrypt(chars);
         assertThat(encrypted, notNullValue());
@@ -169,6 +176,7 @@ public class CryptoServiceTests extends ESTestCase {
 
         final char[] decrypted = service.decrypt(encrypted);
         assertThat(Arrays.equals(chars, decrypted), is(true));
+        assertWarnings("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
     }
 
     public void testEncryptionAndDecryptionCharsWithoutKey() throws Exception {
@@ -185,6 +193,7 @@ public class CryptoServiceTests extends ESTestCase {
     public void testEncryptionEnabledWithKey() throws Exception {
         CryptoService service = new CryptoService(settings, env);
         assertThat(service.isEncryptionEnabled(), is(true));
+        assertWarnings("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
     }
 
     public void testEncryptionEnabledWithoutKey() throws Exception {
@@ -203,6 +212,7 @@ public class CryptoServiceTests extends ESTestCase {
         assertThat(service.isEncrypted(CryptoService.ENCRYPTED_TEXT_PREFIX.toCharArray()), is(true));
         assertThat(service.isEncrypted(randomAlphaOfLengthBetween(0, 100).toCharArray()), is(false));
         assertThat(service.isEncrypted(service.encrypt(randomAlphaOfLength(10).toCharArray())), is(true));
+        assertWarnings("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
     }
 
     public void testSigningKeyCanBeRecomputedConsistently() {
@@ -230,5 +240,20 @@ public class CryptoServiceTests extends ESTestCase {
         assertTrue(Files.exists(keyFile));
         IllegalArgumentException iae = expectThrows(IllegalArgumentException.class, () -> new CryptoService(settings, env));
         assertThat(iae.getMessage(), containsString("Empty key"));
+        assertWarnings("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
+    }
+
+    public void testSystemKeyRequiredWithKeyInKeystore() throws Exception {
+        MockSecureSettings mockSecureSettings = new MockSecureSettings();
+        byte[] keyBytes = Files.readAllBytes(keyFile);
+        Files.delete(keyFile);
+        mockSecureSettings.setFile(Watcher.ENCRYPTION_KEY_SETTING.getKey(), keyBytes);
+        settings = Settings.builder()
+                .put(settings)
+                .put(CryptoService.SYSTEM_KEY_REQUIRED_SETTING.getKey(), true)
+                .setSecureSettings(mockSecureSettings)
+                .build();
+        env = new Environment(settings);
+        new CryptoService(settings, env);
     }
 }

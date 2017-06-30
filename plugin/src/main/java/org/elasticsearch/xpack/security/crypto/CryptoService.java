@@ -27,6 +27,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -45,12 +46,15 @@ import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.Version;
 import org.elasticsearch.common.Nullable;
 import org.elasticsearch.common.component.AbstractComponent;
+import org.elasticsearch.common.io.Streams;
+import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.settings.Setting;
 import org.elasticsearch.common.settings.Setting.Property;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.xpack.XPackPlugin;
 import org.elasticsearch.xpack.security.authc.support.CharArrays;
+import org.elasticsearch.xpack.watcher.Watcher;
 
 import static org.elasticsearch.xpack.security.Security.setting;
 import static org.elasticsearch.xpack.security.authc.support.CharArrays.constantTimeEquals;
@@ -74,7 +78,7 @@ public class CryptoService extends AbstractComponent {
     private static final Pattern SIG_PATTERN = Pattern.compile("^\\$\\$[0-9]+\\$\\$[^\\$]*\\$\\$.+");
     private static final byte[] HKDF_APP_INFO = "es-security-crypto-service".getBytes(StandardCharsets.UTF_8);
 
-    private static final Setting<Boolean> SYSTEM_KEY_REQUIRED_SETTING =
+    static final Setting<Boolean> SYSTEM_KEY_REQUIRED_SETTING =
             Setting.boolSetting(setting("system_key.required"), false, Property.NodeScope);
     private static final Setting<String> ENCRYPTION_ALGO_SETTING =
             new Setting<>(setting("encryption.algorithm"), s -> DEFAULT_ENCRYPTION_ALGORITHM, s -> s, Property.NodeScope);
@@ -121,9 +125,6 @@ public class CryptoService extends AbstractComponent {
         } catch (NoSuchAlgorithmException nsae) {
             throw new ElasticsearchException("failed to start crypto service. could not load encryption key", nsae);
         }
-        if (systemKey != null) {
-            logger.info("system key [{}] has been loaded", keyFile.toAbsolutePath());
-        }
     }
 
     public static byte[] generateKey() {
@@ -156,17 +157,37 @@ public class CryptoService extends AbstractComponent {
         }
     }
 
-    private static SecretKey readSystemKey(Path file, boolean required) throws IOException {
-        if (Files.exists(file)) {
+    private SecretKey readSystemKey(Path file, boolean required) throws IOException {
+        SecretKeySpec secretKeySpec = null;
+        final boolean fileExists = Files.exists(file);
+        if (Watcher.ENCRYPTION_KEY_SETTING.exists(settings)) {
+            if (fileExists) {
+                throw new IllegalArgumentException("the system_key file should not exist if the [" +
+                        Watcher.ENCRYPTION_KEY_SETTING.getKey() + "] secure setting is in use.");
+            }
+            InputStream in = Watcher.ENCRYPTION_KEY_SETTING.get(settings);
+            final int keySizeBytes = KEY_SIZE / 8;
+            final byte[] keyBytes = new byte[keySizeBytes];
+            final int read = Streams.readFully(in, keyBytes);
+            if (read != keySizeBytes) {
+                throw new IllegalArgumentException("key size did not match expected value; was the key generated with syskeygen?");
+            }
+            secretKeySpec = new SecretKeySpec(keyBytes, KEY_ALGO);
+        } else if (fileExists) {
+            new DeprecationLogger(logger)
+                    .deprecated("The system_key will be removed in 6.0 in favor of TLS for encryption and authentication.");
             byte[] bytes = Files.readAllBytes(file);
-            return new SecretKeySpec(bytes, KEY_ALGO);
+            secretKeySpec = new SecretKeySpec(bytes, KEY_ALGO);
+            if (secretKeySpec != null) {
+                logger.info("system key [{}] has been loaded", file.toAbsolutePath());
+            }
         }
 
-        if (required) {
+        if (required && secretKeySpec == null) {
             throw new FileNotFoundException("[" + file + "] must be present with a valid key");
         }
 
-        return null;
+        return secretKeySpec;
     }
 
     /**

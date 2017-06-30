@@ -17,8 +17,11 @@
 
 package org.elasticsearch.xpack.watcher;
 
+import org.elasticsearch.common.settings.MockSecureSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.env.Environment;
 import org.elasticsearch.test.ESTestCase;
+import org.elasticsearch.xpack.security.crypto.CryptoService;
 
 import static org.hamcrest.Matchers.containsString;
 
@@ -50,4 +53,34 @@ public class WatcherPluginTests extends ESTestCase {
         assertThat(exception.getMessage(), containsString("[.watches, .triggered_watches, .watcher-history-*]"));
     }
 
+    public void testDeprecationLoggingEncryptionKeyMissing() {
+        Settings settings = Settings.builder()
+                .put("path.home", createTempDir())
+                .put(Watcher.ENCRYPT_SENSITIVE_DATA_SETTING.getKey(), true)
+                .build();
+        new Watcher(settings);
+        assertWarnings("The use of the system_key file for encrypting sensitive values is deprecated. In order to " +
+                "continue using watches with encrypted data, execute the following command to store the key in the secure settings " +
+                "store: 'bin/elasticsearch-keystore add-file " + Watcher.ENCRYPTION_KEY_SETTING.getKey() + " "
+                + CryptoService.resolveSystemKey(new Environment(settings)) + "' on all of your nodes.");
+    }
+
+    public void testDeprecationLoggingEncryptionDisabled() {
+        Settings settings = randomBoolean() ? Settings.EMPTY :
+                Settings.builder().put(Watcher.ENCRYPT_SENSITIVE_DATA_SETTING.getKey(), false).build();
+        new Watcher(settings);
+        // test framework will assert there are no warnings
+    }
+
+    public void testDeprecationLoggingEncryptionKeyPresent() {
+        MockSecureSettings secureSettings = new MockSecureSettings();
+        secureSettings.setFile(Watcher.ENCRYPTION_KEY_SETTING.getKey(), new byte[] { 0x01 });
+        Settings settings = randomBoolean() ? Settings.EMPTY :
+                Settings.builder()
+                        .put(Watcher.ENCRYPT_SENSITIVE_DATA_SETTING.getKey(), false)
+                        .setSecureSettings(secureSettings)
+                        .build();
+        new Watcher(settings);
+        // test framework will assert there are no warnings
+    }
 }
