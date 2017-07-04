@@ -80,6 +80,7 @@ public class XPackLicenseState {
         messages.put(XPackPlugin.WATCHER, XPackLicenseState::watcherAcknowledgementMessages);
         messages.put(XPackPlugin.MONITORING, XPackLicenseState::monitoringAcknowledgementMessages);
         messages.put(XPackPlugin.GRAPH, XPackLicenseState::graphAcknowledgementMessages);
+        messages.put(XPackPlugin.MACHINE_LEARNING, XPackLicenseState::machineLearningAcknowledgementMessages);
         ACKNOWLEDGMENT_MESSAGES = Collections.unmodifiableMap(messages);
     }
 
@@ -179,6 +180,21 @@ public class XPackLicenseState {
                     case TRIAL:
                     case PLATINUM:
                         return new String[] { "Graph will be disabled" };
+                }
+                break;
+        }
+        return Strings.EMPTY_ARRAY;
+    }
+
+    private static String[] machineLearningAcknowledgementMessages(OperationMode currentMode, OperationMode newMode) {
+        switch (newMode) {
+            case BASIC:
+            case STANDARD:
+            case GOLD:
+                switch (currentMode) {
+                    case TRIAL:
+                    case PLATINUM:
+                        return new String[] { "Machine learning will be disabled" };
                 }
                 break;
         }
