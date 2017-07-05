@@ -16,12 +16,13 @@ package org.elasticsearch.xpack.ml.action;
 
 import org.elasticsearch.xpack.ml.action.FlushJobAction.Response;
 import org.elasticsearch.xpack.ml.support.AbstractStreamableTestCase;
+import org.joda.time.DateTime;
 
 public class PostDataFlushResponseTests extends AbstractStreamableTestCase<Response> {
 
     @Override
     protected Response createTestInstance() {
-        return new Response(randomBoolean());
+        return new Response(randomBoolean(), new DateTime(randomDateTimeZone()).toDate());
     }
 
     @Override

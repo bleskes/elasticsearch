@@ -14,26 +14,30 @@
  */
 package org.elasticsearch.xpack.ml.job.process.autodetect.params;
 
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.test.ESTestCase;
 
+import static org.hamcrest.Matchers.equalTo;
+
 public class FlushJobParamsTests extends ESTestCase {
+
     public void testBuilder_GivenDefault() {
         FlushJobParams params = FlushJobParams.builder().build();
         assertFalse(params.shouldCalculateInterim());
         assertFalse(params.shouldAdvanceTime());
+        assertFalse(params.shouldSkipTime());
         assertEquals("", params.getStart());
         assertEquals("", params.getEnd());
     }
-
 
     public void testBuilder_GivenCalcInterim() {
         FlushJobParams params = FlushJobParams.builder().calcInterim(true).build();
         assertTrue(params.shouldCalculateInterim());
         assertFalse(params.shouldAdvanceTime());
+        assertFalse(params.shouldSkipTime());
         assertEquals("", params.getStart());
         assertEquals("", params.getEnd());
     }
-
 
     public void testBuilder_GivenCalcInterimAndStart() {
         FlushJobParams params = FlushJobParams.builder()
@@ -42,6 +46,7 @@ public class FlushJobParamsTests extends ESTestCase {
                 .build();
         assertTrue(params.shouldCalculateInterim());
         assertFalse(params.shouldAdvanceTime());
+        assertFalse(params.shouldSkipTime());
         assertEquals("42", params.getStart());
         assertEquals("43", params.getEnd());
     }
@@ -56,7 +61,6 @@ public class FlushJobParamsTests extends ESTestCase {
         assertEquals("Invalid flush parameters: 'start' has not been specified.", e.getMessage());
     }
 
-
     public void testBuilder_GivenCalcInterimAndStartAndEnd() {
         FlushJobParams params = FlushJobParams.builder()
                 .calcInterim(true)
@@ -68,7 +72,6 @@ public class FlushJobParamsTests extends ESTestCase {
         assertEquals("7200", params.getEnd());
     }
 
-
     public void testBuilder_GivenAdvanceTime() {
         FlushJobParams params = FlushJobParams.builder().advanceTime("1821").build();
         assertFalse(params.shouldCalculateInterim());
@@ -77,7 +80,6 @@ public class FlushJobParamsTests extends ESTestCase {
         assertTrue(params.shouldAdvanceTime());
         assertEquals(1821, params.getAdvanceTime());
     }
-
 
     public void testBuilder_GivenCalcInterimAndAdvanceTime() {
         FlushJobParams params = FlushJobParams.builder()
@@ -91,7 +93,6 @@ public class FlushJobParamsTests extends ESTestCase {
         assertEquals(1940, params.getAdvanceTime());
     }
 
-
     public void testBuilder_GivenCalcInterimWithTimeRangeAndAdvanceTime() {
         FlushJobParams params = FlushJobParams.builder()
                 .calcInterim(true)
@@ -103,6 +104,27 @@ public class FlushJobParamsTests extends ESTestCase {
         assertEquals("2", params.getEnd());
         assertTrue(params.shouldAdvanceTime());
         assertEquals(1940, params.getAdvanceTime());
+    }
+
+    public void testBuilder_GivenAdvanceTimeIsEarlierThanSkipTime() {
+        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
+                () -> FlushJobParams.builder().advanceTime("2017-01-01T00:00:00Z").skipTime("2017-02-01T00:00:00Z").build());
+
+        assertEquals("advance_time [2017-01-01T00:00:00Z] must be later than skip_time [2017-02-01T00:00:00Z]", e.getMessage());
+    }
+
+    public void testBuilder_GivenAdvanceTimeIsEqualToSkipTime() {
+        ElasticsearchStatusException e = expectThrows(ElasticsearchStatusException.class,
+                () -> FlushJobParams.builder().advanceTime("2017-01-01T00:00:00Z").skipTime("2017-01-01T00:00:00Z").build());
+
+        assertEquals("advance_time [2017-01-01T00:00:00Z] must be later than skip_time [2017-01-01T00:00:00Z]", e.getMessage());
+    }
+
+    public void testBuilder_GivenAdvanceTimeIsLaterToSkipTime() {
+        FlushJobParams params = FlushJobParams.builder().advanceTime("2017-02-01T00:00:00Z").skipTime("2017-01-01T00:00:00Z").build();
+
+        assertThat(params.getSkipTime(), equalTo(1483228800L));
+        assertThat(params.getAdvanceTime(), equalTo(1485907200L));
     }
 
     public void testValidate_GivenOnlyStartSpecified() {

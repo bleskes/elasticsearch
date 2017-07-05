@@ -15,6 +15,8 @@ import org.elasticsearch.common.io.stream.Writeable.Reader;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.xpack.ml.support.AbstractSerializingTestCase;
 
+import java.util.Date;
+
 public class FlushAcknowledgementTests extends AbstractSerializingTestCase<FlushAcknowledgement> {
 
     @Override
@@ -24,7 +26,7 @@ public class FlushAcknowledgementTests extends AbstractSerializingTestCase<Flush
 
     @Override
     protected FlushAcknowledgement createTestInstance() {
-        return new FlushAcknowledgement(randomAlphaOfLengthBetween(1, 20));
+        return new FlushAcknowledgement(randomAlphaOfLengthBetween(1, 20), new Date(randomNonNegativeLong()));
     }
 
     @Override
