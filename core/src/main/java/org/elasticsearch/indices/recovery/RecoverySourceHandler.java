@@ -148,7 +148,7 @@ public class RecoverySourceHandler {
 
             final long startingSeqNo;
             boolean isSequenceNumberBasedRecoveryPossible = request.startingSeqNo() != SequenceNumbersService.UNASSIGNED_SEQ_NO &&
-                isTranslogReadyForSequenceNumberBasedRecovery();
+                isTargetSameTranslog() && isTranslogReadyForSequenceNumberBasedRecovery();
 
             if (isSequenceNumberBasedRecoveryPossible) {
                 logger.trace("performing sequence numbers based recovery. starting at [{}]", request.startingSeqNo());
@@ -196,6 +196,10 @@ public class RecoverySourceHandler {
             finalizeRecovery(targetLocalCheckpoint);
         }
         return response;
+    }
+
+    private boolean isTargetSameTranslog() {
+        return shard.getTranslog().getTranslogUUID().equals(request.metadataSnapshot().getTranslogUUID());
     }
 
     private void runUnderPrimaryPermit(CancellableThreads.Interruptable runnable) {

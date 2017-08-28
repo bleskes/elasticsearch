@@ -48,6 +48,7 @@ import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.common.Nullable;
+import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.lease.Releasable;
 import org.elasticsearch.common.lucene.LoggerInfoStream;
 import org.elasticsearch.common.lucene.Lucene;
@@ -348,8 +349,10 @@ public class InternalEngine extends Engine {
     private Translog openTranslog(EngineConfig engineConfig, IndexWriter writer, TranslogDeletionPolicy translogDeletionPolicy, LongSupplier globalCheckpointSupplier) throws IOException {
         assert openMode != null;
         final TranslogConfig translogConfig = engineConfig.getTranslogConfig();
-        String translogUUID = null;
-        if (openMode == EngineConfig.OpenMode.OPEN_INDEX_AND_TRANSLOG) {
+        final String translogUUID;
+        if (openMode == EngineConfig.OpenMode.CREATE_INDEX_AND_TRANSLOG) {
+            translogUUID = UUIDs.randomBase64UUID();
+        } else {
             translogUUID = loadTranslogUUIDFromCommit(writer);
             // We expect that this shard already exists, so it must already have an existing translog else something is badly wrong!
             if (translogUUID == null) {
@@ -358,8 +361,8 @@ public class InternalEngine extends Engine {
         }
         final Translog translog = new Translog(translogConfig, translogUUID, translogDeletionPolicy, globalCheckpointSupplier);
         if (translogUUID == null) {
-            assert openMode != EngineConfig.OpenMode.OPEN_INDEX_AND_TRANSLOG : "OpenMode must not be "
-                + EngineConfig.OpenMode.OPEN_INDEX_AND_TRANSLOG;
+            assert openMode == EngineConfig.OpenMode.CREATE_INDEX_AND_TRANSLOG : "OpenMode must be "
+                + EngineConfig.OpenMode.CREATE_INDEX_AND_TRANSLOG + " got " + openMode;
             boolean success = false;
             try {
                 commitIndexWriter(writer, translog, openMode == EngineConfig.OpenMode.OPEN_INDEX_CREATE_TRANSLOG

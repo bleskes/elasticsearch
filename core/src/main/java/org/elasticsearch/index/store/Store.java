@@ -79,6 +79,7 @@ import org.elasticsearch.index.seqno.SequenceNumbers;
 import org.elasticsearch.index.shard.AbstractIndexShardComponent;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.ShardId;
+import org.elasticsearch.index.translog.Translog;
 
 import java.io.Closeable;
 import java.io.EOFException;
@@ -1064,6 +1065,13 @@ public class Store extends AbstractIndexShardComponent implements Closeable, Ref
          */
         public String getSyncId() {
             return commitUserData.get(Engine.SYNC_COMMIT_ID);
+        }
+
+        /**
+         * returns the translog uuid the store points at
+         */
+        public String getTranslogUUID() {
+            return commitUserData.get(Translog.TRANSLOG_UUID_KEY);
         }
     }
 

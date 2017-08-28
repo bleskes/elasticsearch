@@ -38,6 +38,7 @@ import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.FileSystemUtils;
@@ -94,19 +95,16 @@ public class RecoverySourceHandlerTests extends ESTestCase {
     private final ShardId shardId = new ShardId(INDEX_SETTINGS.getIndex(), 1);
     private final ClusterSettings service = new ClusterSettings(Settings.EMPTY, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS);
 
+    private Store.MetadataSnapshot snapshotWithTranslog() {
+        return new Store.MetadataSnapshot(Collections.emptyMap(),
+            Collections.singletonMap(Translog.TRANSLOG_UUID_KEY, UUIDs.randomBase64UUID()), 0);
+    }
+
     public void testSendFiles() throws Throwable {
         Settings settings = Settings.builder().put("indices.recovery.concurrent_streams", 1).
                 put("indices.recovery.concurrent_small_file_streams", 1).build();
         final RecoverySettings recoverySettings = new RecoverySettings(settings, service);
-        final StartRecoveryRequest request = new StartRecoveryRequest(
-            shardId,
-            null,
-            new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
-            new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
-            null,
-            randomBoolean(),
-            randomNonNegativeLong(),
-            randomBoolean() ? SequenceNumbersService.UNASSIGNED_SEQ_NO : randomNonNegativeLong());
+        final StartRecoveryRequest request = getStartRecoveryRequest();
         Store store = newStore(createTempDir());
         RecoverySourceHandler handler = new RecoverySourceHandler(null, null, request,
             recoverySettings.getChunkSize().bytesAsInt(), Settings.EMPTY);
@@ -151,19 +149,26 @@ public class RecoverySourceHandlerTests extends ESTestCase {
         IOUtils.close(reader, store, targetStore);
     }
 
-    public void testSendSnapshotSendsOps() throws IOException {
-        final RecoverySettings recoverySettings = new RecoverySettings(Settings.EMPTY, service);
-        final int fileChunkSizeInBytes = recoverySettings.getChunkSize().bytesAsInt();
-        final long startingSeqNo = randomBoolean() ? SequenceNumbersService.UNASSIGNED_SEQ_NO : randomIntBetween(0, 16);
-        final StartRecoveryRequest request = new StartRecoveryRequest(
+    public StartRecoveryRequest getStartRecoveryRequest() {
+        Store.MetadataSnapshot metadataSnapshot = randomBoolean() ? Store.MetadataSnapshot.EMPTY :
+            new Store.MetadataSnapshot(Collections.emptyMap(),
+                Collections.singletonMap(Translog.TRANSLOG_UUID_KEY, UUIDs.randomBase64UUID()), randomIntBetween(0, 100));
+        return new StartRecoveryRequest(
             shardId,
             null,
             new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
             new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
-            null,
+            metadataSnapshot,
             randomBoolean(),
             randomNonNegativeLong(),
-            randomBoolean() ? SequenceNumbersService.UNASSIGNED_SEQ_NO : randomNonNegativeLong());
+            randomBoolean() || metadataSnapshot.getTranslogUUID() == null ?
+                SequenceNumbersService.UNASSIGNED_SEQ_NO : randomNonNegativeLong());
+    }
+
+    public void testSendSnapshotSendsOps() throws IOException {
+        final RecoverySettings recoverySettings = new RecoverySettings(Settings.EMPTY, service);
+        final int fileChunkSizeInBytes = recoverySettings.getChunkSize().bytesAsInt();
+        final StartRecoveryRequest request = getStartRecoveryRequest();
         final IndexShard shard = mock(IndexShard.class);
         when(shard.state()).thenReturn(IndexShardState.STARTED);
         final RecoveryTargetHandler recoveryTarget = mock(RecoveryTargetHandler.class);
@@ -181,6 +186,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             operations.add(new Translog.Index(index, new Engine.IndexResult(1, i - initialNumberOfDocs, true)));
         }
         operations.add(null);
+        final long startingSeqNo = randomBoolean() ? SequenceNumbersService.UNASSIGNED_SEQ_NO : randomIntBetween(0, 16);
         RecoverySourceHandler.SendSnapshotResult result = handler.sendSnapshot(startingSeqNo, new Translog.Snapshot() {
             @Override
             public void close() {
@@ -228,16 +234,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
         Settings settings = Settings.builder().put("indices.recovery.concurrent_streams", 1).
                 put("indices.recovery.concurrent_small_file_streams", 1).build();
         final RecoverySettings recoverySettings = new RecoverySettings(settings, service);
-        final StartRecoveryRequest request =
-            new StartRecoveryRequest(
-                shardId,
-                null,
-                new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
-                new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
-                null,
-                randomBoolean(),
-                randomNonNegativeLong(),
-                randomBoolean() ? SequenceNumbersService.UNASSIGNED_SEQ_NO : 0L);
+        final StartRecoveryRequest request = getStartRecoveryRequest();
         Path tempDir = createTempDir();
         Store store = newStore(tempDir, false);
         AtomicBoolean failedEngine = new AtomicBoolean(false);
@@ -298,16 +295,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
         Settings settings = Settings.builder().put("indices.recovery.concurrent_streams", 1).
                 put("indices.recovery.concurrent_small_file_streams", 1).build();
         final RecoverySettings recoverySettings = new RecoverySettings(settings, service);
-        final StartRecoveryRequest request =
-            new StartRecoveryRequest(
-                shardId,
-                null,
-                new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
-                new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
-                null,
-                randomBoolean(),
-                randomNonNegativeLong(),
-                randomBoolean() ? SequenceNumbersService.UNASSIGNED_SEQ_NO : 0L);
+        final StartRecoveryRequest request = getStartRecoveryRequest();
         Path tempDir = createTempDir();
         Store store = newStore(tempDir, false);
         AtomicBoolean failedEngine = new AtomicBoolean(false);
@@ -363,17 +351,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
 
     public void testThrowExceptionOnPrimaryRelocatedBeforePhase1Started() throws IOException {
         final RecoverySettings recoverySettings = new RecoverySettings(Settings.EMPTY, service);
-        final boolean attemptSequenceNumberBasedRecovery = randomBoolean();
-        final StartRecoveryRequest request =
-            new StartRecoveryRequest(
-                shardId,
-                null,
-                new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
-                new DiscoveryNode("b", buildNewFakeTransportAddress(), emptyMap(), emptySet(), Version.CURRENT),
-                null,
-                false,
-                randomNonNegativeLong(),
-                attemptSequenceNumberBasedRecovery ? randomNonNegativeLong() : SequenceNumbersService.UNASSIGNED_SEQ_NO);
+        final StartRecoveryRequest request = getStartRecoveryRequest();
         final IndexShard shard = mock(IndexShard.class);
         when(shard.seqNoStats()).thenReturn(mock(SeqNoStats.class));
         when(shard.segmentStats(anyBoolean())).thenReturn(mock(SegmentsStats.class));

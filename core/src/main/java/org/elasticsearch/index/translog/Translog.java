@@ -26,7 +26,6 @@ import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.util.IOUtils;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.bytes.ReleasablePagedBytesReference;
@@ -132,23 +131,19 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
      * translog file referenced by this generation. The translog creation will fail if this generation can't be opened.
      *
      * @param config                   the configuration of this translog
-     * @param expectedTranslogUUID     the translog uuid to open, null for a new translog
+     * @param uuid     the translog uuid to open, or to use when creating a new translog
      * @param deletionPolicy           an instance of {@link TranslogDeletionPolicy} that controls when a translog file can be safely
      *                                 deleted
      * @param globalCheckpointSupplier a supplier for the global checkpoint
      */
     public Translog(
-        final TranslogConfig config, final String expectedTranslogUUID, TranslogDeletionPolicy deletionPolicy,
+        final TranslogConfig config, final String uuid, TranslogDeletionPolicy deletionPolicy,
         final LongSupplier globalCheckpointSupplier) throws IOException {
         super(config.getShardId(), config.getIndexSettings());
         this.config = config;
         this.globalCheckpointSupplier = globalCheckpointSupplier;
         this.deletionPolicy = deletionPolicy;
-        if (expectedTranslogUUID == null) {
-            translogUUID = UUIDs.randomBase64UUID();
-        } else {
-            translogUUID = expectedTranslogUUID;
-        }
+        this.translogUUID = uuid;
         bigArrays = config.getBigArrays();
         ReadWriteLock rwl = new ReentrantReadWriteLock();
         readLock = new ReleasableLock(rwl.readLock());
@@ -157,7 +152,7 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
         Files.createDirectories(this.location);
 
         try {
-            if (expectedTranslogUUID != null) {
+            if (uuid != null) {
                 final Checkpoint checkpoint = readCheckpoint(location);
                 final Path nextTranslogFile = location.resolve(getFilename(checkpoint.generation + 1));
                 final Path currentCheckpointFile = location.resolve(getCommitCheckpointFileName(checkpoint.generation));
@@ -169,7 +164,7 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
                 //
                 // For this to happen we must have already copied the translog.ckp file into translog-gen.ckp so we first check if that file exists
                 // if not we don't even try to clean it up and wait until we fail creating it
-                assert Files.exists(nextTranslogFile) == false || Files.size(nextTranslogFile) <= TranslogWriter.getHeaderLength(expectedTranslogUUID) : "unexpected translog file: [" + nextTranslogFile + "]";
+                assert Files.exists(nextTranslogFile) == false || Files.size(nextTranslogFile) <= TranslogWriter.getHeaderLength(uuid) : "unexpected translog file: [" + nextTranslogFile + "]";
                 if (Files.exists(currentCheckpointFile) // current checkpoint is already copied
                         && Files.deleteIfExists(nextTranslogFile)) { // delete it and log a warning
                     logger.warn("deleted previously created, but not yet committed, next generation [{}]. This can happen due to a tragic exception when creating a new generation", nextTranslogFile.getFileName());
