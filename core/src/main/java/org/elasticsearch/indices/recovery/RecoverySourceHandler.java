@@ -47,7 +47,7 @@ import org.elasticsearch.common.util.CancellableThreads;
 import org.elasticsearch.index.engine.Engine;
 import org.elasticsearch.index.engine.RecoveryEngineException;
 import org.elasticsearch.index.seqno.LocalCheckpointTracker;
-import org.elasticsearch.index.seqno.SequenceNumbersService;
+import org.elasticsearch.index.seqno.SequenceNumbers;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.IndexShardClosedException;
 import org.elasticsearch.index.shard.IndexShardRelocatedException;
@@ -147,7 +147,7 @@ public class RecoverySourceHandler {
             final Translog translog = shard.getTranslog();
 
             final long startingSeqNo;
-            boolean isSequenceNumberBasedRecoveryPossible = request.startingSeqNo() != SequenceNumbersService.UNASSIGNED_SEQ_NO &&
+            final boolean isSequenceNumberBasedRecoveryPossible = request.startingSeqNo() != SequenceNumbers.UNASSIGNED_SEQ_NO &&
                 isTargetSameTranslog() && isTranslogReadyForSequenceNumberBasedRecovery();
 
             if (isSequenceNumberBasedRecoveryPossible) {
@@ -162,7 +162,7 @@ public class RecoverySourceHandler {
                 }
                 // we set this to unassigned to create a translog roughly according to the retention policy
                 // on the target
-                startingSeqNo = SequenceNumbersService.UNASSIGNED_SEQ_NO;
+                startingSeqNo = SequenceNumbers.UNASSIGNED_SEQ_NO;
 
                 try {
                     phase1(phase1Snapshot.getIndexCommit(), translog::totalOperations);
@@ -243,7 +243,7 @@ public class RecoverySourceHandler {
             try (Translog.Snapshot snapshot = shard.getTranslog().newSnapshotFromMinSeqNo(startingSeqNo)) {
                 Translog.Operation operation;
                 while ((operation = snapshot.next()) != null) {
-                    if (operation.seqNo() != SequenceNumbersService.UNASSIGNED_SEQ_NO) {
+                    if (operation.seqNo() != SequenceNumbers.UNASSIGNED_SEQ_NO) {
                         tracker.markSeqNoAsCompleted(operation.seqNo());
                     }
                 }
@@ -431,7 +431,7 @@ public class RecoverySourceHandler {
      * point-in-time view of the translog). It then sends each translog operation to the target node so it can be replayed into the new
      * shard.
      *
-     * @param startingSeqNo the sequence number to start recovery from, or {@link SequenceNumbersService#UNASSIGNED_SEQ_NO} if all
+     * @param startingSeqNo the sequence number to start recovery from, or {@link SequenceNumbers#UNASSIGNED_SEQ_NO} if all
      *                      ops should be sent
      * @param snapshot      a snapshot of the translog
      *
@@ -517,7 +517,7 @@ public class RecoverySourceHandler {
         long size = 0;
         int skippedOps = 0;
         int totalSentOps = 0;
-        final AtomicLong targetLocalCheckpoint = new AtomicLong(SequenceNumbersService.UNASSIGNED_SEQ_NO);
+        final AtomicLong targetLocalCheckpoint = new AtomicLong(SequenceNumbers.UNASSIGNED_SEQ_NO);
         final List<Translog.Operation> operations = new ArrayList<>();
 
         final int expectedTotalOps = snapshot.totalOperations();
@@ -540,7 +540,7 @@ public class RecoverySourceHandler {
              * any ops before the starting sequence number.
              */
             final long seqNo = operation.seqNo();
-            if (startingSeqNo >= 0 && (seqNo == SequenceNumbersService.UNASSIGNED_SEQ_NO || seqNo < startingSeqNo)) {
+            if (startingSeqNo >= 0 && (seqNo == SequenceNumbers.UNASSIGNED_SEQ_NO || seqNo < startingSeqNo)) {
                 skippedOps++;
                 continue;
             }

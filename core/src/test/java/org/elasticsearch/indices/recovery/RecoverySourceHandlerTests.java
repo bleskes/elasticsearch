@@ -57,7 +57,7 @@ import org.elasticsearch.index.mapper.SeqNoFieldMapper;
 import org.elasticsearch.index.mapper.Uid;
 import org.elasticsearch.index.mapper.UidFieldMapper;
 import org.elasticsearch.index.seqno.SeqNoStats;
-import org.elasticsearch.index.seqno.SequenceNumbersService;
+import org.elasticsearch.index.seqno.SequenceNumbers;
 import org.elasticsearch.index.shard.IndexShard;
 import org.elasticsearch.index.shard.IndexShardRelocatedException;
 import org.elasticsearch.index.shard.IndexShardState;
@@ -149,7 +149,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
         IOUtils.close(reader, store, targetStore);
     }
 
-    public StartRecoveryRequest getStartRecoveryRequest() {
+    public StartRecoveryRequest getStartRecoveryRequest() throws IOException {
         Store.MetadataSnapshot metadataSnapshot = randomBoolean() ? Store.MetadataSnapshot.EMPTY :
             new Store.MetadataSnapshot(Collections.emptyMap(),
                 Collections.singletonMap(Translog.TRANSLOG_UUID_KEY, UUIDs.randomBase64UUID()), randomIntBetween(0, 100));
@@ -162,7 +162,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             randomBoolean(),
             randomNonNegativeLong(),
             randomBoolean() || metadataSnapshot.getTranslogUUID() == null ?
-                SequenceNumbersService.UNASSIGNED_SEQ_NO : randomNonNegativeLong());
+                SequenceNumbers.UNASSIGNED_SEQ_NO : randomNonNegativeLong());
     }
 
     public void testSendSnapshotSendsOps() throws IOException {
@@ -178,7 +178,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
         final int initialNumberOfDocs = randomIntBetween(16, 64);
         for (int i = 0; i < initialNumberOfDocs; i++) {
             final Engine.Index index = getIndex(Integer.toString(i));
-            operations.add(new Translog.Index(index, new Engine.IndexResult(1, SequenceNumbersService.UNASSIGNED_SEQ_NO, true)));
+            operations.add(new Translog.Index(index, new Engine.IndexResult(1, SequenceNumbers.UNASSIGNED_SEQ_NO, true)));
         }
         final int numberOfDocsWithValidSequenceNumbers = randomIntBetween(16, 64);
         for (int i = initialNumberOfDocs; i < initialNumberOfDocs + numberOfDocsWithValidSequenceNumbers; i++) {
@@ -186,7 +186,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             operations.add(new Translog.Index(index, new Engine.IndexResult(1, i - initialNumberOfDocs, true)));
         }
         operations.add(null);
-        final long startingSeqNo = randomBoolean() ? SequenceNumbersService.UNASSIGNED_SEQ_NO : randomIntBetween(0, 16);
+        final long startingSeqNo = randomBoolean() ? SequenceNumbers.UNASSIGNED_SEQ_NO : randomIntBetween(0, 16);
         RecoverySourceHandler.SendSnapshotResult result = handler.sendSnapshot(startingSeqNo, new Translog.Snapshot() {
             @Override
             public void close() {
@@ -205,7 +205,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
                 return operations.get(counter++);
             }
         });
-        if (startingSeqNo == SequenceNumbersService.UNASSIGNED_SEQ_NO) {
+        if (startingSeqNo == SequenceNumbers.UNASSIGNED_SEQ_NO) {
             assertThat(result.totalOperations, equalTo(initialNumberOfDocs + numberOfDocsWithValidSequenceNumbers));
         } else {
             assertThat(result.totalOperations, equalTo(Math.toIntExact(numberOfDocsWithValidSequenceNumbers - startingSeqNo)));
@@ -390,7 +390,7 @@ public class RecoverySourceHandlerTests extends ESTestCase {
             @Override
             long phase2(long startingSeqNo, Translog.Snapshot snapshot) throws IOException {
                 phase2Called.set(true);
-                return SequenceNumbersService.UNASSIGNED_SEQ_NO;
+                return SequenceNumbers.UNASSIGNED_SEQ_NO;
             }
 
         };
