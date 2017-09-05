@@ -2805,6 +2805,25 @@ public class InternalEngineTests extends ESTestCase {
 
         engine = createEngine(store, primaryTranslogDir); // and recover again!
         assertVisibleCount(engine, numDocs, false);
+
+        // now force recovery from the foreign translog
+        final int extraDocs = randomIntBetween(0, 5);
+        for (int i = numDocs; i < numDocs + extraDocs; i++) {
+            ParsedDocument doc = testParsedDocument(Integer.toString(i), null, testDocument(), new BytesArray("{}"), null);
+            Engine.Index firstIndexRequest = new Engine.Index(newUid(doc), doc, SequenceNumbers.UNASSIGNED_SEQ_NO, 0, Versions.MATCH_DELETED, VersionType.INTERNAL, PRIMARY, System.nanoTime(), -1, false);
+            Engine.IndexResult index = engine.index(firstIndexRequest);
+            assertThat(index.getVersion(), equalTo(1L));
+        }
+        engine.close();
+
+        EngineConfig forceOpen = new EngineConfig(EngineConfig.OpenMode.OPEN_INDEX_CREATE_TRANSLOG, shardId, threadPool,
+            config.getIndexSettings(), null, store, newMergePolicy(), config.getAnalyzer(),
+            config.getSimilarity(), new CodecService(null, logger), config.getEventListener(),
+            IndexSearcher.getDefaultQueryCache(), IndexSearcher.getDefaultQueryCachingPolicy(), translogConfig,
+            TimeValue.timeValueMinutes(5), config.getRefreshListeners(), null,
+            config.getTranslogRecoveryRunner());
+        engine = new InternalEngine(forceOpen);
+        assertVisibleCount(engine, numDocs, false);
     }
 
     public void testShardNotAvailableExceptionWhenEngineClosedConcurrently() throws IOException, InterruptedException {
