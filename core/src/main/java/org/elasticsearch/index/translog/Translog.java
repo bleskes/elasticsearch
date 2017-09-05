@@ -130,16 +130,19 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
      * generation referenced from already committed data. This means all operations that have not yet been committed should be in the
      * translog file referenced by this generation. The translog creation will fail if this generation can't be opened.
      *
+     * @param create                   true if a new empty translog should be created.
      * @param config                   the configuration of this translog
-     * @param uuid     the translog uuid to open, or to use when creating a new translog
+     * @param uuid                     the translog uuid to open or to use when creating a new translog
      * @param deletionPolicy           an instance of {@link TranslogDeletionPolicy} that controls when a translog file can be safely
      *                                 deleted
      * @param globalCheckpointSupplier a supplier for the global checkpoint
      */
     public Translog(
+        final boolean create,
         final TranslogConfig config, final String uuid, TranslogDeletionPolicy deletionPolicy,
         final LongSupplier globalCheckpointSupplier) throws IOException {
         super(config.getShardId(), config.getIndexSettings());
+        Objects.requireNonNull(uuid);
         this.config = config;
         this.globalCheckpointSupplier = globalCheckpointSupplier;
         this.deletionPolicy = deletionPolicy;
@@ -150,9 +153,20 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
         writeLock = new ReleasableLock(rwl.writeLock());
         this.location = config.getTranslogPath();
         Files.createDirectories(this.location);
-
         try {
-            if (uuid != null) {
+            if (create) {
+                IOUtils.rm(location);
+                // start from whatever generation lucene points to
+                final long generation = deletionPolicy.getMinTranslogGenerationForRecovery();
+                logger.debug("wipe translog location - creating new translog, starting generation [{}]", generation);
+                Files.createDirectories(location);
+                final Checkpoint checkpoint = Checkpoint.emptyTranslogCheckpoint(0, generation, globalCheckpointSupplier.getAsLong(), generation);
+                final Path checkpointFile = location.resolve(CHECKPOINT_FILE_NAME);
+                Checkpoint.write(getChannelFactory(), checkpointFile, checkpoint, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+                IOUtils.fsync(checkpointFile, false);
+                current = createWriter(generation, generation);
+                readers.clear();
+            } else {
                 final Checkpoint checkpoint = readCheckpoint(location);
                 final Path nextTranslogFile = location.resolve(getFilename(checkpoint.generation + 1));
                 final Path currentCheckpointFile = location.resolve(getCommitCheckpointFileName(checkpoint.generation));
@@ -186,18 +200,6 @@ public class Translog extends AbstractIndexShardComponent implements IndexShardC
                         IOUtils.closeWhileHandlingException(readers);
                     }
                 }
-            } else {
-                IOUtils.rm(location);
-                // start from whatever generation lucene points to
-                final long generation = deletionPolicy.getMinTranslogGenerationForRecovery();
-                logger.debug("wipe translog location - creating new translog, starting generation [{}]", generation);
-                Files.createDirectories(location);
-                final Checkpoint checkpoint = Checkpoint.emptyTranslogCheckpoint(0, generation, globalCheckpointSupplier.getAsLong(), generation);
-                final Path checkpointFile = location.resolve(CHECKPOINT_FILE_NAME);
-                Checkpoint.write(getChannelFactory(), checkpointFile, checkpoint, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                IOUtils.fsync(checkpointFile, false);
-                current = createWriter(generation, generation);
-                readers.clear();
             }
         } catch (Exception e) {
             // close the opened translog files if we fail to create a new translog...

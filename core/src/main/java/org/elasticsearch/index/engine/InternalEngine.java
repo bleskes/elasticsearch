@@ -359,10 +359,13 @@ public class InternalEngine extends Engine {
                 throw new IndexFormatTooOldException("translog", "translog has no generation nor a UUID - this might be an index from a previous version consider upgrading to N-1 first");
             }
         }
-        final Translog translog = new Translog(translogConfig, translogUUID, translogDeletionPolicy, globalCheckpointSupplier);
-        if (translogUUID == null) {
-            assert openMode == EngineConfig.OpenMode.CREATE_INDEX_AND_TRANSLOG : "OpenMode must be "
-                + EngineConfig.OpenMode.CREATE_INDEX_AND_TRANSLOG + " got " + openMode;
+        final boolean create =
+            openMode == EngineConfig.OpenMode.OPEN_INDEX_CREATE_TRANSLOG || openMode == EngineConfig.OpenMode.CREATE_INDEX_AND_TRANSLOG;
+        final Translog translog = new Translog(
+            create,
+            translogConfig, translogUUID, translogDeletionPolicy, globalCheckpointSupplier);
+        if (create) {
+            // we need to commit the new translog gen
             boolean success = false;
             try {
                 commitIndexWriter(writer, translog, openMode == EngineConfig.OpenMode.OPEN_INDEX_CREATE_TRANSLOG
