@@ -2275,6 +2275,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             boolean b = currentEngineReference.compareAndSet(engine, null);
             assert b : "engine swapped";
             engine.close();
+            state = IndexShardState.RECOVERING;
             // we have to set it before we open an engine and recover from the translog because
             // acquiring a snapshot from the translog causes a sync which causes the global checkpoint to be pulled in,
             // and an engine can be forced to close in ctor which also causes the global checkpoint to be pulled in.
@@ -2291,6 +2292,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             InternalEngine newEngine = (InternalEngine) createNewEngine(config);
             verifyNotClosed();
             newEngine.recoverFromTranslog(localCheckpoint);
+            state = IndexShardState.STARTED;
             logger.info("done opening index after promotion");
         }
     }
