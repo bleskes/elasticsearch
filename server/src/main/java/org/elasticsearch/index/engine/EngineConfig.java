@@ -312,7 +312,7 @@ public final class EngineConfig {
 
     @FunctionalInterface
     public interface TranslogRecoveryRunner {
-        int run(Engine engine, Translog.Snapshot snapshot) throws IOException;
+        int run(Engine engine, Translog.Snapshot snapshot, long maxSeqNo) throws IOException;
     }
 
     /**

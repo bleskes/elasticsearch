@@ -362,6 +362,12 @@ public class InternalEngine extends Engine {
 
     @Override
     public InternalEngine recoverFromTranslog() throws IOException {
+        final long maxSeq = localCheckpointTracker.getMaxSeqNo();
+        recoverFromTranslog(maxSeq);
+        return this;
+    }
+
+    public void recoverFromTranslog(long maxSeq) throws IOException {
         flushLock.lock();
         try (ReleasableLock lock = readLock.acquire()) {
             ensureOpen();
@@ -369,7 +375,7 @@ public class InternalEngine extends Engine {
                 throw new IllegalStateException("Engine has already been recovered");
             }
             try {
-                recoverFromTranslogInternal();
+                recoverFromTranslogInternal(maxSeq);
             } catch (Exception e) {
                 try {
                     pendingTranslogRecovery.set(true); // just play safe and never allow commits on this see #ensureCanFlush
@@ -382,7 +388,6 @@ public class InternalEngine extends Engine {
         } finally {
             flushLock.unlock();
         }
-        return this;
     }
 
     @Override
@@ -391,12 +396,12 @@ public class InternalEngine extends Engine {
         pendingTranslogRecovery.set(false); // we are good - now we can commit
     }
 
-    private void recoverFromTranslogInternal() throws IOException {
+    private void recoverFromTranslogInternal(final long maxSeqNo) throws IOException {
         Translog.TranslogGeneration translogGeneration = translog.getGeneration();
         final int opsRecovered;
         final long translogGen = Long.parseLong(lastCommittedSegmentInfos.getUserData().get(Translog.TRANSLOG_GENERATION_KEY));
         try (Translog.Snapshot snapshot = translog.newSnapshotFromGen(translogGen)) {
-            opsRecovered = config().getTranslogRecoveryRunner().run(this, snapshot);
+            opsRecovered = config().getTranslogRecoveryRunner().run(this, snapshot, maxSeqNo);
         } catch (Exception e) {
             throw new EngineException(shardId, "failed to recover from translog", e);
         }

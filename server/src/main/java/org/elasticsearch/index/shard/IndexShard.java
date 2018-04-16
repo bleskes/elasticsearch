@@ -1227,26 +1227,28 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     }
 
     // package-private for testing
-    int runTranslogRecovery(Engine engine, Translog.Snapshot snapshot) throws IOException {
+    int runTranslogRecovery(Engine engine, Translog.Snapshot snapshot, long maxSeqNo) throws IOException {
         recoveryState.getTranslog().totalOperations(snapshot.totalOperations());
         recoveryState.getTranslog().totalOperationsOnStart(snapshot.totalOperations());
         int opsRecovered = 0;
         Translog.Operation operation;
         while ((operation = snapshot.next()) != null) {
-            try {
-                logger.trace("[translog] recover op {}", operation);
-                Engine.Result result = applyTranslogOperation(operation, Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY, update -> {
-                    throw new IllegalArgumentException("unexpected mapping update: " + update);
-                });
-                ExceptionsHelper.reThrowIfNotNull(result.getFailure());
-                opsRecovered++;
-                recoveryState.getTranslog().incrementRecoveredOperations();
-            } catch (Exception e) {
-                if (ExceptionsHelper.status(e) == RestStatus.BAD_REQUEST) {
-                    // mainly for MapperParsingException and Failure to detect xcontent
-                    logger.info("ignoring recovery of a corrupt translog entry", e);
-                } else {
-                    throw e;
+            if (operation.seqNo() <= maxSeqNo) {
+                try {
+                    logger.trace("[translog] recover op {}", operation);
+                    Engine.Result result = applyTranslogOperation(operation, Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY, update -> {
+                        throw new IllegalArgumentException("unexpected mapping update: " + update);
+                    });
+                    ExceptionsHelper.reThrowIfNotNull(result.getFailure());
+                    opsRecovered++;
+                    recoveryState.getTranslog().incrementRecoveredOperations();
+                } catch (Exception e) {
+                    if (ExceptionsHelper.status(e) == RestStatus.BAD_REQUEST) {
+                        // mainly for MapperParsingException and Failure to detect xcontent
+                        logger.info("ignoring recovery of a corrupt translog entry", e);
+                    } else {
+                        throw e;
+                    }
                 }
             }
         }
@@ -2196,20 +2198,11 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                                 "shard term already update.  op term [" + operationPrimaryTerm + "], shardTerm [" + primaryTerm + "]";
                             primaryTerm = operationPrimaryTerm;
                             updateGlobalCheckpointOnReplica(globalCheckpoint, "primary term transition");
-                            final long currentGlobalCheckpoint = getGlobalCheckpoint();
-                            final long localCheckpoint;
-                            if (currentGlobalCheckpoint == SequenceNumbers.UNASSIGNED_SEQ_NO) {
-                                localCheckpoint = SequenceNumbers.NO_OPS_PERFORMED;
-                            } else {
-                                localCheckpoint = currentGlobalCheckpoint;
+                            try {
+                                resetEngineToLocalCheckpoint();
+                            } catch (final Exception e) {
+                                failShard("failed to reset engine on promotion", e);
                             }
-                            logger.trace(
-                                    "detected new primary with primary term [{}], resetting local checkpoint from [{}] to [{}]",
-                                    operationPrimaryTerm,
-                                    getLocalCheckpoint(),
-                                    localCheckpoint);
-                            getEngine().getLocalCheckpointTracker().resetCheckpoint(localCheckpoint);
-                            getEngine().rollTranslogGeneration();
                         });
                         globalCheckpointUpdated = true;
                     } catch (final Exception e) {
@@ -2260,6 +2253,46 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 },
                 executorOnDelay,
                 true, debugInfo);
+    }
+
+    protected void resetEngineToLocalCheckpoint() throws IOException {
+        synchronized (mutex) {
+            InternalEngine engine = (InternalEngine) getEngine();
+            engine.refresh("resetting to local checkpoint");
+            assert refreshListeners.pendingCount() == 0 : "we can't restart with pending listeners";
+            IOUtils.close(engine);
+            final long currentGlobalCheckpoint = getGlobalCheckpoint();
+            final long localCheckpoint;
+            if (currentGlobalCheckpoint == SequenceNumbers.UNASSIGNED_SEQ_NO) {
+                localCheckpoint = SequenceNumbers.NO_OPS_PERFORMED;
+            } else {
+                localCheckpoint = currentGlobalCheckpoint;
+            }
+            logger.info(
+                "detected new primary with primary term, resetting engine to local checkpoint [{}] (max seqNo [{}])",
+                localCheckpoint,
+                seqNoStats().getMaxSeqNo());
+            boolean b = currentEngineReference.compareAndSet(engine, null);
+            assert b : "engine swapped";
+            engine.close();
+            // we have to set it before we open an engine and recover from the translog because
+            // acquiring a snapshot from the translog causes a sync which causes the global checkpoint to be pulled in,
+            // and an engine can be forced to close in ctor which also causes the global checkpoint to be pulled in.
+            final String translogUUID = store.readLastCommittedSegmentsInfo().getUserData().get(Translog.TRANSLOG_UUID_KEY);
+            final long globalCheckpoint = Translog.readGlobalCheckpoint(translogConfig.getTranslogPath(), translogUUID);
+            replicationTracker.updateGlobalCheckpointOnReplica(globalCheckpoint, "read from translog checkpoint");
+
+            assertMaxUnsafeAutoIdInCommit();
+
+            final EngineConfig config = engine.config();
+            final long minRetainedTranslogGen = Translog.readMinTranslogGeneration(translogConfig.getTranslogPath(), translogUUID);
+            store.trimUnsafeCommits(globalCheckpoint, minRetainedTranslogGen, config.getIndexSettings().getIndexVersionCreated());
+
+            InternalEngine newEngine = (InternalEngine) createNewEngine(config);
+            verifyNotClosed();
+            newEngine.recoverFromTranslog(localCheckpoint);
+            logger.info("done opening index after promotion");
+        }
     }
 
     public int getActiveOperationsCount() {

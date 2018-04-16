@@ -103,13 +103,15 @@ public class TranslogHandler implements EngineConfig.TranslogRecoveryRunner {
     }
 
     @Override
-    public int run(Engine engine, Translog.Snapshot snapshot) throws IOException {
+    public int run(Engine engine, Translog.Snapshot snapshot, final long maxSeqNo) throws IOException {
         int opsRecovered = 0;
         Translog.Operation operation;
         while ((operation = snapshot.next()) != null) {
-            applyOperation(engine, convertToEngineOp(operation, Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY));
-            opsRecovered++;
-            appliedOperations.incrementAndGet();
+            if (operation.seqNo() <= maxSeqNo) {
+                applyOperation(engine, convertToEngineOp(operation, Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY));
+                opsRecovered++;
+                appliedOperations.incrementAndGet();
+            }
         }
         return opsRecovered;
     }

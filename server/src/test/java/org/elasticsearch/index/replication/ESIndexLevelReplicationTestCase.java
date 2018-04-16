@@ -549,7 +549,7 @@ public abstract class ESIndexLevelReplicationTestCase extends IndexShardTestCase
             public void failShardIfNeeded(ShardRouting replica, String message, Exception exception,
                                           Runnable onSuccess, Consumer<Exception> onPrimaryDemoted,
                                           Consumer<Exception> onIgnoredFailure) {
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException(exception);
             }
 
             @Override
