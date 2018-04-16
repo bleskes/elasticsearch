@@ -1749,14 +1749,14 @@ public class IndexShardTests extends IndexShardTestCase {
             SourceToParse.source(indexName, "doc", "doc-1", new BytesArray("{}"), XContentType.JSON), mapping);
         flushShard(shard);
         assertThat(getShardDocUIDs(shard), containsInAnyOrder("doc-0", "doc-1"));
-        // Simulate resync (without rollback): Noop #1, index #2
+        // Simulate resync (with rollback): Noop #1, index #2
         acquireReplicaOperationPermitBlockingly(shard, shard.primaryTerm + 1);
         shard.markSeqNoAsNoop(1, "test");
         shard.applyIndexOperationOnReplica(2, 1, VersionType.EXTERNAL, IndexRequest.UNSET_AUTO_GENERATED_TIMESTAMP, false,
             SourceToParse.source(indexName, "doc", "doc-2", new BytesArray("{}"), XContentType.JSON), mapping);
         flushShard(shard);
-        assertThat(getShardDocUIDs(shard), containsInAnyOrder("doc-0", "doc-1", "doc-2"));
-        // Recovering from store should discard doc #1
+        assertThat(getShardDocUIDs(shard), containsInAnyOrder("doc-0", "doc-2"));
+        // Recovering from store should still discard doc #1
         final ShardRouting replicaRouting = shard.routingEntry();
         IndexShard newShard = reinitShard(shard,
             newShardRouting(replicaRouting.shardId(), replicaRouting.currentNodeId(), true, ShardRoutingState.INITIALIZING,
