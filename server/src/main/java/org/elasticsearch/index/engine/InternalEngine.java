@@ -362,8 +362,7 @@ public class InternalEngine extends Engine {
 
     @Override
     public InternalEngine recoverFromTranslog() throws IOException {
-        final long maxSeq = localCheckpointTracker.getMaxSeqNo();
-        recoverFromTranslog(maxSeq);
+        recoverFromTranslog(Long.MAX_VALUE);
         return this;
     }
 
