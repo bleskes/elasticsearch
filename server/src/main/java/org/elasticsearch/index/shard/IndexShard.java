@@ -2307,12 +2307,14 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             final EngineConfig config = engine.config();
             final long minRetainedTranslogGen = Translog.readMinTranslogGeneration(translogConfig.getTranslogPath(), translogUUID);
             store.trimUnsafeCommits(globalCheckpoint, minRetainedTranslogGen, config.getIndexSettings().getIndexVersionCreated());
+            logger.info("opening commit with local checkpoint [{}]",
+                store.readLastCommittedSegmentsInfo().getUserData().get(SequenceNumbers.LOCAL_CHECKPOINT_KEY));
 
             InternalEngine newEngine = (InternalEngine) createNewEngine(config);
             verifyNotClosed();
-            newEngine.recoverFromTranslog(localCheckpoint);
+            long opsRecovered = newEngine.recoverFromTranslog(localCheckpoint);
             state = IndexShardState.STARTED;
-            logger.info("done opening index after promotion");
+            logger.info("done opening index after promotion. recovered [{}]", opsRecovered);
         }
     }
 

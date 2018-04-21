@@ -366,15 +366,16 @@ public class InternalEngine extends Engine {
         return this;
     }
 
-    public void recoverFromTranslog(long maxSeq) throws IOException {
+    public long recoverFromTranslog(long maxSeq) throws IOException {
         flushLock.lock();
+        final long opsRecovered;
         try (ReleasableLock lock = readLock.acquire()) {
             ensureOpen();
             if (pendingTranslogRecovery.get() == false) {
                 throw new IllegalStateException("Engine has already been recovered");
             }
             try {
-                recoverFromTranslogInternal(maxSeq);
+                opsRecovered = recoverFromTranslogInternal(maxSeq);
             } catch (Exception e) {
                 try {
                     pendingTranslogRecovery.set(true); // just play safe and never allow commits on this see #ensureCanFlush
@@ -387,6 +388,7 @@ public class InternalEngine extends Engine {
         } finally {
             flushLock.unlock();
         }
+        return opsRecovered;
     }
 
     @Override
@@ -395,7 +397,7 @@ public class InternalEngine extends Engine {
         pendingTranslogRecovery.set(false); // we are good - now we can commit
     }
 
-    private void recoverFromTranslogInternal(final long maxSeqNo) throws IOException {
+    private long recoverFromTranslogInternal(final long maxSeqNo) throws IOException {
         Translog.TranslogGeneration translogGeneration = translog.getGeneration();
         final int opsRecovered;
         final long translogGen = Long.parseLong(lastCommittedSegmentInfos.getUserData().get(Translog.TRANSLOG_GENERATION_KEY));
@@ -416,6 +418,7 @@ public class InternalEngine extends Engine {
             refresh("translog_recovery");
         }
         translog.trimUnreferencedReaders();
+        return opsRecovered;
     }
 
     private Translog openTranslog(EngineConfig engineConfig, TranslogDeletionPolicy translogDeletionPolicy, LongSupplier globalCheckpointSupplier) throws IOException {
