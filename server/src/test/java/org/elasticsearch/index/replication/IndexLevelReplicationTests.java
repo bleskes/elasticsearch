@@ -359,6 +359,7 @@ public class IndexLevelReplicationTests extends ESIndexLevelReplicationTestCase 
                 assertThat("Remaining of snapshot should contain init operations", snapshot, containsOperationsInAnyOrder(initOperations));
                 assertThat(snapshot.overriddenOperations(), equalTo(1));
             }
+            shards.assertAllEqual(initDocs + 1);
 
             // Make sure that peer-recovery transfers all but non-overridden operations.
             IndexShard replica3 = shards.addReplica();
@@ -372,6 +373,8 @@ public class IndexLevelReplicationTests extends ESIndexLevelReplicationTestCase 
                 assertThat("Remaining of snapshot should contain init operations", snapshot, containsOperationsInAnyOrder(initOperations));
                 assertThat("Peer-recovery should not send overridden operations", snapshot.overriddenOperations(), equalTo(0));
             }
+
+            shards.assertAllEqual(initDocs + 1);
             // TODO: We should assert the content of shards in the ReplicationGroup.
             // Without rollback replicas(current implementation), we don't have the same content across shards:
             // - replica1 has {doc1}

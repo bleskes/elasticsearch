@@ -892,4 +892,8 @@ public class Lucene {
     public static NumericDocValuesField newSoftDeleteField() {
         return new NumericDocValuesField(SOFT_DELETE_FIELD, 1);
     }
+
+    public static NumericDocValuesField newSoftUndeleteField() {
+        return new NumericDocValuesField(SOFT_DELETE_FIELD, null);
+    }
 }

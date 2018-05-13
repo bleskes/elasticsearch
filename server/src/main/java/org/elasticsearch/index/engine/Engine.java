@@ -616,6 +616,9 @@ public abstract class Engine implements Closeable {
     public abstract Translog.Snapshot newLuceneChangesSnapshot(String source, MapperService mapperService,
                                                                long minSeqNo, long maxSeqNo, boolean requiredFullRange) throws IOException;
 
+
+    public abstract long rollbackLocalCheckpointToGlobal(MapperService mapperService) throws IOException;
+
     protected final void ensureOpen(Exception suppressed) {
         if (isClosed.get()) {
             AlreadyClosedException ace = new AlreadyClosedException(shardId + " engine is closed", failedEngine.get());
