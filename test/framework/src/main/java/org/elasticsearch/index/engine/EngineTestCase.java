@@ -96,6 +96,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -841,5 +842,75 @@ public abstract class EngineTestCase extends ESTestCase {
      */
     public static Translog getTranslog(Engine engine) {
         return engine.getTranslog();
+    }
+
+
+    protected MockDocStore generateMultiDocHistory(int docNum, int numOfOps, boolean primary) {
+        Set<String> ids = new HashSet<>();
+        for (int i = 0; i < docNum; i++) {
+            ids.add("id_" + i);
+        }
+        long seqNo = 0;
+        long term = 1;
+        final MockDocStore mockDocStore = new MockDocStore();
+        final Engine.Operation.Origin origin = primary ? PRIMARY : REPLICA;
+        for (int i = 0; i < numOfOps; i++) {
+            final String id = randomFrom(ids);
+            final Engine.Operation lastOp = mockDocStore.lastOpPerDoc.get(id);
+            final boolean delete = lastOp instanceof Engine.Index && randomBoolean();
+            final Engine.Operation op;
+            final long version = lastOp == null ? 1 : lastOp.version() + 1;
+            if (rarely()) {
+                term++;
+            }
+            if (delete) {
+                op = new Engine.Delete("_doc", id, newUid(id), seqNo++, term,
+                    version, VersionType.EXTERNAL, origin, System.currentTimeMillis());
+            } else {
+                op = new Engine.Index(newUid(id), createParsedDoc(id, id), seqNo++, term, version, VersionType.EXTERNAL, origin,
+                    System.currentTimeMillis(), -1, false);
+            }
+            mockDocStore.apply(op);
+        }
+        return mockDocStore;
+    }
+
+    static class MockDocStore {
+        public final List<Engine.Operation> history;
+        public final Map<String, Engine.Operation> lastOpPerDoc;
+
+        private long maxPrimaryTerm;
+        private long maxSeqNo;
+
+        MockDocStore() {
+            history = new ArrayList<>();
+            lastOpPerDoc = new HashMap<>();
+        }
+
+        public Engine.Index getDoc(String id) {
+            Engine.Operation op = lastOpPerDoc.get(id);
+            return op instanceof Engine.Index ? (Engine.Index) op : null;
+        }
+
+        public void apply(Engine.Operation op) {
+            Engine.Operation existing = lastOpPerDoc.get(op.id());
+            if (existing == null ||
+                op.seqNo() > existing.seqNo() ||
+                (op.seqNo() == existing.seqNo() && op.primaryTerm() > existing.primaryTerm())) {
+                lastOpPerDoc.put(op.id(), op);
+            }
+            history.add(op);
+            history.sort(Comparator.comparing(Engine.Operation::seqNo));
+            maxPrimaryTerm = Math.max(maxPrimaryTerm, op.primaryTerm());
+            maxSeqNo = Math.max(maxSeqNo, op.seqNo());
+        }
+
+        public long getMaxPrimaryTerm() {
+            return maxPrimaryTerm;
+        }
+
+        public long getMaxSeqNo() {
+            return maxSeqNo;
+        }
     }
 }

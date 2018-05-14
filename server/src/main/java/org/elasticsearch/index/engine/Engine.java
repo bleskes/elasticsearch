@@ -617,7 +617,7 @@ public abstract class Engine implements Closeable {
                                                                long minSeqNo, long maxSeqNo, boolean requiredFullRange) throws IOException;
 
 
-    public abstract long rollbackLocalCheckpointToGlobal(MapperService mapperService) throws IOException;
+    public abstract int rollbackLocalCheckpointToGlobal(MapperService mapperService) throws IOException;
 
     protected final void ensureOpen(Exception suppressed) {
         if (isClosed.get()) {

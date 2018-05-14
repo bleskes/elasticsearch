@@ -25,6 +25,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.FilterDirectoryReader;
 import org.apache.lucene.index.IndexCommit;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -1451,11 +1452,11 @@ public class InternalEngine extends Engine {
         mergeScheduler.refreshConfig();
     }
 
-    public long rollbackLocalCheckpointToGlobal(MapperService mapperService) throws IOException {
+    public int rollbackLocalCheckpointToGlobal(MapperService mapperService) throws IOException {
         ensureOpen();
         try (Releasable lock = writeLock.acquire()) {
             boolean notDone = true;
-            long rolledBack = 0;
+            int rolledBack = 0;
             RETRY:
             while (notDone) {
                 refresh("rollback", SearcherScope.INTERNAL);
@@ -1468,24 +1469,24 @@ public class InternalEngine extends Engine {
                 try (Engine.Searcher searcher = acquireSearcher("rollback", SearcherScope.INTERNAL)) {
                     IndexSearcher softDeleteSearcher = new IndexSearcher(Lucene.wrapAllDocsLive(searcher.getDirectoryReader()));
                     FieldsVisitor fieldsVisitor = new FieldsVisitor(false);
-                    // TODO: batch
+                    // TODO: batch so we won't overflow
                     // TODO: deal with nested
                     TopDocs docs = softDeleteSearcher.search(rollbackQuery, Integer.MAX_VALUE, sortBySeqNo);
                     for (ScoreDoc doc : docs.scoreDocs) {
                         fieldsVisitor.reset();
                         softDeleteSearcher.doc(doc.doc, fieldsVisitor);
                         fieldsVisitor.postProcess(mapperService);
-                        if (rollbackDoc(fieldsVisitor.uid(), globalCheckpoint, softDeleteSearcher, searcher.reader()) == false) {
+                        if (rollbackDoc(fieldsVisitor.uid(), globalCheckpoint, softDeleteSearcher, searcher.getDirectoryReader()) == false) {
                             continue RETRY;
                         }
                     }
                     rolledBack = docs.scoreDocs.length;
                 }
                 indexWriter.deleteDocuments(rollbackQuery);
-                refresh("done_rollback");
                 localCheckpointTracker.resetCheckpoint(
                     globalCheckpoint == SequenceNumbers.UNASSIGNED_SEQ_NO ?  SequenceNumbers.NO_OPS_PERFORMED : globalCheckpoint
                 );
+                flush(true, true);
                 notDone = false;
             }
             return rolledBack;
@@ -1499,7 +1500,7 @@ public class InternalEngine extends Engine {
         }
     }
 
-    private boolean rollbackDoc(Uid docId, long globalCheckpoint, IndexSearcher searcher, IndexReader reader) throws IOException {
+    private boolean rollbackDoc(Uid docId, long globalCheckpoint, IndexSearcher searcher, DirectoryReader reader) throws IOException {
         final Query rangeQuery = LongPoint.newRangeQuery(SeqNoFieldMapper.NAME, SequenceNumbers.NO_OPS_PERFORMED , globalCheckpoint);
         final Query boolQuery = new BooleanQuery.Builder()
             .add(new TermQuery(new Term(IdFieldMapper.NAME, Uid.encodeId(docId.id()))), BooleanClause.Occur.MUST)
@@ -1508,11 +1509,10 @@ public class InternalEngine extends Engine {
             new SortedNumericSortField(SeqNoFieldMapper.NAME, SortField.Type.LONG, true)
         );
         // TODO: nested!
-        // TODO: optimized collector?
         TopDocs docs = searcher.search(boolQuery, 1, sortBySeqNo);
         for (ScoreDoc oldDoc: docs.scoreDocs) {
-            long lucneSeq = indexWriter.tryUpdateDocValue(reader, oldDoc.doc, softUndeleteField);
-            if (lucneSeq < 0) {
+            long luceneSeq = indexWriter.tryUpdateDocValue(FilterDirectoryReader.unwrap(reader), oldDoc.doc, softUndeleteField);
+            if (luceneSeq < 0) {
                 return false;
             }
         }

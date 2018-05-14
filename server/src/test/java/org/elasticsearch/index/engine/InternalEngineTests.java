@@ -4736,6 +4736,66 @@ public class InternalEngineTests extends EngineTestCase {
         assertOperationHistoryInLucene(operations);
     }
 
+    public void testRollbackLocalCheckpoint() throws IOException {
+        MockDocStore docStore = generateMultiDocHistory(5, randomIntBetween(20, 40), false);
+        final long globalCheckpoint = randomLongBetween(0, docStore.getMaxSeqNo());
+        final List<Engine.Operation> completeHistory =
+            docStore.history.stream().filter(o -> o.seqNo() <= globalCheckpoint).collect(Collectors.toList());
+        final List<Engine.Operation> opsToApply = new ArrayList<>(completeHistory);
+        docStore.history.stream().filter(o -> o.seqNo() > globalCheckpoint).filter(o -> randomBoolean()).forEach(opsToApply::add);
+        final MergePolicy keepSoftDeleteDocsMP = new SoftDeletesRetentionMergePolicy(
+            Lucene.SOFT_DELETE_FIELD, MatchAllDocsQuery::new, engine.config().getMergePolicy());
+        InternalEngine engine = null;
+        try (Store store = createStore()) {
+            engine = createEngine(
+                config(defaultSettings, store, createTempDir(), keepSoftDeleteDocsMP, null, null, () -> globalCheckpoint));
+            Collections.shuffle(opsToApply, random());
+
+            for (Engine.Operation op : opsToApply) {
+                if (op instanceof Engine.Index) {
+                    Engine.IndexResult indexResult = engine.index((Engine.Index) op);
+                    assertThat(indexResult.getFailure(), nullValue());
+                } else {
+                    Engine.DeleteResult deleteResult = engine.delete((Engine.Delete) op);
+                    assertThat(deleteResult.getFailure(), nullValue());
+                }
+                if (rarely()) {
+                    engine.refresh("test");
+                }
+                if (rarely()) {
+                    engine.flush();
+                }
+                if (rarely()) {
+                    engine.forceMerge(true);
+                }
+            }
+            final MapperService mapperService = createMapperService("_doc");
+            int rolled = engine.rollbackLocalCheckpointToGlobal(mapperService);
+            assertThat(rolled, equalTo(opsToApply.size() - completeHistory.size()));
+            if (randomBoolean()) {
+                engine.close();
+                engine = createEngine(engine.config());
+            }
+            List<Translog.Operation> opsInLucene = readAllOperationsInLucene(engine, mapperService);
+            assertThat(opsInLucene.size(), equalTo(completeHistory.size()));
+            for (int i = 0; i < completeHistory.size(); i++) {
+                final Translog.Operation luceneOp = opsInLucene.get(i);
+                final Engine.Operation historyOp = completeHistory.get(i);
+                assertThat(luceneOp.opType(),
+                    equalTo(historyOp instanceof Engine.Index ? Translog.Operation.Type.INDEX : Translog.Operation.Type.DELETE));
+                assertThat(luceneOp.seqNo(), equalTo(historyOp.seqNo()));
+                assertThat(luceneOp.primaryTerm(), equalTo(historyOp.primaryTerm()));
+                if (luceneOp.opType() == Translog.Operation.Type.INDEX) {
+                    assertThat(((Translog.Index) luceneOp).id(), equalTo(historyOp.id()));
+                } else {
+                    assertThat(((Translog.Delete) luceneOp).id(), equalTo(historyOp.id()));
+                }
+            }
+        } finally {
+            IOUtils.close(engine);
+        }
+    }
+
     private void assertOperationHistoryInLucene(List<Engine.Operation> operations) throws IOException {
         final MergePolicy keepSoftDeleteDocsMP = new SoftDeletesRetentionMergePolicy(
             Lucene.SOFT_DELETE_FIELD, () -> new MatchAllDocsQuery(), engine.config().getMergePolicy());
