@@ -162,6 +162,7 @@ import java.util.stream.LongStream;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.shuffle;
+import static java.util.Collections.sort;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.PEER_RECOVERY;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.PRIMARY;
@@ -735,9 +736,10 @@ public class InternalEngineTests extends EngineTestCase {
             recoveringEngine = new InternalEngine(initialEngine.config()) {
 
                 @Override
-                protected void commitIndexWriter(IndexWriter writer, Translog translog, String syncId) throws IOException {
+                protected void commitIndexWriter(IndexWriter writer, Translog translog, String syncId, LongSupplier maxSeqNoSupplier)
+                    throws IOException {
                     committed.set(true);
-                    super.commitIndexWriter(writer, translog, syncId);
+                    super.commitIndexWriter(writer, translog, syncId, maxSeqNoSupplier);
                 }
             };
             assertThat(recoveringEngine.getTranslog().stats().getUncommittedOperations(), equalTo(docs));
@@ -2520,8 +2522,9 @@ public class InternalEngineTests extends EngineTestCase {
                          globalCheckpointSupplier)) {
 
                 @Override
-                protected void commitIndexWriter(IndexWriter writer, Translog translog, String syncId) throws IOException {
-                    super.commitIndexWriter(writer, translog, syncId);
+                protected void commitIndexWriter(IndexWriter writer, Translog translog, String syncId, LongSupplier maxSeqNoSupplier)
+                    throws IOException {
+                    super.commitIndexWriter(writer, translog, syncId, maxSeqNoSupplier);
                     if (throwErrorOnCommit.get()) {
                         throw new RuntimeException("power's out");
                     }
@@ -4203,13 +4206,14 @@ public class InternalEngineTests extends EngineTestCase {
             () -> globalCheckpoint.get());
         try (Engine engine = new InternalEngine(engineConfig) {
                 @Override
-                protected void commitIndexWriter(IndexWriter writer, Translog translog, String syncId) throws IOException {
+                protected void commitIndexWriter(IndexWriter writer, Translog translog, String syncId, LongSupplier maxSeqNoSupplier)
+                    throws IOException {
                     // Advance the global checkpoint during the flush to create a lag between a persisted global checkpoint in the translog
                     // (this value is visible to the deletion policy) and an in memory global checkpoint in the SequenceNumbersService.
                     if (rarely()) {
                         globalCheckpoint.set(randomLongBetween(globalCheckpoint.get(), getLocalCheckpointTracker().getCheckpoint()));
                     }
-                    super.commitIndexWriter(writer, translog, syncId);
+                    super.commitIndexWriter(writer, translog, syncId, maxSeqNoSupplier);
                 }
             }) {
             engine.recoverFromTranslog();
@@ -4770,6 +4774,12 @@ public class InternalEngineTests extends EngineTestCase {
                 }
             }
             final MapperService mapperService = createMapperService("_doc");
+
+            // These are not needed but are handy for debugging
+            sort(opsToApply, Comparator.comparing(Engine.Operation::seqNo));
+            MockDocStore rolledBackStore = new MockDocStore();
+            completeHistory.forEach(rolledBackStore::apply);
+
             int rolled = engine.rollbackLocalCheckpointToGlobal(mapperService);
             assertThat(rolled, equalTo(opsToApply.size() - completeHistory.size()));
             if (randomBoolean()) {

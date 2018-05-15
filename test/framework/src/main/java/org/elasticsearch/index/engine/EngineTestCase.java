@@ -863,11 +863,14 @@ public abstract class EngineTestCase extends ESTestCase {
             if (rarely()) {
                 term++;
             }
-            if (delete) {
-                op = new Engine.Delete("_doc", id, newUid(id), seqNo++, term,
+            final long ppSeqNo = seqNo++;
+            if (rarely()) {
+                op = new Engine.NoOp(seqNo, term, origin, System.currentTimeMillis(), "test");
+            } else if (delete) {
+                op = new Engine.Delete("_doc", id, newUid(id), ppSeqNo, term,
                     version, VersionType.EXTERNAL, origin, System.currentTimeMillis());
             } else {
-                op = new Engine.Index(newUid(id), createParsedDoc(id, id), seqNo++, term, version, VersionType.EXTERNAL, origin,
+                op = new Engine.Index(newUid(id), createParsedDoc(id, id), ppSeqNo, term, version, VersionType.EXTERNAL, origin,
                     System.currentTimeMillis(), -1, false);
             }
             mockDocStore.apply(op);
@@ -893,11 +896,13 @@ public abstract class EngineTestCase extends ESTestCase {
         }
 
         public void apply(Engine.Operation op) {
-            Engine.Operation existing = lastOpPerDoc.get(op.id());
-            if (existing == null ||
-                op.seqNo() > existing.seqNo() ||
-                (op.seqNo() == existing.seqNo() && op.primaryTerm() > existing.primaryTerm())) {
-                lastOpPerDoc.put(op.id(), op);
+            if (op instanceof Engine.NoOp == false) {
+                Engine.Operation existing = lastOpPerDoc.get(op.id());
+                if (existing == null ||
+                    op.seqNo() > existing.seqNo() ||
+                    (op.seqNo() == existing.seqNo() && op.primaryTerm() > existing.primaryTerm())) {
+                    lastOpPerDoc.put(op.id(), op);
+                }
             }
             history.add(op);
             history.sort(Comparator.comparing(Engine.Operation::seqNo));

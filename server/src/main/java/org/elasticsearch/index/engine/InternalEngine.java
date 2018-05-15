@@ -436,7 +436,7 @@ public class InternalEngine extends Engine {
         if (opsRecovered > 0) {
             logger.trace("flushing post recovery from translog. ops recovered [{}]. committed translog id [{}]. current id [{}]",
                 opsRecovered, translogGeneration == null ? null : translogGeneration.translogFileGeneration, translog.currentFileGeneration());
-            commitIndexWriter(indexWriter, translog, null);
+            commitIndexWriter(indexWriter, translog, null, localCheckpointTracker::getMaxSeqNo);
             refreshLastCommittedSegmentInfos();
             refresh("translog_recovery");
         }
@@ -1455,40 +1455,44 @@ public class InternalEngine extends Engine {
     public int rollbackLocalCheckpointToGlobal(MapperService mapperService) throws IOException {
         ensureOpen();
         try (Releasable lock = writeLock.acquire()) {
-            boolean notDone = true;
             int rolledBack = 0;
+            final long globalCheckpoint = config().getGlobalCheckpointSupplier().getAsLong();
+            long currentStart = globalCheckpoint + 1;
+            final long maxSeqNo = localCheckpointTracker.getMaxSeqNo();
+            final int BULK_SIZE = 100;
+            refresh("rollback", SearcherScope.INTERNAL);
             RETRY:
-            while (notDone) {
-                refresh("rollback", SearcherScope.INTERNAL);
-                final long globalCheckpoint = config().getGlobalCheckpointSupplier().getAsLong();
+            while (currentStart < maxSeqNo) {
                 logger.trace("rolling back local checkpoint from [{}] to [{}]", localCheckpointTracker.getCheckpoint(), globalCheckpoint);
-                final Query rollbackQuery = LongPoint.newRangeQuery(SeqNoFieldMapper.NAME, globalCheckpoint + 1, Long.MAX_VALUE);
+                final Query rollbackQuery = LongPoint.newRangeQuery(SeqNoFieldMapper.NAME, currentStart, currentStart + BULK_SIZE - 1L);
                 final Sort sortBySeqNo = new Sort(
                     new SortedNumericSortField(SeqNoFieldMapper.NAME, SortField.Type.LONG)
                 );
                 try (Engine.Searcher searcher = acquireSearcher("rollback", SearcherScope.INTERNAL)) {
                     IndexSearcher softDeleteSearcher = new IndexSearcher(Lucene.wrapAllDocsLive(searcher.getDirectoryReader()));
                     FieldsVisitor fieldsVisitor = new FieldsVisitor(false);
-                    // TODO: batch so we won't overflow
                     // TODO: deal with nested
-                    TopDocs docs = softDeleteSearcher.search(rollbackQuery, Integer.MAX_VALUE, sortBySeqNo);
+                    TopDocs docs = softDeleteSearcher.search(rollbackQuery, BULK_SIZE, sortBySeqNo);
                     for (ScoreDoc doc : docs.scoreDocs) {
                         fieldsVisitor.reset();
                         softDeleteSearcher.doc(doc.doc, fieldsVisitor);
                         fieldsVisitor.postProcess(mapperService);
-                        if (rollbackDoc(fieldsVisitor.uid(), globalCheckpoint, softDeleteSearcher, searcher.getDirectoryReader()) == false) {
+                        if (rollbackDoc(doc.doc, fieldsVisitor.uid(),
+                            globalCheckpoint, softDeleteSearcher, searcher.getDirectoryReader()) == false) {
+                            // expose any changes.
+                            refresh("rollback", SearcherScope.INTERNAL);
                             continue RETRY;
                         }
                     }
-                    rolledBack = docs.scoreDocs.length;
+                    currentStart += BULK_SIZE;
+                    rolledBack += docs.scoreDocs.length;
                 }
-                indexWriter.deleteDocuments(rollbackQuery);
-                localCheckpointTracker.resetCheckpoint(
-                    globalCheckpoint == SequenceNumbers.UNASSIGNED_SEQ_NO ?  SequenceNumbers.NO_OPS_PERFORMED : globalCheckpoint
-                );
-                flush(true, true);
-                notDone = false;
             }
+            localCheckpointTracker.resetCheckpoint(
+                globalCheckpoint == SequenceNumbers.UNASSIGNED_SEQ_NO ?  SequenceNumbers.NO_OPS_PERFORMED : globalCheckpoint
+            );
+            commitIndexWriter(indexWriter, translog, null, () -> globalCheckpoint);
+            refresh("post rollback", SearcherScope.EXTERNAL);
             return rolledBack;
         } catch (Exception e) {
             try {
@@ -1500,23 +1504,27 @@ public class InternalEngine extends Engine {
         }
     }
 
-    private boolean rollbackDoc(Uid docId, long globalCheckpoint, IndexSearcher searcher, DirectoryReader reader) throws IOException {
+    private boolean rollbackDoc(int docId, Uid uid, long globalCheckpoint, IndexSearcher searcher, DirectoryReader reader)
+        throws IOException {
         final Query rangeQuery = LongPoint.newRangeQuery(SeqNoFieldMapper.NAME, SequenceNumbers.NO_OPS_PERFORMED , globalCheckpoint);
         final Query boolQuery = new BooleanQuery.Builder()
-            .add(new TermQuery(new Term(IdFieldMapper.NAME, Uid.encodeId(docId.id()))), BooleanClause.Occur.MUST)
+            .add(new TermQuery(new Term(IdFieldMapper.NAME, Uid.encodeId(uid.id()))), BooleanClause.Occur.MUST)
             .add(rangeQuery, BooleanClause.Occur.MUST).build();
         final Sort sortBySeqNo = new Sort(
             new SortedNumericSortField(SeqNoFieldMapper.NAME, SortField.Type.LONG, true)
         );
         // TODO: nested!
         TopDocs docs = searcher.search(boolQuery, 1, sortBySeqNo);
+        final DirectoryReader unwrappedReader = FilterDirectoryReader.unwrap(reader);
         for (ScoreDoc oldDoc: docs.scoreDocs) {
-            long luceneSeq = indexWriter.tryUpdateDocValue(FilterDirectoryReader.unwrap(reader), oldDoc.doc, softUndeleteField);
+            long luceneSeq = indexWriter.tryUpdateDocValue(unwrappedReader, oldDoc.doc, softUndeleteField);
             if (luceneSeq < 0) {
                 return false;
             }
         }
-        return true;
+        // now delete the doc itself
+        long luceneSeq = indexWriter.tryDeleteDocument(unwrappedReader, docId);
+        return luceneSeq >= 0;
     }
 
     @Override
@@ -1553,7 +1561,7 @@ public class InternalEngine extends Engine {
                 return SyncedFlushResult.COMMIT_MISMATCH;
             }
             logger.trace("starting sync commit [{}]", syncId);
-            commitIndexWriter(indexWriter, translog, syncId);
+            commitIndexWriter(indexWriter, translog, syncId, localCheckpointTracker::getMaxSeqNo);
             logger.debug("successfully sync committed. sync id [{}].", syncId);
             lastCommittedSegmentInfos = store.readLastCommittedSegmentsInfo();
             return SyncedFlushResult.SUCCESS;
@@ -1572,7 +1580,7 @@ public class InternalEngine extends Engine {
             long translogGenOfLastCommit = Long.parseLong(lastCommittedSegmentInfos.userData.get(Translog.TRANSLOG_GENERATION_KEY));
             if (syncId != null && indexWriter.hasUncommittedChanges() && translog.totalOperationsByMinGen(translogGenOfLastCommit) == 0) {
                 logger.trace("start renewing sync commit [{}]", syncId);
-                commitIndexWriter(indexWriter, translog, syncId);
+                commitIndexWriter(indexWriter, translog, syncId, localCheckpointTracker::getMaxSeqNo);
                 logger.debug("successfully sync committed. sync id [{}].", syncId);
                 lastCommittedSegmentInfos = store.readLastCommittedSegmentsInfo();
                 renewed = true;
@@ -1655,7 +1663,7 @@ public class InternalEngine extends Engine {
                     try {
                         translog.rollGeneration();
                         logger.trace("starting commit for flush; commitTranslog=true");
-                        commitIndexWriter(indexWriter, translog, null);
+                        commitIndexWriter(indexWriter, translog, null, localCheckpointTracker::getMaxSeqNo);
                         logger.trace("finished commit for flush");
                         // we need to refresh in order to clear older version values
                         refresh("version_table_flush", SearcherScope.INTERNAL);
@@ -2275,9 +2283,13 @@ public class InternalEngine extends Engine {
      * @param writer   the index writer to commit
      * @param translog the translog
      * @param syncId   the sync flush ID ({@code null} if not committing a synced flush)
-     * @throws IOException if an I/O exception occurs committing the specfied writer
+     * @param maxSeqNoSupplier called after the set of segments for this flush are fixed.
+     *                         Should supplied an upper bound for the maximum sequence number of
+     *                         all operations that are included in the commit.
+     * @throws IOException if an I/O exception occurs committing the specified writer
      */
-    protected void commitIndexWriter(final IndexWriter writer, final Translog translog, @Nullable final String syncId) throws IOException {
+    protected void commitIndexWriter(final IndexWriter writer, final Translog translog,
+                                     @Nullable final String syncId, LongSupplier maxSeqNoSupplier) throws IOException {
         ensureCanFlush();
         try {
             final long localCheckpoint = localCheckpointTracker.getCheckpoint();
@@ -2303,7 +2315,7 @@ public class InternalEngine extends Engine {
                 if (syncId != null) {
                     commitData.put(Engine.SYNC_COMMIT_ID, syncId);
                 }
-                commitData.put(SequenceNumbers.MAX_SEQ_NO, Long.toString(localCheckpointTracker.getMaxSeqNo()));
+                commitData.put(SequenceNumbers.MAX_SEQ_NO, Long.toString(maxSeqNoSupplier.getAsLong()));
                 commitData.put(MAX_UNSAFE_AUTO_ID_TIMESTAMP_COMMIT_ID, Long.toString(maxUnsafeAutoIdTimestamp.get()));
                 commitData.put(HISTORY_UUID_KEY, historyUUID);
                 logger.trace("committing writer with commit data [{}]", commitData);
