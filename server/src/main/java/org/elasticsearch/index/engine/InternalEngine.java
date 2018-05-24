@@ -159,6 +159,7 @@ public class InternalEngine extends Engine {
     private final CounterMetric numDocUpdates = new CounterMetric();
     private final NumericDocValuesField softDeleteField = Lucene.newSoftDeleteField();
     private final NumericDocValuesField softUndeleteField = Lucene.newSoftUndeleteField();
+    private final NumericDocValuesField rolledbackField = Lucene.newRolledbackFieldField();
     private final boolean softDeleteEnabled;
     private final LastRefreshedCheckpointListener lastRefreshedCheckpointListener;
 
@@ -1509,6 +1510,8 @@ public class InternalEngine extends Engine {
         final Query rangeQuery = LongPoint.newRangeQuery(SeqNoFieldMapper.NAME, SequenceNumbers.NO_OPS_PERFORMED , globalCheckpoint);
         final Query boolQuery = new BooleanQuery.Builder()
             .add(new TermQuery(new Term(IdFieldMapper.NAME, Uid.encodeId(uid.id()))), BooleanClause.Occur.MUST)
+            // no need to revive tombstone docs.
+            .add(NumericDocValuesField.newSlowExactQuery(SeqNoFieldMapper.TOMBSTONE_NAME, 1), BooleanClause.Occur.MUST_NOT)
             .add(rangeQuery, BooleanClause.Occur.MUST).build();
         final Sort sortBySeqNo = new Sort(
             new SortedNumericSortField(SeqNoFieldMapper.NAME, SortField.Type.LONG, true)
@@ -1523,7 +1526,7 @@ public class InternalEngine extends Engine {
             }
         }
         // now delete the doc itself
-        long luceneSeq = indexWriter.tryDeleteDocument(unwrappedReader, docId);
+        long luceneSeq = indexWriter.tryUpdateDocValue(unwrappedReader, docId, softDeleteField, rolledbackField);
         return luceneSeq >= 0;
     }
 

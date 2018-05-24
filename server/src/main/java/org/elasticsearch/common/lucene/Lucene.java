@@ -41,6 +41,7 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NoMergePolicy;
+import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SegmentCommitInfo;
 import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.index.SegmentReader;
@@ -65,8 +66,10 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.Lock;
+import org.apache.lucene.util.BitSet;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.FixedBitSet;
 import org.apache.lucene.util.Version;
 import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.common.Nullable;
@@ -100,6 +103,7 @@ public class Lucene {
     }
 
     public static final String SOFT_DELETE_FIELD = "__soft_delete";
+    public static final String ROLLEDBACK_FIELD = "__rolled_back";
 
     public static final NamedAnalyzer STANDARD_ANALYZER = new NamedAnalyzer("_standard", AnalyzerScope.GLOBAL, new StandardAnalyzer());
     public static final NamedAnalyzer KEYWORD_ANALYZER = new NamedAnalyzer("_keyword", AnalyzerScope.GLOBAL, new KeywordAnalyzer());
@@ -858,12 +862,33 @@ public class Lucene {
 
     private static final class DirectoryReaderWithAllLiveDocs extends FilterDirectoryReader {
         static final class SubReaderWithAllLiveDocs extends FilterLeafReader {
-            SubReaderWithAllLiveDocs(LeafReader in) {
+            final Bits liveDocs;
+            SubReaderWithAllLiveDocs(LeafReader in) throws IOException {
                 super(in);
+                final int maxDoc = in.maxDoc();
+                final NumericDocValues numericDocValues = in.getNumericDocValues(ROLLEDBACK_FIELD);
+                // TODO: optimize
+                BitSet rolledBack = BitSet.of(numericDocValues == null ? DocIdSetIterator.empty() : numericDocValues, maxDoc);
+                final int rollbackCount = rolledBack.cardinality();
+                if (rollbackCount == 0) {
+                    liveDocs = new Bits.MatchAllBits(maxDoc);
+                } else if (rollbackCount == maxDoc) {
+                    liveDocs = new Bits.MatchNoBits(maxDoc);
+                } else {
+                    BitSet bitSet = new FixedBitSet(maxDoc);
+                    for (int i = 0; i < maxDoc; i++) {
+                        if (rolledBack.get(i) == false) {
+                            bitSet.set(i);
+                        }
+                    }
+                    liveDocs = bitSet;
+
+                }
             }
+
             @Override
             public Bits getLiveDocs() {
-                return null;
+                return liveDocs;
             }
             @Override
             public int numDocs() {
@@ -882,7 +907,11 @@ public class Lucene {
             super(in, new FilterDirectoryReader.SubReaderWrapper() {
                 @Override
                 public LeafReader wrap(LeafReader leaf) {
-                    return new SubReaderWithAllLiveDocs(leaf);
+                    try {
+                        return new SubReaderWithAllLiveDocs(leaf);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             });
         }
@@ -907,4 +936,9 @@ public class Lucene {
     public static NumericDocValuesField newSoftUndeleteField() {
         return new NumericDocValuesField(SOFT_DELETE_FIELD, null);
     }
+
+    public static NumericDocValuesField newRolledbackFieldField() {
+        return new NumericDocValuesField(ROLLEDBACK_FIELD, 1);
+    }
+
 }

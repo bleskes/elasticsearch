@@ -20,6 +20,7 @@
 package org.elasticsearch.index.engine;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import com.carrotsearch.randomizedtesting.annotations.Seed;
 import com.carrotsearch.randomizedtesting.generators.RandomNumbers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -4740,6 +4741,7 @@ public class InternalEngineTests extends EngineTestCase {
         assertOperationHistoryInLucene(operations);
     }
 
+    @Seed("A1DE9D3B2F79B458")
     public void testRollbackLocalCheckpoint() throws IOException {
         MockDocStore docStore = generateMultiDocHistory(5, randomIntBetween(20, 40), false);
         final long globalCheckpoint = randomLongBetween(0, docStore.getMaxSeqNo());
@@ -4775,22 +4777,36 @@ public class InternalEngineTests extends EngineTestCase {
             }
             final MapperService mapperService = createMapperService("_doc");
 
+            int rolled = engine.rollbackLocalCheckpointToGlobal(mapperService);
+            assertThat(rolled, equalTo(opsToApply.size() - completeHistory.size()));
+
+            final List<Engine.Operation> expectedOpsInLuncene;
+            if (rarely()) {
+                engine.close();
+                engine = createInternalEngine(null, null, null, engine.config());
+                // simulate peer recovery from the commit point
+                engine.skipTranslogRecovery();
+                expectedOpsInLuncene = completeHistory;
+            } else if (randomBoolean()) {
+                engine.close();
+                // this simulates a primary recovery and makes sure the rollback didn't lose any
+                // docs (they might have been acked to the user)
+                engine = createEngine(engine.config());
+                expectedOpsInLuncene = opsToApply;
+            } else {
+                expectedOpsInLuncene = completeHistory;
+            }
+
             // These are not needed but are handy for debugging
             sort(opsToApply, Comparator.comparing(Engine.Operation::seqNo));
             MockDocStore rolledBackStore = new MockDocStore();
-            completeHistory.forEach(rolledBackStore::apply);
+            expectedOpsInLuncene.forEach(rolledBackStore::apply);
 
-            int rolled = engine.rollbackLocalCheckpointToGlobal(mapperService);
-            assertThat(rolled, equalTo(opsToApply.size() - completeHistory.size()));
-            if (randomBoolean()) {
-                engine.close();
-                engine = createEngine(engine.config());
-            }
             List<Translog.Operation> opsInLucene = readAllOperationsInLucene(engine, mapperService);
-            assertThat(opsInLucene.size(), equalTo(completeHistory.size()));
-            for (int i = 0; i < completeHistory.size(); i++) {
+            assertThat(opsInLucene.size(), equalTo(expectedOpsInLuncene.size()));
+            for (int i = 0; i < expectedOpsInLuncene.size(); i++) {
                 final Translog.Operation luceneOp = opsInLucene.get(i);
-                final Engine.Operation historyOp = completeHistory.get(i);
+                final Engine.Operation historyOp = expectedOpsInLuncene.get(i);
                 assertThat(luceneOp.opType(),
                     equalTo(historyOp instanceof Engine.Index ? Translog.Operation.Type.INDEX : Translog.Operation.Type.DELETE));
                 assertThat(luceneOp.seqNo(), equalTo(historyOp.seqNo()));
