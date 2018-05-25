@@ -1168,6 +1168,11 @@ public abstract class Engine implements Closeable {
         abstract String id();
 
         public abstract TYPE operationType();
+
+        @Override
+        public String toString() {
+            return operationType()+ "{id=" + id() + ", seqNo=" + seqNo + ", primaryTerm=" + primaryTerm + "}";
+        }
     }
 
     public static class Index extends Operation {

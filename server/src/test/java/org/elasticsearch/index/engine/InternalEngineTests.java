@@ -4744,17 +4744,21 @@ public class InternalEngineTests extends EngineTestCase {
     @Seed("A1DE9D3B2F79B458")
     public void testRollbackLocalCheckpoint() throws IOException {
         MockDocStore docStore = generateMultiDocHistory(5, randomIntBetween(20, 40), false);
-        final long globalCheckpoint = randomLongBetween(0, docStore.getMaxSeqNo());
+        final long targetGlobalCheckpoint = randomLongBetween(0, docStore.getMaxSeqNo());
+        final AtomicLong globalCheckpoint = new AtomicLong(SequenceNumbers.NO_OPS_PERFORMED);
         final List<Engine.Operation> completeHistory =
-            docStore.history.stream().filter(o -> o.seqNo() <= globalCheckpoint).collect(Collectors.toList());
+            docStore.history.stream().filter(o -> o.seqNo() <= targetGlobalCheckpoint).collect(Collectors.toList());
         final List<Engine.Operation> opsToApply = new ArrayList<>(completeHistory);
-        docStore.history.stream().filter(o -> o.seqNo() > globalCheckpoint).filter(o -> randomBoolean()).forEach(opsToApply::add);
-        final MergePolicy keepSoftDeleteDocsMP = new SoftDeletesRetentionMergePolicy(
-            Lucene.SOFT_DELETE_FIELD, MatchAllDocsQuery::new, engine.config().getMergePolicy());
+        docStore.history.stream().filter(o -> o.seqNo() > targetGlobalCheckpoint).filter(o -> randomBoolean()).forEach(opsToApply::add);
+        Settings settings = Settings.builder()
+            .put(defaultSettings.getSettings())
+            .put(IndexSettings.INDEX_SOFT_DELETES_RETENTION_OPERATIONS_SETTING.getKey(), docStore.history.size()).build();
+        IndexMetaData indexMetaData = IndexMetaData.builder(defaultSettings.getIndexMetaData()).settings(settings).build();
         InternalEngine engine = null;
         try (Store store = createStore()) {
             engine = createEngine(
-                config(defaultSettings, store, createTempDir(), keepSoftDeleteDocsMP, null, null, () -> globalCheckpoint));
+                config(new IndexSettings(indexMetaData, defaultSettings.getNodeSettings()), store, createTempDir(), newMergePolicy(),
+                    null, null, globalCheckpoint::get));
             Collections.shuffle(opsToApply, random());
 
             for (Engine.Operation op : opsToApply) {
@@ -4765,6 +4769,9 @@ public class InternalEngineTests extends EngineTestCase {
                     Engine.DeleteResult deleteResult = engine.delete((Engine.Delete) op);
                     assertThat(deleteResult.getFailure(), nullValue());
                 }
+
+                globalCheckpoint.set(randomLongBetween(globalCheckpoint.get(), engine.getLocalCheckpointTracker().getCheckpoint()));
+
                 if (rarely()) {
                     engine.refresh("test");
                 }
@@ -4777,48 +4784,55 @@ public class InternalEngineTests extends EngineTestCase {
             }
             final MapperService mapperService = createMapperService("_doc");
 
+            sort(opsToApply, Comparator.comparing(Engine.Operation::seqNo));
+            readAndAssertOpsInLucene(engine, mapperService, opsToApply);
+
             int rolled = engine.rollbackLocalCheckpointToGlobal(mapperService);
             assertThat(rolled, equalTo(opsToApply.size() - completeHistory.size()));
 
-            final List<Engine.Operation> expectedOpsInLuncene;
+            final List<Engine.Operation> expectedOpsInLucene;
             if (rarely()) {
                 engine.close();
                 engine = createInternalEngine(null, null, null, engine.config());
                 // simulate peer recovery from the commit point
                 engine.skipTranslogRecovery();
-                expectedOpsInLuncene = completeHistory;
+                expectedOpsInLucene = completeHistory;
             } else if (randomBoolean()) {
                 engine.close();
                 // this simulates a primary recovery and makes sure the rollback didn't lose any
                 // docs (they might have been acked to the user)
                 engine = createEngine(engine.config());
-                expectedOpsInLuncene = opsToApply;
+                expectedOpsInLucene = opsToApply;
             } else {
-                expectedOpsInLuncene = completeHistory;
+                expectedOpsInLucene = completeHistory;
             }
 
             // These are not needed but are handy for debugging
-            sort(opsToApply, Comparator.comparing(Engine.Operation::seqNo));
             MockDocStore rolledBackStore = new MockDocStore();
-            expectedOpsInLuncene.forEach(rolledBackStore::apply);
+            expectedOpsInLucene.forEach(rolledBackStore::apply);
 
-            List<Translog.Operation> opsInLucene = readAllOperationsInLucene(engine, mapperService);
-            assertThat(opsInLucene.size(), equalTo(expectedOpsInLuncene.size()));
-            for (int i = 0; i < expectedOpsInLuncene.size(); i++) {
-                final Translog.Operation luceneOp = opsInLucene.get(i);
-                final Engine.Operation historyOp = expectedOpsInLuncene.get(i);
-                assertThat(luceneOp.opType(),
-                    equalTo(historyOp instanceof Engine.Index ? Translog.Operation.Type.INDEX : Translog.Operation.Type.DELETE));
-                assertThat(luceneOp.seqNo(), equalTo(historyOp.seqNo()));
-                assertThat(luceneOp.primaryTerm(), equalTo(historyOp.primaryTerm()));
-                if (luceneOp.opType() == Translog.Operation.Type.INDEX) {
-                    assertThat(((Translog.Index) luceneOp).id(), equalTo(historyOp.id()));
-                } else {
-                    assertThat(((Translog.Delete) luceneOp).id(), equalTo(historyOp.id()));
-                }
-            }
+            readAndAssertOpsInLucene(engine, mapperService, expectedOpsInLucene);
         } finally {
             IOUtils.close(engine);
+        }
+    }
+
+    private void readAndAssertOpsInLucene(InternalEngine engine, MapperService mapperService, List<Engine.Operation> expectedOps)
+        throws IOException {
+        List<Translog.Operation> opsInLucene = readAllOperationsInLucene(engine, mapperService);
+        assertThat(opsInLucene.size(), equalTo(expectedOps.size()));
+        for (int i = 0; i < expectedOps.size(); i++) {
+            final Translog.Operation luceneOp = opsInLucene.get(i);
+            final Engine.Operation historyOp = expectedOps.get(i);
+            assertThat(luceneOp.opType(),
+                equalTo(historyOp instanceof Engine.Index ? Translog.Operation.Type.INDEX : Translog.Operation.Type.DELETE));
+            assertThat(luceneOp.seqNo(), equalTo(historyOp.seqNo()));
+            assertThat(luceneOp.primaryTerm(), equalTo(historyOp.primaryTerm()));
+            if (luceneOp.opType() == Translog.Operation.Type.INDEX) {
+                assertThat(((Translog.Index) luceneOp).id(), equalTo(historyOp.id()));
+            } else {
+                assertThat(((Translog.Delete) luceneOp).id(), equalTo(historyOp.id()));
+            }
         }
     }
 
