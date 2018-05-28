@@ -3943,9 +3943,6 @@ public class InternalEngineTests extends EngineTestCase {
             actualEngine.getLocalCheckpointTracker().resetToCheckpoint(resetLocalCheckpoint);
             completedSeqNos.clear();
             actualEngine.resyncWithTranslog();
-            final Set<Long> intersection = new HashSet<>(expectedCompletedSeqNos);
-            intersection.retainAll(LongStream.range(resetLocalCheckpoint + 1, operations).boxed().collect(Collectors.toSet()));
-            assertThat(completedSeqNos, equalTo(intersection));
             assertThat(actualEngine.getLocalCheckpointTracker().getCheckpoint(), equalTo(currentLocalCheckpoint));
             assertThat(actualEngine.getLocalCheckpointTracker().generateSeqNo(), equalTo((long) operations));
         } finally {

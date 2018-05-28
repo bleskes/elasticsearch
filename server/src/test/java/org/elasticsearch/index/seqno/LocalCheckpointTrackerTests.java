@@ -244,7 +244,7 @@ public class LocalCheckpointTrackerTests extends ESTestCase {
         thread.join();
     }
 
-    public void testResetCheckpoint() {
+    public void testResetToCheckpoint() {
         final int operations = 1024 - scaledRandomIntBetween(0, 1024);
         int maxSeqNo = Math.toIntExact(SequenceNumbers.NO_OPS_PERFORMED);
         for (int i = 0; i < operations; i++) {
@@ -258,7 +258,7 @@ public class LocalCheckpointTrackerTests extends ESTestCase {
                 randomIntBetween(Math.toIntExact(SequenceNumbers.NO_OPS_PERFORMED), Math.toIntExact(tracker.getCheckpoint()));
         tracker.resetToCheckpoint(localCheckpoint);
         assertThat(tracker.getCheckpoint(), equalTo((long) localCheckpoint));
-        assertThat(tracker.getMaxSeqNo(), equalTo((long) maxSeqNo));
+        assertThat(tracker.getMaxSeqNo(), equalTo((long) localCheckpoint));
         assertThat(tracker.processedSeqNo, new BaseMatcher<LongObjectHashMap<CountedBitSet>>() {
             @Override
             public boolean matches(Object item) {
