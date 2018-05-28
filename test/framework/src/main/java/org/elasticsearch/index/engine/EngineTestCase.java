@@ -523,15 +523,19 @@ public abstract class EngineTestCase extends ESTestCase {
                 // we don't need to notify anybody in this test
             }
         };
-        final TranslogHandler handler = new TranslogHandler(xContentRegistry(), IndexSettingsModule.newIndexSettings(shardId.getIndexName(),
-                indexSettings.getSettings()));
+        final TranslogHandler recoveryHandler =
+            new TranslogHandler(xContentRegistry(), IndexSettingsModule.newIndexSettings(shardId.getIndexName(),
+                indexSettings.getSettings()), Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY);
+        final TranslogHandler resyncHandler =
+            new TranslogHandler(xContentRegistry(), IndexSettingsModule.newIndexSettings(shardId.getIndexName(),
+                indexSettings.getSettings()), Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY);
         final List<ReferenceManager.RefreshListener> refreshListenerList =
                 refreshListener == null ? emptyList() : Collections.singletonList(refreshListener);
         EngineConfig config = new EngineConfig(shardId, allocationId.getId(), threadPool, indexSettings, null, store,
                 mergePolicy, iwc.getAnalyzer(), iwc.getSimilarity(), new CodecService(null, logger), listener,
                 IndexSearcher.getDefaultQueryCache(), IndexSearcher.getDefaultQueryCachingPolicy(), translogConfig,
-                TimeValue.timeValueMinutes(5), refreshListenerList, Collections.emptyList(), indexSort, handler,
-                handler, new NoneCircuitBreakerService(),
+                TimeValue.timeValueMinutes(5), refreshListenerList, Collections.emptyList(), indexSort, recoveryHandler,
+                resyncHandler, new NoneCircuitBreakerService(),
                 globalCheckpointSupplier == null ?
                     new ReplicationTracker(shardId, allocationId.getId(), indexSettings, SequenceNumbers.NO_OPS_PERFORMED) :
                     globalCheckpointSupplier, primaryTerm::get, tombstoneDocSupplier());

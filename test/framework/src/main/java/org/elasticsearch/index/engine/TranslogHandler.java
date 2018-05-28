@@ -53,12 +53,14 @@ public class TranslogHandler implements EngineConfig.TranslogSnapshotIndexer {
     private final Map<String, Mapping> recoveredTypes = new HashMap<>();
 
     private final AtomicLong appliedOperations = new AtomicLong();
+    private final Engine.Operation.Origin origin;
 
     long appliedOperations() {
         return appliedOperations.get();
     }
 
-    public TranslogHandler(NamedXContentRegistry xContentRegistry, IndexSettings indexSettings) {
+    public TranslogHandler(NamedXContentRegistry xContentRegistry, IndexSettings indexSettings, Engine.Operation.Origin origin) {
+        this.origin = origin;
         NamedAnalyzer defaultAnalyzer = new NamedAnalyzer("default", AnalyzerScope.INDEX, new StandardAnalyzer());
         IndexAnalyzers indexAnalyzers =
                 new IndexAnalyzers(indexSettings, defaultAnalyzer, defaultAnalyzer, defaultAnalyzer, emptyMap(), emptyMap());
@@ -107,7 +109,7 @@ public class TranslogHandler implements EngineConfig.TranslogSnapshotIndexer {
         int opsRecovered = 0;
         Translog.Operation operation;
         while ((operation = snapshot.next()) != null) {
-            applyOperation(engine, convertToEngineOp(operation, Engine.Operation.Origin.LOCAL_TRANSLOG));
+            applyOperation(engine, convertToEngineOp(operation, origin));
             opsRecovered++;
             appliedOperations.incrementAndGet();
         }

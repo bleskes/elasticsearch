@@ -227,7 +227,7 @@ public class LuceneChangesSnapshotTests extends EngineTestCase {
             this.isDone = isDone;
             this.readLatch = readLatch;
             this.translogHandler = new TranslogHandler(xContentRegistry(), IndexSettingsModule.newIndexSettings(shardId.getIndexName(),
-                engine.engineConfig.getIndexSettings().getSettings()));
+                engine.engineConfig.getIndexSettings().getSettings()), Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY);
         }
 
         void pullOperations(Engine follower) throws IOException {

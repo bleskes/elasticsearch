@@ -1232,7 +1232,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         while ((operation = snapshot.next()) != null) {
             try {
                 logger.trace("[translog] recover op {}", operation);
-                Engine.Result result = applyTranslogOperation(operation, Engine.Operation.Origin.LOCAL_TRANSLOG);
+                Engine.Result result = applyTranslogOperation(operation, Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY);
                 switch (result.getResultType()) {
                     case FAILURE:
                         throw result.getFailure();
@@ -1264,7 +1264,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         while ((operation = snapshot.next()) != null) {
             try {
                 logger.trace("[translog] resync op {}", operation);
-                Engine.Result result = applyTranslogOperation(operation, Engine.Operation.Origin.LOCAL_TRANSLOG);
+                Engine.Result result = applyTranslogOperation(operation, Engine.Operation.Origin.LOCAL_TRANSLOG_RESYNC);
                 switch (result.getResultType()) {
                     case FAILURE:
                         throw result.getFailure();
@@ -1277,7 +1277,6 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                 }
 
                 opsResynced++;
-                recoveryState.getTranslog().incrementRecoveredOperations();
             } catch (Exception e) {
                 if (ExceptionsHelper.status(e) == RestStatus.BAD_REQUEST) {
                     // mainly for MapperParsingException and Failure to detect xcontent
@@ -1438,12 +1437,12 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     private void ensureWriteAllowed(Engine.Operation.Origin origin) throws IllegalIndexShardStateException {
         IndexShardState state = this.state; // one time volatile read
 
-        if (origin == Engine.Operation.Origin.PEER_RECOVERY) {
+        if (origin.isRecovery()) {
             if (state != IndexShardState.RECOVERING) {
                 throw new IllegalIndexShardStateException(shardId, state, "operation only allowed when recovering, origin [" + origin + "]");
             }
         } else {
-            if (origin == Engine.Operation.Origin.PRIMARY) {
+            if (origin == Engine.Operation.Origin.PRIMARY || origin == Engine.Operation.Origin.LOCAL_TRANSLOG_RESYNC) {
                 verifyPrimary();
             } else {
                 assert origin == Engine.Operation.Origin.REPLICA;

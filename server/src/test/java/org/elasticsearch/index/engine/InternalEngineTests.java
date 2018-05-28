@@ -163,7 +163,8 @@ import java.util.stream.LongStream;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.shuffle;
 import static java.util.Collections.sort;
-import static org.elasticsearch.index.engine.Engine.Operation.Origin.LOCAL_TRANSLOG;
+import static org.elasticsearch.index.engine.Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY;
+import static org.elasticsearch.index.engine.Engine.Operation.Origin.LOCAL_TRANSLOG_RESYNC;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.PEER_RECOVERY;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.PRIMARY;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.REPLICA;
@@ -3615,7 +3616,7 @@ public class InternalEngineTests extends EngineTestCase {
 
         final int numberOfOperations = randomIntBetween(16, 32);
         final AtomicLong sequenceNumber = new AtomicLong();
-        final Engine.Operation.Origin origin = randomFrom(LOCAL_TRANSLOG, PEER_RECOVERY, PRIMARY, REPLICA);
+        final Engine.Operation.Origin origin = randomFrom(LOCAL_TRANSLOG_RECOVERY, PEER_RECOVERY, PRIMARY, REPLICA, LOCAL_TRANSLOG_RESYNC);
         final LongSupplier sequenceNumberSupplier =
             origin == PRIMARY ? () -> SequenceNumbers.UNASSIGNED_SEQ_NO : sequenceNumber::getAndIncrement;
         final Supplier<ParsedDocument> doc = () -> {
@@ -3716,7 +3717,7 @@ public class InternalEngineTests extends EngineTestCase {
             noOpEngine.recoverFromTranslog();
             final int gapsFilled = noOpEngine.fillSeqNoGaps(primaryTerm.get());
             final String reason = "filling gaps";
-            noOpEngine.noOp(new Engine.NoOp(maxSeqNo + 1, primaryTerm.get(), LOCAL_TRANSLOG, System.nanoTime(), reason));
+            noOpEngine.noOp(new Engine.NoOp(maxSeqNo + 1, primaryTerm.get(), LOCAL_TRANSLOG_RECOVERY, System.nanoTime(), reason));
             assertThat(noOpEngine.getLocalCheckpointTracker().getCheckpoint(), equalTo((long) (maxSeqNo + 1)));
             assertThat(noOpEngine.getTranslog().stats().getUncommittedOperations(), equalTo(gapsFilled));
             noOpEngine.noOp(

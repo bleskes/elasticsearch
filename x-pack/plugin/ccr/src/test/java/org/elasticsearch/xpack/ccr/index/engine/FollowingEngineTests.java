@@ -253,8 +253,12 @@ public class FollowingEngineTests extends ESTestCase {
         final IndexWriterConfig indexWriterConfig = newIndexWriterConfig();
         final Path translogPath = createTempDir("translog");
         final TranslogConfig translogConfig = new TranslogConfig(shardId, translogPath, indexSettings, BigArrays.NON_RECYCLING_INSTANCE);
-        final TranslogHandler translogHandler = new TranslogHandler(
-            xContentRegistry, IndexSettingsModule.newIndexSettings(shardId.getIndexName(), indexSettings.getSettings()));
+        final TranslogHandler recoveryHandler = new TranslogHandler(
+            xContentRegistry, IndexSettingsModule.newIndexSettings(shardId.getIndexName(), indexSettings.getSettings()),
+            Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY);
+        final TranslogHandler resyncHanlder = new TranslogHandler(
+            xContentRegistry, IndexSettingsModule.newIndexSettings(shardId.getIndexName(), indexSettings.getSettings()),
+            Engine.Operation.Origin.LOCAL_TRANSLOG_RESYNC);
         return new EngineConfig(
                 shardId,
                 "allocation-id",
@@ -279,8 +283,8 @@ public class FollowingEngineTests extends ESTestCase {
                 Collections.emptyList(),
                 Collections.emptyList(),
                 null,
-                translogHandler,
-                translogHandler,
+                recoveryHandler,
+                resyncHanlder,
                 new NoneCircuitBreakerService(),
                 () -> SequenceNumbers.NO_OPS_PERFORMED,
                 () -> primaryTerm.get(),

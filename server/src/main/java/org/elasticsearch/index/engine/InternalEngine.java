@@ -685,7 +685,7 @@ public class InternalEngine extends Engine {
                     assert index.version() == 1 && index.versionType() == VersionType.EXTERNAL
                         : "version: " + index.version() + " type: " + index.versionType();
                     return true;
-                case LOCAL_TRANSLOG:
+                case LOCAL_TRANSLOG_RECOVERY:
                     assert index.isRetry();
                     return true; // allow to optimize in order to update the max safe time stamp
                 default:
@@ -704,7 +704,7 @@ public class InternalEngine extends Engine {
     private boolean assertVersionType(final Engine.Operation operation) {
         if (operation.origin() == Operation.Origin.REPLICA ||
             operation.origin() == Operation.Origin.PEER_RECOVERY ||
-            operation.origin() == Operation.Origin.LOCAL_TRANSLOG) {
+            operation.origin() == Operation.Origin.LOCAL_TRANSLOG_RECOVERY) {
             // ensure that replica operation has expected version type for replication
             // ensure that versionTypeForReplicationAndRecovery is idempotent
             assert operation.versionType() == operation.versionType().versionTypeForReplicationAndRecovery()
@@ -796,7 +796,7 @@ public class InternalEngine extends Engine {
                     indexResult = new IndexResult(
                         plan.versionForIndexing, plan.seqNoForIndexing, plan.currentNotFoundOrDeleted);
                 }
-                if (index.origin() != Operation.Origin.LOCAL_TRANSLOG) {
+                if (index.origin().isTranslog() == false) {
                     final Translog.Location location;
                     if (indexResult.getResultType() == Result.Type.SUCCESS) {
                         location = translog.add(new Translog.Index(index, indexResult));
@@ -1137,7 +1137,7 @@ public class InternalEngine extends Engine {
                 deleteResult = new DeleteResult(
                     plan.versionOfDeletion, plan.seqNoOfDeletion, plan.currentlyDeleted == false);
             }
-            if (delete.origin() != Operation.Origin.LOCAL_TRANSLOG) {
+            if (delete.origin() != Operation.Origin.LOCAL_TRANSLOG_RECOVERY) {
                 final Translog.Location location;
                 if (deleteResult.getResultType() == Result.Type.SUCCESS) {
                     location = translog.add(new Translog.Delete(delete, deleteResult));
@@ -1377,7 +1377,7 @@ public class InternalEngine extends Engine {
                 }
             }
             final NoOpResult noOpResult = failure != null ? new NoOpResult(noOp.seqNo(), failure) : new NoOpResult(noOp.seqNo());
-            if (noOp.origin() != Operation.Origin.LOCAL_TRANSLOG) {
+            if (noOp.origin() != Operation.Origin.LOCAL_TRANSLOG_RECOVERY) {
                 final Translog.Location location = translog.add(new Translog.NoOp(noOp.seqNo(), noOp.primaryTerm(), noOp.reason()));
                 noOpResult.setTranslogLocation(location);
             }
