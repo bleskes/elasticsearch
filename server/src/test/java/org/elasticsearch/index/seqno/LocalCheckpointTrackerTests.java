@@ -246,11 +246,9 @@ public class LocalCheckpointTrackerTests extends ESTestCase {
 
     public void testResetToCheckpoint() {
         final int operations = 1024 - scaledRandomIntBetween(0, 1024);
-        int maxSeqNo = Math.toIntExact(SequenceNumbers.NO_OPS_PERFORMED);
         for (int i = 0; i < operations; i++) {
             if (!rarely()) {
                 tracker.markSeqNoAsCompleted(i);
-                maxSeqNo = i;
             }
         }
 
@@ -270,6 +268,6 @@ public class LocalCheckpointTrackerTests extends ESTestCase {
                 description.appendText("empty");
             }
         });
-        assertThat(tracker.generateSeqNo(), equalTo((long) (maxSeqNo + 1)));
+        assertThat(tracker.generateSeqNo(), equalTo((long) (localCheckpoint + 1)));
     }
 }
