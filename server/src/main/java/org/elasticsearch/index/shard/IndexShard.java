@@ -473,7 +473,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                                  * replaying the translog and marking any operations there are completed.
                                  */
                                 final Engine engine = getEngine();
-                                engine.restoreLocalCheckpointFromTranslog();
+                                engine.resyncWithTranslog();
                                 /* Rolling the translog generation is not strictly needed here (as we will never have collisions between
                                  * sequence numbers in a translog generation in a new primary as it takes the last known sequence number
                                  * as a starting point), but it simplifies reasoning about the relationship between primary terms and
@@ -1232,7 +1232,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         while ((operation = snapshot.next()) != null) {
             try {
                 logger.trace("[translog] recover op {}", operation);
-                Engine.Result result = applyTranslogOperation(operation, Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY);
+                Engine.Result result = applyTranslogOperation(operation, Engine.Operation.Origin.LOCAL_TRANSLOG);
                 switch (result.getResultType()) {
                     case FAILURE:
                         throw result.getFailure();
@@ -1257,6 +1257,39 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         }
         return opsRecovered;
     }
+
+    int runTranslogResync(Engine engine, Translog.Snapshot snapshot) throws IOException {
+        int opsResynced = 0;
+        Translog.Operation operation;
+        while ((operation = snapshot.next()) != null) {
+            try {
+                logger.trace("[translog] resync op {}", operation);
+                Engine.Result result = applyTranslogOperation(operation, Engine.Operation.Origin.LOCAL_TRANSLOG);
+                switch (result.getResultType()) {
+                    case FAILURE:
+                        throw result.getFailure();
+                    case MAPPING_UPDATE_REQUIRED:
+                        throw new IllegalArgumentException("unexpected mapping update: " + result.getRequiredMappingUpdate());
+                    case SUCCESS:
+                        break;
+                    default:
+                        throw new AssertionError("Unknown result type [" + result.getResultType() + "]");
+                }
+
+                opsResynced++;
+                recoveryState.getTranslog().incrementRecoveredOperations();
+            } catch (Exception e) {
+                if (ExceptionsHelper.status(e) == RestStatus.BAD_REQUEST) {
+                    // mainly for MapperParsingException and Failure to detect xcontent
+                    logger.info("ignoring recovery of a corrupt translog entry", e);
+                } else {
+                    throw ExceptionsHelper.convertToRuntime(e);
+                }
+            }
+        }
+        return opsResynced;
+    }
+
 
     /**
      * opens the engine on top of the existing lucene engine and translog.
@@ -1405,7 +1438,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
     private void ensureWriteAllowed(Engine.Operation.Origin origin) throws IllegalIndexShardStateException {
         IndexShardState state = this.state; // one time volatile read
 
-        if (origin.isRecovery()) {
+        if (origin == Engine.Operation.Origin.PEER_RECOVERY) {
             if (state != IndexShardState.RECOVERING) {
                 throw new IllegalIndexShardStateException(shardId, state, "operation only allowed when recovering, origin [" + origin + "]");
             }
@@ -2176,7 +2209,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             IndexingMemoryController.SHARD_INACTIVE_TIME_SETTING.get(indexSettings.getSettings()),
             Collections.singletonList(refreshListeners),
             Collections.singletonList(new RefreshMetricUpdater(refreshMetric)),
-            indexSort, this::runTranslogRecovery, circuitBreakerService, replicationTracker, this::getPrimaryTerm, tombstoneDocSupplier());
+            indexSort, this::runTranslogRecovery, this::runTranslogResync, circuitBreakerService, replicationTracker,
+            this::getPrimaryTerm, tombstoneDocSupplier());
     }
 
     /**
@@ -2238,7 +2272,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
                             updateGlobalCheckpointOnReplica(globalCheckpoint, "primary term transition");
                             getEngine().rollTranslogGeneration();
                             logger.info("starting to rollback ops on detecting a new primary");
-                            long ops = getEngine().rollbackLocalCheckpointToGlobal(mapperService);
+                            long ops = getEngine().rollbackToGlobalCheckpoint(mapperService);
                             logger.info("done rolling back. Rolled: {}", ops);
                         });
                         globalCheckpointUpdated = true;

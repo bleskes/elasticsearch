@@ -206,8 +206,9 @@ public abstract class EngineTestCase extends ESTestCase {
             config.getWarmer(), config.getStore(), config.getMergePolicy(), config.getAnalyzer(), config.getSimilarity(),
             new CodecService(null, logger), config.getEventListener(), config.getQueryCache(), config.getQueryCachingPolicy(),
             config.getTranslogConfig(), config.getFlushMergesAfter(),
-            config.getExternalRefreshListener(), Collections.emptyList(), config.getIndexSort(), config.getTranslogRecoveryRunner(),
-            config.getCircuitBreakerService(), globalCheckpointSupplier, config.getPrimaryTermSupplier(), tombstoneDocSupplier());
+            config.getExternalRefreshListener(), Collections.emptyList(), config.getIndexSort(),
+            config.getTranslogRecoveryRunner(), config.getTranslogResyncRunner(), config.getCircuitBreakerService(),
+            globalCheckpointSupplier, config.getPrimaryTermSupplier(), tombstoneDocSupplier());
     }
 
     public EngineConfig copy(EngineConfig config, Analyzer analyzer) {
@@ -215,9 +216,9 @@ public abstract class EngineTestCase extends ESTestCase {
                 config.getWarmer(), config.getStore(), config.getMergePolicy(), analyzer, config.getSimilarity(),
                 new CodecService(null, logger), config.getEventListener(), config.getQueryCache(), config.getQueryCachingPolicy(),
                 config.getTranslogConfig(), config.getFlushMergesAfter(),
-                config.getExternalRefreshListener(), Collections.emptyList(), config.getIndexSort(), config.getTranslogRecoveryRunner(),
-                config.getCircuitBreakerService(), config.getGlobalCheckpointSupplier(), config.getPrimaryTermSupplier(),
-                config.getTombstoneDocSupplier());
+                config.getExternalRefreshListener(), Collections.emptyList(), config.getIndexSort(),
+                config.getTranslogRecoveryRunner(), config.getTranslogResyncRunner(), config.getCircuitBreakerService(),
+                config.getGlobalCheckpointSupplier(), config.getPrimaryTermSupplier(), config.getTombstoneDocSupplier());
     }
 
     public EngineConfig copy(EngineConfig config, MergePolicy mergePolicy) {
@@ -225,9 +226,9 @@ public abstract class EngineTestCase extends ESTestCase {
             config.getWarmer(), config.getStore(), mergePolicy, config.getAnalyzer(), config.getSimilarity(),
             new CodecService(null, logger), config.getEventListener(), config.getQueryCache(), config.getQueryCachingPolicy(),
             config.getTranslogConfig(), config.getFlushMergesAfter(),
-            config.getExternalRefreshListener(), Collections.emptyList(), config.getIndexSort(), config.getTranslogRecoveryRunner(),
-            config.getCircuitBreakerService(), config.getGlobalCheckpointSupplier(), config.getPrimaryTermSupplier(),
-            config.getTombstoneDocSupplier());
+            config.getExternalRefreshListener(), Collections.emptyList(), config.getIndexSort(),
+            config.getTranslogRecoveryRunner(), config.getTranslogResyncRunner(), config.getCircuitBreakerService(),
+            config.getGlobalCheckpointSupplier(), config.getPrimaryTermSupplier(), config.getTombstoneDocSupplier());
     }
 
     @Override
@@ -530,7 +531,7 @@ public abstract class EngineTestCase extends ESTestCase {
                 mergePolicy, iwc.getAnalyzer(), iwc.getSimilarity(), new CodecService(null, logger), listener,
                 IndexSearcher.getDefaultQueryCache(), IndexSearcher.getDefaultQueryCachingPolicy(), translogConfig,
                 TimeValue.timeValueMinutes(5), refreshListenerList, Collections.emptyList(), indexSort, handler,
-                new NoneCircuitBreakerService(),
+                handler, new NoneCircuitBreakerService(),
                 globalCheckpointSupplier == null ?
                     new ReplicationTracker(shardId, allocationId.getId(), indexSettings, SequenceNumbers.NO_OPS_PERFORMED) :
                     globalCheckpointSupplier, primaryTerm::get, tombstoneDocSupplier());
@@ -867,7 +868,7 @@ public abstract class EngineTestCase extends ESTestCase {
             }
             final long ppSeqNo = seqNo++;
             if (rarely()) {
-                op = new Engine.NoOp(seqNo, term, origin, System.currentTimeMillis(), "test");
+                op = new Engine.NoOp(ppSeqNo, term, origin, System.currentTimeMillis(), "test");
             } else if (delete) {
                 op = new Engine.Delete("_doc", id, newUid(id), ppSeqNo, term,
                     version, VersionType.EXTERNAL, origin, System.currentTimeMillis());

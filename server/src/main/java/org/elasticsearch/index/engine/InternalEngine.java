@@ -338,17 +338,12 @@ public class InternalEngine extends Engine {
     }
 
     @Override
-    public void restoreLocalCheckpointFromTranslog() throws IOException {
+    public void resyncWithTranslog() throws IOException {
         try (ReleasableLock ignored = writeLock.acquire()) {
             ensureOpen();
             final long localCheckpoint = localCheckpointTracker.getCheckpoint();
             try (Translog.Snapshot snapshot = getTranslog().newSnapshotFrom(localCheckpoint + 1)) {
-                Translog.Operation operation;
-                while ((operation = snapshot.next()) != null) {
-                    if (operation.seqNo() > localCheckpoint) {
-                        localCheckpointTracker.markSeqNoAsCompleted(operation.seqNo());
-                    }
-                }
+                config().getTranslogResyncRunner().index(this, snapshot);
             }
         }
     }
@@ -426,7 +421,7 @@ public class InternalEngine extends Engine {
         final int opsRecovered;
         final long translogGen = Long.parseLong(lastCommittedSegmentInfos.getUserData().get(Translog.TRANSLOG_GENERATION_KEY));
         try (Translog.Snapshot snapshot = translog.newSnapshotFromGen(translogGen)) {
-            opsRecovered = config().getTranslogRecoveryRunner().run(this, snapshot);
+            opsRecovered = config().getTranslogRecoveryRunner().index(this, snapshot);
         } catch (Exception e) {
             throw new EngineException(shardId, "failed to recover from translog", e);
         }
@@ -690,7 +685,7 @@ public class InternalEngine extends Engine {
                     assert index.version() == 1 && index.versionType() == VersionType.EXTERNAL
                         : "version: " + index.version() + " type: " + index.versionType();
                     return true;
-                case LOCAL_TRANSLOG_RECOVERY:
+                case LOCAL_TRANSLOG:
                     assert index.isRetry();
                     return true; // allow to optimize in order to update the max safe time stamp
                 default:
@@ -709,7 +704,7 @@ public class InternalEngine extends Engine {
     private boolean assertVersionType(final Engine.Operation operation) {
         if (operation.origin() == Operation.Origin.REPLICA ||
             operation.origin() == Operation.Origin.PEER_RECOVERY ||
-            operation.origin() == Operation.Origin.LOCAL_TRANSLOG_RECOVERY) {
+            operation.origin() == Operation.Origin.LOCAL_TRANSLOG) {
             // ensure that replica operation has expected version type for replication
             // ensure that versionTypeForReplicationAndRecovery is idempotent
             assert operation.versionType() == operation.versionType().versionTypeForReplicationAndRecovery()
@@ -801,7 +796,7 @@ public class InternalEngine extends Engine {
                     indexResult = new IndexResult(
                         plan.versionForIndexing, plan.seqNoForIndexing, plan.currentNotFoundOrDeleted);
                 }
-                if (index.origin() != Operation.Origin.LOCAL_TRANSLOG_RECOVERY) {
+                if (index.origin() != Operation.Origin.LOCAL_TRANSLOG) {
                     final Translog.Location location;
                     if (indexResult.getResultType() == Result.Type.SUCCESS) {
                         location = translog.add(new Translog.Index(index, indexResult));
@@ -1142,7 +1137,7 @@ public class InternalEngine extends Engine {
                 deleteResult = new DeleteResult(
                     plan.versionOfDeletion, plan.seqNoOfDeletion, plan.currentlyDeleted == false);
             }
-            if (delete.origin() != Operation.Origin.LOCAL_TRANSLOG_RECOVERY) {
+            if (delete.origin() != Operation.Origin.LOCAL_TRANSLOG) {
                 final Translog.Location location;
                 if (deleteResult.getResultType() == Result.Type.SUCCESS) {
                     location = translog.add(new Translog.Delete(delete, deleteResult));
@@ -1382,7 +1377,7 @@ public class InternalEngine extends Engine {
                 }
             }
             final NoOpResult noOpResult = failure != null ? new NoOpResult(noOp.seqNo(), failure) : new NoOpResult(noOp.seqNo());
-            if (noOp.origin() != Operation.Origin.LOCAL_TRANSLOG_RECOVERY) {
+            if (noOp.origin() != Operation.Origin.LOCAL_TRANSLOG) {
                 final Translog.Location location = translog.add(new Translog.NoOp(noOp.seqNo(), noOp.primaryTerm(), noOp.reason()));
                 noOpResult.setTranslogLocation(location);
             }
@@ -1453,19 +1448,23 @@ public class InternalEngine extends Engine {
         mergeScheduler.refreshConfig();
     }
 
-    public int rollbackLocalCheckpointToGlobal(MapperService mapperService) throws IOException {
+    public int rollbackToGlobalCheckpoint(MapperService mapperService) throws IOException {
         ensureOpen();
         try (Releasable lock = writeLock.acquire()) {
             int rolledBack = 0;
             final long globalCheckpoint = config().getGlobalCheckpointSupplier().getAsLong();
+            // make sure that global checkpoint is persisted
+            translog.sync();
             long currentStart = globalCheckpoint + 1;
             final long maxSeqNo = localCheckpointTracker.getMaxSeqNo();
             final int BULK_SIZE = 100;
             refresh("rollback", SearcherScope.INTERNAL);
+            logger.trace("rolling back started. maxSeq [{}], global checkpoint [{}]", currentStart, globalCheckpoint);
             RETRY:
-            while (currentStart < maxSeqNo) {
-                logger.trace("rolling back local checkpoint from [{}] to [{}]", localCheckpointTracker.getCheckpoint(), globalCheckpoint);
-                final Query rollbackQuery = LongPoint.newRangeQuery(SeqNoFieldMapper.NAME, currentStart, currentStart + BULK_SIZE - 1L);
+            while (currentStart <= maxSeqNo) {
+                final long upperValue = currentStart + BULK_SIZE - 1L;
+                logger.trace("rolling back from [{}] to [{}]", currentStart, upperValue);
+                final Query rollbackQuery = LongPoint.newRangeQuery(SeqNoFieldMapper.NAME, currentStart, upperValue);
                 final Sort sortBySeqNo = new Sort(
                     new SortedNumericSortField(SeqNoFieldMapper.NAME, SortField.Type.LONG)
                 );
@@ -1478,18 +1477,20 @@ public class InternalEngine extends Engine {
                         fieldsVisitor.reset();
                         softDeleteSearcher.doc(doc.doc, fieldsVisitor);
                         fieldsVisitor.postProcess(mapperService);
+                        logger.trace("rolling back doc [{}], doc id [{}]", doc,
+                            fieldsVisitor.uid() == null ? "_na_" : fieldsVisitor.uid().id());
                         if (rollbackDoc(doc.doc, fieldsVisitor.uid(),
                             globalCheckpoint, softDeleteSearcher, searcher.getDirectoryReader()) == false) {
                             // expose any changes.
                             refresh("rollback", SearcherScope.INTERNAL);
                             continue RETRY;
                         }
+                        rolledBack++;
                     }
                     currentStart += BULK_SIZE;
-                    rolledBack += docs.scoreDocs.length;
                 }
             }
-            localCheckpointTracker.resetCheckpoint(
+            localCheckpointTracker.resetToCheckpoint(
                 globalCheckpoint == SequenceNumbers.UNASSIGNED_SEQ_NO ?  SequenceNumbers.NO_OPS_PERFORMED : globalCheckpoint
             );
             commitIndexWriter(indexWriter, translog, null, () -> globalCheckpoint);
@@ -1507,27 +1508,36 @@ public class InternalEngine extends Engine {
 
     private boolean rollbackDoc(int docId, Uid uid, long globalCheckpoint, IndexSearcher searcher, DirectoryReader reader)
         throws IOException {
-        final Query rangeQuery = LongPoint.newRangeQuery(SeqNoFieldMapper.NAME, SequenceNumbers.NO_OPS_PERFORMED , globalCheckpoint);
-        final Query boolQuery = new BooleanQuery.Builder()
-            .add(new TermQuery(new Term(IdFieldMapper.NAME, Uid.encodeId(uid.id()))), BooleanClause.Occur.MUST)
-            // no need to revive tombstone docs.
-            .add(NumericDocValuesField.newSlowExactQuery(SeqNoFieldMapper.TOMBSTONE_NAME, 1), BooleanClause.Occur.MUST_NOT)
-            .add(rangeQuery, BooleanClause.Occur.MUST).build();
-        final Sort sortBySeqNo = new Sort(
-            new SortedNumericSortField(SeqNoFieldMapper.NAME, SortField.Type.LONG, true)
-        );
-        // TODO: nested!
-        TopDocs docs = searcher.search(boolQuery, 1, sortBySeqNo);
         final DirectoryReader unwrappedReader = FilterDirectoryReader.unwrap(reader);
-        for (ScoreDoc oldDoc: docs.scoreDocs) {
-            long luceneSeq = indexWriter.tryUpdateDocValue(unwrappedReader, oldDoc.doc, softUndeleteField);
-            if (luceneSeq < 0) {
-                return false;
+        // no ops have no uids.
+        if (uid != null) {
+            final Query rangeQuery = LongPoint.newRangeQuery(SeqNoFieldMapper.NAME, SequenceNumbers.NO_OPS_PERFORMED, globalCheckpoint);
+            final Query boolQuery = new BooleanQuery.Builder()
+                .add(new TermQuery(new Term(IdFieldMapper.NAME, Uid.encodeId(uid.id()))), BooleanClause.Occur.MUST)
+                // no need to revive tombstone docs.
+                .add(NumericDocValuesField.newSlowExactQuery(SeqNoFieldMapper.TOMBSTONE_NAME, 1), BooleanClause.Occur.MUST_NOT)
+                .add(rangeQuery, BooleanClause.Occur.MUST).build();
+            final Sort sortBySeqNo = new Sort(
+                new SortedNumericSortField(SeqNoFieldMapper.NAME, SortField.Type.LONG, true)
+            );
+            // TODO: nested!
+            TopDocs docs = searcher.search(boolQuery, 1, sortBySeqNo);
+            for (ScoreDoc oldDoc : docs.scoreDocs) {
+                long luceneSeq = indexWriter.tryUpdateDocValue(unwrappedReader, oldDoc.doc, softUndeleteField);
+                if (luceneSeq < 0) {
+                    logger.trace("failed to restore previous version of [{}], old doc id [{}]", uid, oldDoc.doc);
+                    return false;
+                }
             }
         }
         // now delete the doc itself
         long luceneSeq = indexWriter.tryUpdateDocValue(unwrappedReader, docId, softDeleteField, rolledbackField);
-        return luceneSeq >= 0;
+        if (luceneSeq < 0) {
+            logger.trace("failed to rollback [{}], doc id [{}]", uid == null ? "_na_" : uid.id(), docId);
+            return false;
+        } else {
+            return true;
+        }
     }
 
     @Override

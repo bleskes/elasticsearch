@@ -149,7 +149,7 @@ public class LuceneChangesSnapshotTests extends EngineTestCase {
             for (Engine.Operation op : ops) {
                 // We need to simulate a rollback here as only ops after local checkpoint get into the engine
                 if (op.seqNo() <= engine.getLocalCheckpointTracker().getCheckpoint()) {
-                    engine.getLocalCheckpointTracker().resetCheckpoint(randomLongBetween(-1, op.seqNo() - 1));
+                    engine.getLocalCheckpointTracker().resetToCheckpoint(randomLongBetween(-1, op.seqNo() - 1));
                     engine.rollTranslogGeneration();
                 }
                 if (op instanceof Engine.Index) {
@@ -238,7 +238,7 @@ public class LuceneChangesSnapshotTests extends EngineTestCase {
                 long batchSize = randomLongBetween(0, 100);
                 long toSeqNo = Math.min(fromSeqNo + batchSize, leaderCheckpoint);
                 try (Translog.Snapshot snapshot = leader.newLuceneChangesSnapshot("test", mapperService, fromSeqNo, toSeqNo, true)) {
-                    translogHandler.run(follower, snapshot);
+                    translogHandler.index(follower, snapshot);
                 }
             }
         }

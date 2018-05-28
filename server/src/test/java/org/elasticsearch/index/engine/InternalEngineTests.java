@@ -20,7 +20,6 @@
 package org.elasticsearch.index.engine;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
-import com.carrotsearch.randomizedtesting.annotations.Seed;
 import com.carrotsearch.randomizedtesting.generators.RandomNumbers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -164,7 +163,7 @@ import java.util.stream.LongStream;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.shuffle;
 import static java.util.Collections.sort;
-import static org.elasticsearch.index.engine.Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY;
+import static org.elasticsearch.index.engine.Engine.Operation.Origin.LOCAL_TRANSLOG;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.PEER_RECOVERY;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.PRIMARY;
 import static org.elasticsearch.index.engine.Engine.Operation.Origin.REPLICA;
@@ -2700,8 +2699,9 @@ public class InternalEngineTests extends EngineTestCase {
                 threadPool, config.getIndexSettings(), null, store, newMergePolicy(), config.getAnalyzer(), config.getSimilarity(),
                 new CodecService(null, logger), config.getEventListener(), IndexSearcher.getDefaultQueryCache(),
                 IndexSearcher.getDefaultQueryCachingPolicy(), translogConfig, TimeValue.timeValueMinutes(5),
-                config.getExternalRefreshListener(), config.getInternalRefreshListener(), null, config.getTranslogRecoveryRunner(),
-                new NoneCircuitBreakerService(), () -> SequenceNumbers.UNASSIGNED_SEQ_NO, primaryTerm::get, tombstoneDocSupplier());
+                config.getExternalRefreshListener(), config.getInternalRefreshListener(), null,
+                config.getTranslogRecoveryRunner(), config.getTranslogResyncRunner(), new NoneCircuitBreakerService(),
+                () -> SequenceNumbers.UNASSIGNED_SEQ_NO, primaryTerm::get, tombstoneDocSupplier());
         try {
             InternalEngine internalEngine = new InternalEngine(brokenConfig);
             fail("translog belongs to a different engine");
@@ -3615,7 +3615,7 @@ public class InternalEngineTests extends EngineTestCase {
 
         final int numberOfOperations = randomIntBetween(16, 32);
         final AtomicLong sequenceNumber = new AtomicLong();
-        final Engine.Operation.Origin origin = randomFrom(LOCAL_TRANSLOG_RECOVERY, PEER_RECOVERY, PRIMARY, REPLICA);
+        final Engine.Operation.Origin origin = randomFrom(LOCAL_TRANSLOG, PEER_RECOVERY, PRIMARY, REPLICA);
         final LongSupplier sequenceNumberSupplier =
             origin == PRIMARY ? () -> SequenceNumbers.UNASSIGNED_SEQ_NO : sequenceNumber::getAndIncrement;
         final Supplier<ParsedDocument> doc = () -> {
@@ -3716,7 +3716,7 @@ public class InternalEngineTests extends EngineTestCase {
             noOpEngine.recoverFromTranslog();
             final int gapsFilled = noOpEngine.fillSeqNoGaps(primaryTerm.get());
             final String reason = "filling gaps";
-            noOpEngine.noOp(new Engine.NoOp(maxSeqNo + 1, primaryTerm.get(), LOCAL_TRANSLOG_RECOVERY, System.nanoTime(), reason));
+            noOpEngine.noOp(new Engine.NoOp(maxSeqNo + 1, primaryTerm.get(), LOCAL_TRANSLOG, System.nanoTime(), reason));
             assertThat(noOpEngine.getLocalCheckpointTracker().getCheckpoint(), equalTo((long) (maxSeqNo + 1)));
             assertThat(noOpEngine.getTranslog().stats().getUncommittedOperations(), equalTo(gapsFilled));
             noOpEngine.noOp(
@@ -3939,9 +3939,9 @@ public class InternalEngineTests extends EngineTestCase {
             final long currentLocalCheckpoint = actualEngine.getLocalCheckpointTracker().getCheckpoint();
             final long resetLocalCheckpoint =
                     randomIntBetween(Math.toIntExact(SequenceNumbers.NO_OPS_PERFORMED), Math.toIntExact(currentLocalCheckpoint));
-            actualEngine.getLocalCheckpointTracker().resetCheckpoint(resetLocalCheckpoint);
+            actualEngine.getLocalCheckpointTracker().resetToCheckpoint(resetLocalCheckpoint);
             completedSeqNos.clear();
-            actualEngine.restoreLocalCheckpointFromTranslog();
+            actualEngine.resyncWithTranslog();
             final Set<Long> intersection = new HashSet<>(expectedCompletedSeqNos);
             intersection.retainAll(LongStream.range(resetLocalCheckpoint + 1, operations).boxed().collect(Collectors.toSet()));
             assertThat(completedSeqNos, equalTo(intersection));
@@ -4741,9 +4741,8 @@ public class InternalEngineTests extends EngineTestCase {
         assertOperationHistoryInLucene(operations);
     }
 
-    @Seed("A1DE9D3B2F79B458")
     public void testRollbackLocalCheckpoint() throws IOException {
-        MockDocStore docStore = generateMultiDocHistory(5, randomIntBetween(20, 40), false);
+        MockDocStore docStore = generateMultiDocHistory(5, randomIntBetween(20, 150), false);
         final long targetGlobalCheckpoint = randomLongBetween(0, docStore.getMaxSeqNo());
         final AtomicLong globalCheckpoint = new AtomicLong(SequenceNumbers.NO_OPS_PERFORMED);
         final List<Engine.Operation> completeHistory =
@@ -4763,14 +4762,21 @@ public class InternalEngineTests extends EngineTestCase {
 
             for (Engine.Operation op : opsToApply) {
                 if (op instanceof Engine.Index) {
+                    logger.debug("indexing {}", op);
                     Engine.IndexResult indexResult = engine.index((Engine.Index) op);
                     assertThat(indexResult.getFailure(), nullValue());
-                } else {
+                } else if (op instanceof Engine.Delete) {
+                    logger.debug("deleting {}", op);
                     Engine.DeleteResult deleteResult = engine.delete((Engine.Delete) op);
                     assertThat(deleteResult.getFailure(), nullValue());
-                }
+                } else {
+                    logger.debug("marking as no op {}", op);
+                    Engine.NoOpResult noOpResult = engine.noOp((Engine.NoOp) op);
+                    assertThat(noOpResult.getFailure(), nullValue()); }
 
-                globalCheckpoint.set(randomLongBetween(globalCheckpoint.get(), engine.getLocalCheckpointTracker().getCheckpoint()));
+                globalCheckpoint.set(Math.min(targetGlobalCheckpoint,
+                    randomLongBetween(globalCheckpoint.get(), engine.getLocalCheckpointTracker().getCheckpoint())
+                ));
 
                 if (rarely()) {
                     engine.refresh("test");
@@ -4782,12 +4788,14 @@ public class InternalEngineTests extends EngineTestCase {
                     engine.forceMerge(true);
                 }
             }
+            // make sure the global checkpoint is caught up.
+            globalCheckpoint.set(targetGlobalCheckpoint);
             final MapperService mapperService = createMapperService("_doc");
 
             sort(opsToApply, Comparator.comparing(Engine.Operation::seqNo));
             readAndAssertOpsInLucene(engine, mapperService, opsToApply);
 
-            int rolled = engine.rollbackLocalCheckpointToGlobal(mapperService);
+            int rolled = engine.rollbackToGlobalCheckpoint(mapperService);
             assertThat(rolled, equalTo(opsToApply.size() - completeHistory.size()));
 
             final List<Engine.Operation> expectedOpsInLucene;
@@ -4824,14 +4832,22 @@ public class InternalEngineTests extends EngineTestCase {
         for (int i = 0; i < expectedOps.size(); i++) {
             final Translog.Operation luceneOp = opsInLucene.get(i);
             final Engine.Operation historyOp = expectedOps.get(i);
-            assertThat(luceneOp.opType(),
-                equalTo(historyOp instanceof Engine.Index ? Translog.Operation.Type.INDEX : Translog.Operation.Type.DELETE));
             assertThat(luceneOp.seqNo(), equalTo(historyOp.seqNo()));
             assertThat(luceneOp.primaryTerm(), equalTo(historyOp.primaryTerm()));
-            if (luceneOp.opType() == Translog.Operation.Type.INDEX) {
-                assertThat(((Translog.Index) luceneOp).id(), equalTo(historyOp.id()));
-            } else {
-                assertThat(((Translog.Delete) luceneOp).id(), equalTo(historyOp.id()));
+            switch (luceneOp.opType()) {
+                case INDEX:
+                    assertThat(historyOp, instanceOf(Engine.Index.class));
+                    assertThat(((Translog.Index) luceneOp).id(), equalTo(historyOp.id()));
+                    break;
+                case DELETE:
+                    assertThat(historyOp, instanceOf(Engine.Delete.class));
+                    assertThat(((Translog.Delete) luceneOp).id(), equalTo(historyOp.id()));
+                    break;
+                case NO_OP:
+                    assertThat(historyOp, instanceOf(Engine.NoOp.class));
+                    break;
+                default:
+                    throw new AssertionError("unknown type " + luceneOp.opType());
             }
         }
     }

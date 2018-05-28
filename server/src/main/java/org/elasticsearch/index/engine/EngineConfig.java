@@ -76,7 +76,8 @@ public final class EngineConfig {
     private final List<ReferenceManager.RefreshListener> internalRefreshListener;
     @Nullable
     private final Sort indexSort;
-    private final TranslogRecoveryRunner translogRecoveryRunner;
+    private final TranslogSnapshotIndexer translogRecoveryRunner;
+    private final TranslogSnapshotIndexer translogResyncRunner;
     @Nullable
     private final CircuitBreakerService circuitBreakerService;
     private final LongSupplier globalCheckpointSupplier;
@@ -127,7 +128,8 @@ public final class EngineConfig {
                         TranslogConfig translogConfig, TimeValue flushMergesAfter,
                         List<ReferenceManager.RefreshListener> externalRefreshListener,
                         List<ReferenceManager.RefreshListener> internalRefreshListener, Sort indexSort,
-                        TranslogRecoveryRunner translogRecoveryRunner, CircuitBreakerService circuitBreakerService,
+                        TranslogSnapshotIndexer translogRecoveryRunner, TranslogSnapshotIndexer translogResyncRunner,
+                        CircuitBreakerService circuitBreakerService,
                         LongSupplier globalCheckpointSupplier, LongSupplier primaryTermSupplier,
                         TombstoneDocSupplier tombstoneDocSupplier) {
         this.shardId = shardId;
@@ -142,6 +144,7 @@ public final class EngineConfig {
         this.codecService = codecService;
         this.eventListener = eventListener;
         codecName = indexSettings.getValue(INDEX_CODEC_SETTING);
+        this.translogResyncRunner = translogResyncRunner;
         // We give IndexWriter a "huge" (256 MB) buffer, so it won't flush on its own unless the ES indexing buffer is also huge and/or
         // there are not too many shards allocated to this node.  Instead, IndexingMemoryController periodically checks
         // and refreshes the most heap-consuming shards when total indexing heap usage across all shards is too high:
@@ -315,15 +318,22 @@ public final class EngineConfig {
     public TimeValue getFlushMergesAfter() { return flushMergesAfter; }
 
     @FunctionalInterface
-    public interface TranslogRecoveryRunner {
-        int run(Engine engine, Translog.Snapshot snapshot) throws IOException;
+    public interface TranslogSnapshotIndexer {
+        int index(Engine engine, Translog.Snapshot snapshot) throws IOException;
     }
 
     /**
-     * Returns a runner that implements the translog recovery from the given snapshot
+     * Returns an snapshot indexer that implements the translog recovery from the given snapshot
      */
-    public TranslogRecoveryRunner getTranslogRecoveryRunner() {
+    public TranslogSnapshotIndexer getTranslogRecoveryRunner() {
         return translogRecoveryRunner;
+    }
+
+    /**
+     * Returns a snapshot indexers that implements allows resyncing with the translog upon promotion
+     */
+    public TranslogSnapshotIndexer getTranslogResyncRunner() {
+        return translogResyncRunner;
     }
 
     /**

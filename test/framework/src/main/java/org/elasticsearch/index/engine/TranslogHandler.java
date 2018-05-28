@@ -46,7 +46,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static org.elasticsearch.index.mapper.SourceToParse.source;
 
-public class TranslogHandler implements EngineConfig.TranslogRecoveryRunner {
+public class TranslogHandler implements EngineConfig.TranslogSnapshotIndexer {
 
     private final MapperService mapperService;
     public Mapping mappingUpdate = null;
@@ -103,11 +103,11 @@ public class TranslogHandler implements EngineConfig.TranslogRecoveryRunner {
     }
 
     @Override
-    public int run(Engine engine, Translog.Snapshot snapshot) throws IOException {
+    public int index(Engine engine, Translog.Snapshot snapshot) throws IOException {
         int opsRecovered = 0;
         Translog.Operation operation;
         while ((operation = snapshot.next()) != null) {
-            applyOperation(engine, convertToEngineOp(operation, Engine.Operation.Origin.LOCAL_TRANSLOG_RECOVERY));
+            applyOperation(engine, convertToEngineOp(operation, Engine.Operation.Origin.LOCAL_TRANSLOG));
             opsRecovered++;
             appliedOperations.incrementAndGet();
         }

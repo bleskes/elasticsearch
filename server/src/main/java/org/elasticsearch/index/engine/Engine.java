@@ -617,7 +617,7 @@ public abstract class Engine implements Closeable {
                                                                long minSeqNo, long maxSeqNo, boolean requiredFullRange) throws IOException;
 
 
-    public abstract int rollbackLocalCheckpointToGlobal(MapperService mapperService) throws IOException;
+    public abstract int rollbackToGlobalCheckpoint(MapperService mapperService) throws IOException;
 
     protected final void ensureOpen(Exception suppressed) {
         if (isClosed.get()) {
@@ -1123,10 +1123,10 @@ public abstract class Engine implements Closeable {
             PRIMARY,
             REPLICA,
             PEER_RECOVERY,
-            LOCAL_TRANSLOG_RECOVERY;
+            LOCAL_TRANSLOG;
 
             public boolean isRecovery() {
-                return this == PEER_RECOVERY || this == LOCAL_TRANSLOG_RECOVERY;
+                return this == PEER_RECOVERY || this == LOCAL_TRANSLOG;
             }
         }
 
@@ -1620,7 +1620,7 @@ public abstract class Engine implements Closeable {
      *
      * @throws IOException if an I/O exception occurred reading the translog
      */
-    public abstract void restoreLocalCheckpointFromTranslog() throws IOException;
+    public abstract void resyncWithTranslog() throws IOException;
 
     /**
      * Fills up the local checkpoints history with no-ops until the local checkpoint

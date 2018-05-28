@@ -85,7 +85,7 @@ public class TranslogDeletionPolicy {
      * Sets the translog generation of the last index commit.
      */
     public synchronized void setTranslogGenerationOfLastCommit(long lastGen) {
-        if (lastGen < translogGenerationOfLastCommit || lastGen < minTranslogGenerationForRecovery) {
+        if (lastGen < minTranslogGenerationForRecovery) {
             throw new IllegalArgumentException("Invalid translogGenerationOfLastCommit; new [" + lastGen + "]," +
                 "current [" + translogGenerationOfLastCommit + "], minRequiredGen [" + minTranslogGenerationForRecovery + "]");
         }

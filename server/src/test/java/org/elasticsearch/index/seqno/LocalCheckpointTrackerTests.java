@@ -256,7 +256,7 @@ public class LocalCheckpointTrackerTests extends ESTestCase {
 
         final int localCheckpoint =
                 randomIntBetween(Math.toIntExact(SequenceNumbers.NO_OPS_PERFORMED), Math.toIntExact(tracker.getCheckpoint()));
-        tracker.resetCheckpoint(localCheckpoint);
+        tracker.resetToCheckpoint(localCheckpoint);
         assertThat(tracker.getCheckpoint(), equalTo((long) localCheckpoint));
         assertThat(tracker.getMaxSeqNo(), equalTo((long) maxSeqNo));
         assertThat(tracker.processedSeqNo, new BaseMatcher<LongObjectHashMap<CountedBitSet>>() {
