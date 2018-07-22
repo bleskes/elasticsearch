@@ -128,8 +128,9 @@ public class ClusterStateChanges extends AbstractComponent {
         allocationService = new AllocationService(settings,
             new AllocationDeciders(settings, new HashSet<>(Arrays.asList(
                 new SameShardAllocationDecider(settings, clusterSettings),
-                new ReplicaAfterPrimaryActiveAllocationDecider(settings))
-            )),
+                new ReplicaAfterPrimaryActiveAllocationDecider(settings)
+//                new RandomAllocationDeciderTests.RandomAllocationDecider(random())
+            ))),
             new TestGatewayAllocator(), new BalancedShardsAllocator(settings), EmptyClusterInfoService.INSTANCE);
         shardFailedClusterStateTaskExecutor = new ShardStateAction.ShardFailedClusterStateTaskExecutor(allocationService, null, logger);
         shardStartedClusterStateTaskExecutor = new ShardStateAction.ShardStartedClusterStateTaskExecutor(allocationService, logger);
