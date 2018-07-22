@@ -19,6 +19,7 @@
 
 package org.elasticsearch.indices.cluster;
 
+import com.carrotsearch.randomizedtesting.annotations.Seed;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.admin.cluster.reroute.ClusterRerouteRequest;
@@ -43,6 +44,7 @@ import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.ShardRoutingState;
 import org.elasticsearch.cluster.routing.allocation.FailedShard;
 import org.elasticsearch.cluster.service.ClusterService;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.set.Sets;
@@ -59,6 +61,7 @@ import org.elasticsearch.transport.TransportService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -70,6 +73,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_AUTO_EXPAND_REPLICAS;
 import static org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS;
@@ -97,25 +102,34 @@ public class IndicesClusterStateServiceRandomUpdatesTests extends AbstractIndice
         terminate(threadPool);
     }
 
+    public static int getLineNumber() {
+        return Thread.currentThread().getStackTrace()[2].getLineNumber();
+    }
+
+    @Seed("CD2B4B57A34AB3C9")
     public void testRandomClusterStateUpdates() {
         // we have an IndicesClusterStateService per node in the cluster
         final Map<DiscoveryNode, IndicesClusterStateService> clusterStateServiceMap = new HashMap<>();
         ClusterState state = randomInitialClusterState(clusterStateServiceMap, MockIndicesService::new);
         // each of the following iterations represents a new cluster state update processed on all nodes
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 4; i++) {
             logger.info("Iteration {}", i);
+            logger.info("random number {} (line: {})", randomInt(), getLineNumber());
             final ClusterState previousState = state;
 
             // calculate new cluster state
-            for (int j = 0; j < randomInt(3); j++) { // multiple iterations to simulate batching of cluster states
+            for (int j = randomInt(2); j >= 0; j--) { // multiple iterations to simulate batching of cluster states
                 try {
                     state = randomlyUpdateClusterState(state, clusterStateServiceMap, MockIndicesService::new);
+                    logger.info("random number {} (line: {})", randomInt(), getLineNumber());
                 } catch (AssertionError error) {
                     ClusterState finalState = state;
                     logger.error(() -> new ParameterizedMessage("failed to random change state. last good state: \n{}", finalState), error);
                     throw error;
                 }
             }
+
+            logger.debug("cluster state: {}", state);
 
             // apply cluster state to nodes (incl. master)
             for (DiscoveryNode node : state.nodes()) {
@@ -242,11 +256,15 @@ public class IndicesClusterStateServiceRandomUpdatesTests extends AbstractIndice
                 ClusterBlocks.builder().blocks(state.blocks()).removeGlobalBlock(DiscoverySettings.NO_MASTER_BLOCK_ID)).build();
         }
 
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
+
         // randomly add no_master blocks
         if (rarely() && state.blocks().hasGlobalBlock(DiscoverySettings.NO_MASTER_BLOCK_ID) == false) {
             ClusterBlock block = randomBoolean() ? DiscoverySettings.NO_MASTER_BLOCK_ALL : DiscoverySettings.NO_MASTER_BLOCK_WRITES;
             state = ClusterState.builder(state).blocks(ClusterBlocks.builder().blocks(state.blocks()).addGlobalBlock(block)).build();
         }
+
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
 
         // if no_master block is in place, make no other cluster state changes
         if (state.blocks().hasGlobalBlock(DiscoverySettings.NO_MASTER_BLOCK_ID)) {
@@ -254,7 +272,7 @@ public class IndicesClusterStateServiceRandomUpdatesTests extends AbstractIndice
         }
 
         // randomly create new indices (until we have 200 max)
-        for (int i = 0; i < randomInt(5); i++) {
+        for (int i = randomInt(4); i >= 0; i--) {
             if (state.metaData().indices().size() > 200) {
                 break;
             }
@@ -268,15 +286,21 @@ public class IndicesClusterStateServiceRandomUpdatesTests extends AbstractIndice
             } else {
                 settingsBuilder.put(SETTING_NUMBER_OF_REPLICAS, randomInt(2));
             }
+            logger.info("random number {} (line: {})", randomInt(), getLineNumber());
             CreateIndexRequest request = new CreateIndexRequest(name, settingsBuilder.build()).waitForActiveShards(ActiveShardCount.NONE);
+            logger.info("create request {}", Strings.toString(request));
+            logger.info("random number {} (line: {})", randomInt(), getLineNumber());
             state = cluster.createIndex(state, request);
+            logger.info("random number {} (line: {})", randomInt(), getLineNumber());
             assertTrue(state.metaData().hasIndex(name));
         }
+
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
 
         // randomly delete indices
         Set<String> indicesToDelete = new HashSet<>();
         int numberOfIndicesToDelete = randomInt(Math.min(2, state.metaData().indices().size()));
-        for (String index : randomSubsetOf(numberOfIndicesToDelete, state.metaData().indices().keys().toArray(String.class))) {
+        for (String index : randomSubsetOf(numberOfIndicesToDelete, getSortedIndices(state))) {
             indicesToDelete.add(state.metaData().index(index).getIndex().getName());
         }
         if (indicesToDelete.isEmpty() == false) {
@@ -287,30 +311,39 @@ public class IndicesClusterStateServiceRandomUpdatesTests extends AbstractIndice
             }
         }
 
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
+
         // randomly close indices
         int numberOfIndicesToClose = randomInt(Math.min(1, state.metaData().indices().size()));
-        for (String index : randomSubsetOf(numberOfIndicesToClose, state.metaData().indices().keys().toArray(String.class))) {
+        for (String index : randomSubsetOf(numberOfIndicesToClose, getSortedIndices(state))) {
             CloseIndexRequest closeIndexRequest = new CloseIndexRequest(state.metaData().index(index).getIndex().getName());
             state = cluster.closeIndices(state, closeIndexRequest);
         }
 
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
+
         // randomly open indices
         int numberOfIndicesToOpen = randomInt(Math.min(1, state.metaData().indices().size()));
-        for (String index : randomSubsetOf(numberOfIndicesToOpen, state.metaData().indices().keys().toArray(String.class))) {
+        for (String index : randomSubsetOf(numberOfIndicesToOpen, getSortedIndices(state))) {
             OpenIndexRequest openIndexRequest = new OpenIndexRequest(state.metaData().index(index).getIndex().getName());
             state = cluster.openIndices(state, openIndexRequest);
         }
+
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
 
         // randomly update settings
         Set<String> indicesToUpdate = new HashSet<>();
         boolean containsClosedIndex = false;
         int numberOfIndicesToUpdate = randomInt(Math.min(2, state.metaData().indices().size()));
-        for (String index : randomSubsetOf(numberOfIndicesToUpdate, state.metaData().indices().keys().toArray(String.class))) {
+        for (String index : randomSubsetOf(numberOfIndicesToUpdate, getSortedIndices(state))) {
             indicesToUpdate.add(state.metaData().index(index).getIndex().getName());
             if (state.metaData().index(index).getState() == IndexMetaData.State.CLOSE) {
                 containsClosedIndex = true;
             }
         }
+
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
+        logger.info("index set: {}", indicesToUpdate.toArray(new String[indicesToUpdate.size()]));
         if (indicesToUpdate.isEmpty() == false) {
             UpdateSettingsRequest updateSettingsRequest = new UpdateSettingsRequest(
                 indicesToUpdate.toArray(new String[indicesToUpdate.size()]));
@@ -323,15 +356,21 @@ public class IndicesClusterStateServiceRandomUpdatesTests extends AbstractIndice
             state = cluster.updateSettings(state, updateSettingsRequest);
         }
 
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
+
         // randomly reroute
         if (rarely()) {
             state = cluster.reroute(state, new ClusterRerouteRequest());
         }
 
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
+
         // randomly start and fail allocated shards
         List<ShardRouting> startedShards = new ArrayList<>();
         List<FailedShard> failedShards = new ArrayList<>();
-        for (DiscoveryNode node : state.nodes()) {
+        final List<DiscoveryNode> nodes = StreamSupport.stream(state.nodes().spliterator(),false)
+            .sorted(Comparator.comparing(DiscoveryNode::getName)).collect(Collectors.toList());
+        for (DiscoveryNode node : nodes) {
             IndicesClusterStateService indicesClusterStateService = clusterStateServiceMap.get(node);
             MockIndicesService indicesService = (MockIndicesService) indicesClusterStateService.indicesService;
             for (MockIndexService indexService : indicesService) {
@@ -345,6 +384,9 @@ public class IndicesClusterStateServiceRandomUpdatesTests extends AbstractIndice
                 }
             }
         }
+
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
+
         state = cluster.applyFailedShards(state, failedShards);
         state = cluster.applyStartedShards(state, startedShards);
 
@@ -373,15 +415,23 @@ public class IndicesClusterStateServiceRandomUpdatesTests extends AbstractIndice
             }
         }
 
+        logger.info("random number {} (line: {})", randomInt(), getLineNumber());
+
         // TODO: go masterless?
 
         return state;
     }
 
+    private String[] getSortedIndices(ClusterState state) {
+        final String[] indices = state.metaData().indices().keys().toArray(String.class);
+        Arrays.sort(indices);
+        return indices;
+    }
+
     private static final AtomicInteger nodeIdGenerator = new AtomicInteger();
 
     protected DiscoveryNode createNode(DiscoveryNode.Role... mustHaveRoles) {
-        Set<DiscoveryNode.Role> roles = new HashSet<>(randomSubsetOf(Sets.newHashSet(DiscoveryNode.Role.values())));
+        Set<DiscoveryNode.Role> roles = new HashSet<>(randomSubsetOf(Arrays.asList(DiscoveryNode.Role.values())));
         for (DiscoveryNode.Role mustHaveRole : mustHaveRoles) {
             roles.add(mustHaveRole);
         }

@@ -240,6 +240,7 @@ public class AllocationService extends AbstractComponent {
      * Returns an updated cluster state if changes were necessary, or the identical cluster if no changes were required.
      */
     private ClusterState adaptAutoExpandReplicas(ClusterState clusterState) {
+        logger.warn("auto expanding , data nodes count: {}", clusterState.nodes().getDataNodes().size());
         final Map<Integer, List<String>> autoExpandReplicaChanges =
             AutoExpandReplicas.getAutoExpandReplicaChanges(clusterState.metaData(), clusterState.nodes());
         if (autoExpandReplicaChanges.isEmpty()) {
@@ -364,6 +365,9 @@ public class AllocationService extends AbstractComponent {
         RoutingNodes routingNodes = getMutableRoutingNodes(fixedClusterState);
         // shuffle the unassigned nodes, just so we won't have things like poison failed shards
         routingNodes.unassigned().shuffle();
+        for (ShardRouting u: routingNodes.unassigned()) {
+            logger.warn("info: {}", u);
+        }
         RoutingAllocation allocation = new RoutingAllocation(allocationDeciders, routingNodes, fixedClusterState,
             clusterInfoService.getClusterInfo(), currentNanoTime());
         allocation.debugDecision(debug);

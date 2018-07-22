@@ -46,8 +46,8 @@ import org.elasticsearch.cluster.ClusterStateTaskExecutor.ClusterTasksResult;
 import org.elasticsearch.cluster.ClusterStateUpdateTask;
 import org.elasticsearch.cluster.EmptyClusterInfoService;
 import org.elasticsearch.cluster.action.shard.ShardStateAction;
-import org.elasticsearch.cluster.action.shard.ShardStateAction.StartedShardEntry;
 import org.elasticsearch.cluster.action.shard.ShardStateAction.FailedShardEntry;
+import org.elasticsearch.cluster.action.shard.ShardStateAction.StartedShardEntry;
 import org.elasticsearch.cluster.metadata.AliasValidator;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
@@ -60,7 +60,6 @@ import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.routing.allocation.FailedShard;
-import org.elasticsearch.cluster.routing.allocation.RandomAllocationDeciderTests;
 import org.elasticsearch.cluster.routing.allocation.allocator.BalancedShardsAllocator;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDeciders;
 import org.elasticsearch.cluster.routing.allocation.decider.ReplicaAfterPrimaryActiveAllocationDecider;
@@ -94,7 +93,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.carrotsearch.randomizedtesting.RandomizedTest.getRandom;
 import static org.elasticsearch.env.Environment.PATH_HOME_SETTING;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -127,12 +125,12 @@ public class ClusterStateChanges extends AbstractComponent {
         super(Settings.builder().put(PATH_HOME_SETTING.getKey(), "dummy").build());
 
         ClusterSettings clusterSettings = new ClusterSettings(settings, ClusterSettings.BUILT_IN_CLUSTER_SETTINGS);
-        allocationService = new AllocationService(settings, new AllocationDeciders(settings,
-            new HashSet<>(Arrays.asList(new SameShardAllocationDecider(settings, clusterSettings),
-                new ReplicaAfterPrimaryActiveAllocationDecider(settings),
-                new RandomAllocationDeciderTests.RandomAllocationDecider(getRandom())))),
-            new TestGatewayAllocator(), new BalancedShardsAllocator(settings),
-            EmptyClusterInfoService.INSTANCE);
+        allocationService = new AllocationService(settings,
+            new AllocationDeciders(settings, new HashSet<>(Arrays.asList(
+                new SameShardAllocationDecider(settings, clusterSettings),
+                new ReplicaAfterPrimaryActiveAllocationDecider(settings))
+            )),
+            new TestGatewayAllocator(), new BalancedShardsAllocator(settings), EmptyClusterInfoService.INSTANCE);
         shardFailedClusterStateTaskExecutor = new ShardStateAction.ShardFailedClusterStateTaskExecutor(allocationService, null, logger);
         shardStartedClusterStateTaskExecutor = new ShardStateAction.ShardStartedClusterStateTaskExecutor(allocationService, logger);
         ActionFilters actionFilters = new ActionFilters(Collections.emptySet());

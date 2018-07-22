@@ -97,7 +97,7 @@ public final class Randomness {
      *                               running but tests.seed is not set
      */
     public static Random get() {
-        if (currentMethod != null && getRandomMethod != null) {
+        if (isMocked()) {
             try {
                 Object randomizedContext = currentMethod.invoke(null);
                 return (Random) getRandomMethod.invoke(randomizedContext);
@@ -110,13 +110,37 @@ public final class Randomness {
         }
     }
 
+    private static boolean isMocked() {
+        return currentMethod != null && getRandomMethod != null;
+    }
+
     /**
-     * Provides a secure source of randomness.
+     * Provides a singleton secure source of randomness, unless tests are enabled in which case it falls back
+     * to the test framework reproducible random source.
+     *
+     */
+    public static Random getSecureRandom() {
+        if (isMocked()) {
+            try {
+                Object randomizedContext = currentMethod.invoke(null);
+                return (Random) getRandomMethod.invoke(randomizedContext);
+            } catch (ReflectiveOperationException e) {
+                // unexpected, bail
+                throw new IllegalStateException("running tests but failed to invoke RandomizedContext#getRandom", e);
+            }
+        } else {
+            return SecureRandomHolder.INSTANCE;
+        }
+    }
+
+    /**
+     * Provides a new secure source of randomness, unless tests are enabled in which case it falls back
+     * to the test framework reproducible random source.
      *
      * This acts exactly similar to {@link #get()}, but returning a new {@link SecureRandom}.
      */
     public static SecureRandom createSecure() {
-        if (currentMethod != null && getRandomMethod != null) {
+        if (isMocked()) {
             // tests, so just use a seed from the non secure random
             byte[] seed = new byte[16];
             get().nextBytes(seed);
