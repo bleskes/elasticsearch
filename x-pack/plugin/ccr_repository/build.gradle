@@ -1,0 +1,27 @@
+evaluationDependsOn(xpackModule('core'))
+
+apply plugin: 'elasticsearch.esplugin'
+esplugin {
+    name 'x-pack-ccr-repository'
+    description 'Elasticsearch Expanded Pack Plugin - CCR Repository'
+    classname 'org.elasticsearch.xpack.ccr.Repository'
+    extendedPlugins = ['x-pack-core']
+}
+archivesBaseName = 'x-pack-ccr-repository'
+
+compileJava.options.compilerArgs << "-Xlint:-rawtypes"
+compileTestJava.options.compilerArgs << "-Xlint:-rawtypes"
+
+
+dependencies {
+    compileOnly "org.elasticsearch:elasticsearch:${version}"
+
+    compileOnly project(path: xpackModule('core'), configuration: 'shadow')
+    testCompile project(path: xpackModule('core'), configuration: 'testArtifacts')
+}
+
+run {
+    plugin xpackModule('core')
+}
+
+integTest.enabled = false
