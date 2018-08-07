@@ -34,14 +34,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CCRRepository extends AbstractLifecycleComponent implements Repository {
+public class RemoteClusterRepository extends AbstractLifecycleComponent implements Repository {
 
-    private final static SnapshotId SNAPSHOT_ID = new SnapshotId("_ccr_", "_ccr_");
+    private final static SnapshotId SNAPSHOT_ID = new SnapshotId("_latest_", "_latest_");
 
     private final RepositoryMetaData metadata;
     private final Client client;
 
-    public CCRRepository(RepositoryMetaData metadata, Client client, Settings settings) {
+    public RemoteClusterRepository(RepositoryMetaData metadata, Client client, Settings settings) {
         super(settings);
         this.metadata = metadata;
         this.client = client;
@@ -54,7 +54,7 @@ public class CCRRepository extends AbstractLifecycleComponent implements Reposit
 
     @Override
     public SnapshotInfo getSnapshotInfo(SnapshotId snapshotId) {
-        assert snapshotId.equals(snapshotId);
+        assert snapshotId.equals(SNAPSHOT_ID);
         ClusterStateResponse response = client.admin().cluster().prepareState().clear().setMetaData(true).get();
         return new SnapshotInfo(snapshotId,
             Arrays.asList(response.getState().metaData().getConcreteAllIndices()),
@@ -83,7 +83,7 @@ public class CCRRepository extends AbstractLifecycleComponent implements Reposit
             Collections.singletonMap(SNAPSHOT_ID.getName(), SnapshotState.SUCCESS),
             Arrays.stream(metaData.getConcreteAllIndices()).collect(Collectors.toMap(
                 i -> {
-                    Index index = metaData.indices().get(i).getIndex()
+                    Index index = metaData.indices().get(i).getIndex();
                     return new IndexId(index.getName(), index.getUUID());
                 },
                 i -> Collections.singleton(SNAPSHOT_ID))),
@@ -118,6 +118,7 @@ public class CCRRepository extends AbstractLifecycleComponent implements Reposit
 
     @Override
     public String startVerification() {
+        return null;
     }
 
     @Override
@@ -149,6 +150,7 @@ public class CCRRepository extends AbstractLifecycleComponent implements Reposit
 
     @Override
     public IndexShardSnapshotStatus getShardSnapshotStatus(SnapshotId snapshotId, Version version, IndexId indexId, ShardId shardId) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
