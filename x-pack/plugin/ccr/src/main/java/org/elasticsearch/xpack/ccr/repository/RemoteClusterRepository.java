@@ -3,7 +3,7 @@
  * or more contributor license agreements. Licensed under the Elastic License;
  * you may not use this file except in compliance with the Elastic License.
  */
-package org.elasticsearch.xpack.ccr;
+package org.elasticsearch.xpack.ccr.repository;
 
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.lucene.index.CorruptIndexException;
@@ -40,7 +40,7 @@ import org.elasticsearch.snapshots.SnapshotId;
 import org.elasticsearch.snapshots.SnapshotInfo;
 import org.elasticsearch.snapshots.SnapshotShardFailure;
 import org.elasticsearch.snapshots.SnapshotState;
-import org.elasticsearch.xpack.ccr.TransportCreateRestoreSessionAction.Session;
+import org.elasticsearch.xpack.ccr.repository.TransportCreateRestoreSessionAction.Session;
 
 import java.io.IOException;
 import java.io.InputStream;
