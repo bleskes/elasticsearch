@@ -5,6 +5,7 @@
  */
 package org.elasticsearch.xpack.ccr;
 
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.core.internal.io.IOUtils;
@@ -40,5 +41,21 @@ public class RemoteClusterRestoreSourceService extends AbstractLifecycleComponen
 
     public void addCommit(String uuid, Engine.IndexCommitRef commit) {
         onGoingRestores.put(uuid, commit);
+    }
+
+    public Engine.IndexCommitRef getCommit(String uuid) {
+        Engine.IndexCommitRef commit = onGoingRestores.get(uuid);
+        if (commit == null) {
+            throw new ElasticsearchException("commit for [" + uuid + "] not found");
+        }
+        return commit;
+    }
+
+    public void closeCommit(String uuid) {
+        Engine.IndexCommitRef commit = onGoingRestores.remove(uuid);
+        if (commit == null) {
+            throw new ElasticsearchException("commit for [" + uuid + "] not found");
+        }
+        IOUtils.closeWhileHandlingException(commit);
     }
 }

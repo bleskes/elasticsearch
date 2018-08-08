@@ -47,7 +47,11 @@ public class CCRRepositoryPlugin extends Plugin implements RepositoryPlugin, Act
 
     @Override
     public List<ActionHandler<? extends ActionRequest, ? extends ActionResponse>> getActions() {
-        return Arrays.asList(new ActionHandler<>(TransportCreateRestoreSessionAction.ACTION, TransportCreateRestoreSessionAction.class));
+        return Arrays.asList(
+            new ActionHandler<>(TransportCreateRestoreSessionAction.ACTION, TransportCreateRestoreSessionAction.class),
+            new ActionHandler<>(TransportFetchFileChunkAction.ACTION, TransportFetchFileChunkAction.class),
+            new ActionHandler<>(TransportCloseSessionAction.ACTION, TransportCloseSessionAction.class)
+        );
     }
 
     @Override
