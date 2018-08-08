@@ -204,7 +204,7 @@ public class Ccr extends Plugin implements ActionPlugin, PersistentTaskPlugin, E
 
     @Override
     public Map<String, Repository.Factory> getRepositories(Environment env, NamedXContentRegistry namedXContentRegistry) {
-        return Collections.singletonMap("ccr", this::createRepository);
+        return Collections.singletonMap(RemoteClusterRepository.TYPE, this::createRepository);
     }
 
 

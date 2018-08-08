@@ -52,7 +52,8 @@ import java.util.stream.Collectors;
 
 public class RemoteClusterRepository extends AbstractLifecycleComponent implements Repository {
 
-    private final static SnapshotId SNAPSHOT_ID = new SnapshotId("_latest_", "_latest_");
+    public final static SnapshotId SNAPSHOT_ID = new SnapshotId("_latest_", "_latest_");
+    public final static String TYPE = "_remote_cluster_";
 
     private final RepositoryMetaData metadata;
     private final Client client;

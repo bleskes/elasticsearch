@@ -44,6 +44,7 @@ import org.elasticsearch.xpack.ccr.action.ShardChangesAction;
 import org.elasticsearch.xpack.ccr.action.ShardFollowNodeTask;
 import org.elasticsearch.xpack.ccr.action.ShardFollowTask;
 import org.elasticsearch.xpack.ccr.action.UnfollowIndexAction;
+import org.elasticsearch.xpack.ccr.repository.RemoteClusterRepository;
 import org.elasticsearch.xpack.core.XPackSettings;
 
 import java.io.IOException;
@@ -466,6 +467,50 @@ public class ShardChangesIT extends ESIntegTestCase {
         ensureYellow("index1");
 
         final int numDocs = 1024;
+        logger.info("Indexing [{}] docs", numDocs);
+        for (int i = 0; i < numDocs; i++) {
+            final String source = String.format(Locale.ROOT, "{\"f\":%d}", i);
+            client().prepareIndex("index1", "doc", Integer.toString(i)).setSource(source, XContentType.JSON).get();
+        }
+
+        final FollowIndexAction.Request followRequest = new FollowIndexAction.Request("index1", "index2", 1024, 1, 1024L,
+            1, 10240, TimeValue.timeValueMillis(500), TimeValue.timeValueMillis(10));
+        final CreateAndFollowIndexAction.Request createAndFollowRequest = new CreateAndFollowIndexAction.Request(followRequest);
+        client().execute(CreateAndFollowIndexAction.INSTANCE, createAndFollowRequest).get();
+
+        final Map<ShardId, Long> firstBatchNumDocsPerShard = new HashMap<>();
+        final ShardStats[] firstBatchShardStats = client().admin().indices().prepareStats("index1").get().getIndex("index1").getShards();
+        for (final ShardStats shardStats : firstBatchShardStats) {
+            if (shardStats.getShardRouting().primary()) {
+                long value = shardStats.getStats().getIndexing().getTotal().getIndexCount() - 1;
+                firstBatchNumDocsPerShard.put(shardStats.getShardRouting().shardId(), value);
+            }
+        }
+
+        assertBusy(assertTask(1, firstBatchNumDocsPerShard));
+        for (int i = 0; i < numDocs; i++) {
+            assertBusy(assertExpectedDocumentRunnable(i));
+        }
+        unfollowIndex("index2");
+    }
+
+    public void testRemoteRestoreAndFollow() throws Exception {
+        client().admin().cluster().preparePutRepository("_local_").setType(RemoteClusterRepository.TYPE).get();
+
+        final String leaderIndexSettings = getIndexSettings(1, between(0, 1),
+            singletonMap(IndexSettings.INDEX_SOFT_DELETES_SETTING.getKey(), "true"));
+        assertAcked(client().admin().indices().prepareCreate("index1").setSource(leaderIndexSettings, XContentType.JSON));
+        ensureYellow("index1");
+
+        final int numDocs = 1024;
+        logger.info("Indexing [{}] docs", numDocs);
+        for (int i = 0; i < numDocs; i++) {
+            final String source = String.format(Locale.ROOT, "{\"f\":%d}", i);
+            client().prepareIndex("index1", "doc", Integer.toString(i)).setSource(source, XContentType.JSON).get();
+        }
+
+        flush("index1");
+
         logger.info("Indexing [{}] docs", numDocs);
         for (int i = 0; i < numDocs; i++) {
             final String source = String.format(Locale.ROOT, "{\"f\":%d}", i);

@@ -5,8 +5,10 @@
  */
 package org.elasticsearch.xpack.ccr.action;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import org.elasticsearch.ResourceAlreadyExistsException;
+import org.elasticsearch.Version;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
@@ -26,6 +28,7 @@ import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
+import org.elasticsearch.cluster.routing.RecoverySource;
 import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.service.ClusterService;
@@ -36,11 +39,13 @@ import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.snapshots.Snapshot;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.RemoteClusterAware;
 import org.elasticsearch.transport.RemoteClusterService;
 import org.elasticsearch.transport.TransportService;
 import org.elasticsearch.xpack.ccr.CcrSettings;
+import org.elasticsearch.xpack.ccr.repository.RemoteClusterRepository;
 
 import java.io.IOException;
 import java.util.List;
@@ -237,8 +242,9 @@ public class CreateAndFollowIndexAction extends Action<CreateAndFollowIndexActio
         }
 
         private void createFollowIndex(IndexMetaData leaderIndexMetaData, Request request, ActionListener<Response> listener) {
+            final String leaderIndexName = request.getFollowRequest().getLeaderIndex();
             if (leaderIndexMetaData == null) {
-                listener.onFailure(new IllegalArgumentException("leader index [" + request.getFollowRequest().getLeaderIndex() +
+                listener.onFailure(new IllegalArgumentException("leader index [" + leaderIndexName +
                     "] does not exist"));
                 return;
             }
@@ -293,8 +299,16 @@ public class CreateAndFollowIndexAction extends Action<CreateAndFollowIndexActio
                     builder.metaData(mdBuilder.build());
                     ClusterState updatedState = builder.build();
 
+                    final String remoteClusterName = RemoteClusterService.getRemoteClusterNameFromIndex(leaderIndexName);
+
                     RoutingTable.Builder routingTableBuilder = RoutingTable.builder(updatedState.routingTable())
-                        .addAsNew(updatedState.metaData().index(request.getFollowRequest().getFollowerIndex()));
+                        .addAsNewRestore(updatedState.metaData().index(
+                            request.getFollowRequest().getFollowerIndex()),
+                            new RecoverySource.SnapshotRecoverySource(
+                                new Snapshot(
+                                    remoteClusterName.isEmpty() ? "_local_" : remoteClusterName,
+                                    RemoteClusterRepository.SNAPSHOT_ID),
+                                Version.CURRENT, leaderIndexName), new IntHashSet());
                     updatedState = allocationService.reroute(
                         ClusterState.builder(updatedState).routingTable(routingTableBuilder.build()).build(),
                         "follow index [" + request.getFollowRequest().getFollowerIndex() + "] created");

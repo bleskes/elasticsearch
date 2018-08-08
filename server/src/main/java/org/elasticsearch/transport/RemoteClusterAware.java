@@ -82,6 +82,15 @@ public abstract class RemoteClusterAware extends AbstractComponent {
             }));
     }
 
+    public static String getRemoteClusterNameFromIndex(String index) {
+        int i = index.indexOf(RemoteClusterService.REMOTE_CLUSTER_INDEX_SEPARATOR);
+        if (i >= 0) {
+            return index.substring(0, i);
+        } else {
+            return "";
+        }
+    }
+
     /**
      * Groups indices per cluster by splitting remote cluster-alias, index-name pairs on {@link #REMOTE_CLUSTER_INDEX_SEPARATOR}. All
      * indices per cluster are collected as a list in the returned map keyed by the cluster alias. Local indices are grouped under
