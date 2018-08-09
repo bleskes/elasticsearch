@@ -5,14 +5,12 @@
  */
 package org.elasticsearch.xpack.ccr.action;
 
-import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
-import org.elasticsearch.ResourceAlreadyExistsException;
-import org.elasticsearch.Version;
+import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.Action;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequestValidationException;
 import org.elasticsearch.action.ActionResponse;
+import org.elasticsearch.action.admin.cluster.snapshots.restore.RestoreSnapshotResponse;
 import org.elasticsearch.action.admin.cluster.state.ClusterStateRequest;
 import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.ActiveShardCount;
@@ -20,26 +18,19 @@ import org.elasticsearch.action.support.ActiveShardsObserver;
 import org.elasticsearch.action.support.master.AcknowledgedRequest;
 import org.elasticsearch.action.support.master.TransportMasterNodeAction;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.AckedClusterStateUpdateTask;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.block.ClusterBlockException;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
-import org.elasticsearch.cluster.metadata.MappingMetaData;
-import org.elasticsearch.cluster.metadata.MetaData;
-import org.elasticsearch.cluster.routing.RecoverySource;
-import org.elasticsearch.cluster.routing.RoutingTable;
 import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.service.ClusterService;
-import org.elasticsearch.common.UUIDs;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.ToXContentObject;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.snapshots.Snapshot;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.transport.RemoteClusterAware;
 import org.elasticsearch.transport.RemoteClusterService;
@@ -249,76 +240,92 @@ public class CreateAndFollowIndexAction extends Action<CreateAndFollowIndexActio
                 return;
             }
 
-            ActionListener<Boolean> handler = ActionListener.wrap(
+            ActionListener<RestoreSnapshotResponse> handler = ActionListener.wrap(
                 result -> {
-                    if (result) {
+                    if (result.getRestoreInfo().failedShards() == 0) {
                         initiateFollowing(request, listener);
                     } else {
-                        listener.onResponse(new Response(true, false, false));
+                        listener.onFailure(
+                            new ElasticsearchException("failed to restore [" + result.getRestoreInfo().failedShards() + "] shards"));
                     }
                 },
                 listener::onFailure);
-            // Can't use create index api here, because then index templates can alter the mappings / settings.
-            // And index templates could introduce settings / mappings that are incompatible with the leader index.
-            clusterService.submitStateUpdateTask("follow_index_action", new AckedClusterStateUpdateTask<Boolean>(request, handler) {
+            final String remoteClusterName = RemoteClusterService.getRemoteClusterNameFromIndex(leaderIndexName);
+            String followIndex = request.getFollowRequest().getFollowerIndex();
 
-                @Override
-                protected Boolean newResponse(boolean acknowledged) {
-                    return acknowledged;
-                }
+            Settings.Builder settings = Settings.builder()
+                .put(CcrSettings.CCR_FOLLOWING_INDEX_SETTING.getKey(), true);
 
-                @Override
-                public ClusterState execute(ClusterState currentState) throws Exception {
-                    String followIndex = request.getFollowRequest().getFollowerIndex();
-                    IndexMetaData currentIndex = currentState.metaData().index(followIndex);
-                    if (currentIndex != null) {
-                        throw new ResourceAlreadyExistsException(currentIndex.getIndex());
-                    }
+            client.admin().cluster().prepareRestoreSnapshot(
+                remoteClusterName.isEmpty() ? "_local_" : remoteClusterName,
+                RemoteClusterRepository.SNAPSHOT_ID.getName()
+            )
+                // TODO: what do want more here? do we want to remove aliases?
+                .setWaitForCompletion(true).setIndices(leaderIndexName).setRenamePattern("^(.*)$").setRenameReplacement(followIndex)
+                .setIndexSettings(settings)
+                .execute(handler);
 
-                    MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
-                    IndexMetaData.Builder imdBuilder = IndexMetaData.builder(followIndex);
-
-                    // Copy all settings, but overwrite a few settings.
-                    Settings.Builder settingsBuilder = Settings.builder();
-                    settingsBuilder.put(leaderIndexMetaData.getSettings());
-                    // Overwriting UUID here, because otherwise we can't follow indices in the same cluster
-                    settingsBuilder.put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID());
-                    settingsBuilder.put(IndexMetaData.SETTING_INDEX_PROVIDED_NAME, followIndex);
-                    settingsBuilder.put(CcrSettings.CCR_FOLLOWING_INDEX_SETTING.getKey(), true);
-                    imdBuilder.settings(settingsBuilder);
-
-                    // Copy mappings from leader IMD to follow IMD
-                    for (ObjectObjectCursor<String, MappingMetaData> cursor : leaderIndexMetaData.getMappings()) {
-                        imdBuilder.putMapping(cursor.value);
-                    }
-                    imdBuilder.setRoutingNumShards(leaderIndexMetaData.getRoutingNumShards());
-                    IndexMetaData followIMD = imdBuilder.build();
-                    mdBuilder.put(followIMD, false);
-
-                    ClusterState.Builder builder = ClusterState.builder(currentState);
-                    builder.metaData(mdBuilder.build());
-                    ClusterState updatedState = builder.build();
-
-                    final String remoteClusterName = RemoteClusterService.getRemoteClusterNameFromIndex(leaderIndexName);
-
-                    RoutingTable.Builder routingTableBuilder = RoutingTable.builder(updatedState.routingTable())
-                        .addAsNewRestore(updatedState.metaData().index(
-                            request.getFollowRequest().getFollowerIndex()),
-                            new RecoverySource.SnapshotRecoverySource(
-                                new Snapshot(
-                                    remoteClusterName.isEmpty() ? "_local_" : remoteClusterName,
-                                    RemoteClusterRepository.SNAPSHOT_ID),
-                                Version.CURRENT, leaderIndexName), new IntHashSet());
-                    updatedState = allocationService.reroute(
-                        ClusterState.builder(updatedState).routingTable(routingTableBuilder.build()).build(),
-                        "follow index [" + request.getFollowRequest().getFollowerIndex() + "] created");
-
-                    logger.info("[{}] creating index, cause [ccr_create_and_follow], shards [{}]/[{}]",
-                        followIndex, followIMD.getNumberOfShards(), followIMD.getNumberOfReplicas());
-
-                    return updatedState;
-                }
-            });
+//            // Can't use create index api here, because then index templates can alter the mappings / settings.
+//            // And index templates could introduce settings / mappings that are incompatible with the leader index.
+//            clusterService.submitStateUpdateTask("follow_index_action", new AckedClusterStateUpdateTask<Boolean>(request, handler) {
+//
+//                @Override
+//                protected Boolean newResponse(boolean acknowledged) {
+//                    return acknowledged;
+//                }
+//
+//                @Override
+//                public ClusterState execute(ClusterState currentState) throws Exception {
+//                    String followIndex = request.getFollowRequest().getFollowerIndex();
+//                    IndexMetaData currentIndex = currentState.metaData().index(followIndex);
+//                    if (currentIndex != null) {
+//                        throw new ResourceAlreadyExistsException(currentIndex.getIndex());
+//                    }
+//
+//                    MetaData.Builder mdBuilder = MetaData.builder(currentState.metaData());
+//                    IndexMetaData.Builder imdBuilder = IndexMetaData.builder(followIndex);
+//
+//                    // Copy all settings, but overwrite a few settings.
+//                    Settings.Builder settingsBuilder = Settings.builder();
+//                    settingsBuilder.put(leaderIndexMetaData.getSettings());
+//                    // Overwriting UUID here, because otherwise we can't follow indices in the same cluster
+//                    settingsBuilder.put(IndexMetaData.SETTING_INDEX_UUID, UUIDs.randomBase64UUID());
+//                    settingsBuilder.put(IndexMetaData.SETTING_INDEX_PROVIDED_NAME, followIndex);
+//                    settingsBuilder.put(CcrSettings.CCR_FOLLOWING_INDEX_SETTING.getKey(), true);
+//                    imdBuilder.settings(settingsBuilder);
+//
+//                    // Copy mappings from leader IMD to follow IMD
+//                    for (ObjectObjectCursor<String, MappingMetaData> cursor : leaderIndexMetaData.getMappings()) {
+//                        imdBuilder.putMapping(cursor.value);
+//                    }
+//                    imdBuilder.setRoutingNumShards(leaderIndexMetaData.getRoutingNumShards());
+//                    IndexMetaData followIMD = imdBuilder.build();
+//                    mdBuilder.put(followIMD, false);
+//
+//                    ClusterState.Builder builder = ClusterState.builder(currentState);
+//                    builder.metaData(mdBuilder.build());
+//                    ClusterState updatedState = builder.build();
+//
+//                    final String remoteClusterName = RemoteClusterService.getRemoteClusterNameFromIndex(leaderIndexName);
+//
+//                    RoutingTable.Builder routingTableBuilder = RoutingTable.builder(updatedState.routingTable())
+//                        .addAsNewRestore(updatedState.metaData().index(
+//                            request.getFollowRequest().getFollowerIndex()),
+//                            new RecoverySource.SnapshotRecoverySource(
+//                                new Snapshot(
+//                                    remoteClusterName.isEmpty() ? "_local_" : remoteClusterName,
+//                                    RemoteClusterRepository.SNAPSHOT_ID),
+//                                Version.CURRENT, leaderIndexName), new IntHashSet());
+//                    updatedState = allocationService.reroute(
+//                        ClusterState.builder(updatedState).routingTable(routingTableBuilder.build()).build(),
+//                        "follow index [" + request.getFollowRequest().getFollowerIndex() + "] created");
+//
+//                    logger.info("[{}] creating index, cause [ccr_create_and_follow], shards [{}]/[{}]",
+//                        followIndex, followIMD.getNumberOfShards(), followIMD.getNumberOfReplicas());
+//
+//                    return updatedState;
+//                }
+//            });
         }
 
         private void initiateFollowing(Request request, ActionListener<Response> listener) {

@@ -82,7 +82,7 @@ public class TransportCreateRestoreSessionAction extends
 
     @Override
     protected Session newResponse() {
-        return null;
+        return new Session();
     }
 
     @Override
@@ -92,7 +92,9 @@ public class TransportCreateRestoreSessionAction extends
 
     @Override
     protected ShardsIterator shards(ClusterState state, InternalRequest request) {
-        IndexShardRoutingTable shardRoutingTable = state.routingTable().shardRoutingTable(request.request().shardId);
+        final ShardId shardId = request.request().shardId;
+        // sadly the index uuid is not correct if we restore with a rename (Which we do)
+        IndexShardRoutingTable shardRoutingTable = state.routingTable().shardRoutingTable(shardId.getIndexName(), shardId.id());
         return shardRoutingTable.primaryShardIt();
     }
 

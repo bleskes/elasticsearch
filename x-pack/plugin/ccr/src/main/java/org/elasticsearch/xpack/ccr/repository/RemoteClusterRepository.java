@@ -378,6 +378,7 @@ public class RemoteClusterRepository extends AbstractLifecycleComponent implemen
             }
             byte[] remote = TransportFetchFileChunkAction.readBytesFromFile(client, session.getNodeId(), session.getSessionUUID(),
                 fileInfo.name(), pos, (int)Math.min(fileInfo.length() - pos, len));
+            pos += remote.length;
             System.arraycopy(remote, 0, bytes, off, remote.length);
             return remote.length;
         }

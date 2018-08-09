@@ -18,6 +18,7 @@ import org.elasticsearch.action.support.nodes.BaseNodesResponse;
 import org.elasticsearch.action.support.nodes.TransportNodesAction;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterName;
+import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -74,15 +75,16 @@ public class TransportFetchFileChunkAction extends
         Engine.IndexCommitRef snapshot = restoreSourceService.getCommit(request.sessionUUID);
         try (IndexInput in = snapshot.getIndexCommit().getDirectory().openInput(request.fileName, IOContext.READ)) {
             byte[] chunk = new byte[request.size];
+            in.seek(request.offset);
             in.readBytes(chunk, 0, request.size);
-            return new ChunkResponse(chunk);
+            return new ChunkResponse(clusterService.localNode(), chunk);
         } catch (IOException e) {
             throw new ElasticsearchException(e);
         }
     }
 
     public static byte[] readBytesFromFile(Client client, String nodeId, String sessionUUID, String filename, long offset, int size) {
-        Request request = new Request(new ChunkRequest(sessionUUID, filename, offset, size));
+        Request request = new Request(new ChunkRequest(nodeId, sessionUUID, filename, offset, size));
         request.nodesIds(nodeId);
         Response response = client.execute(ACTION, request).actionGet();
         return response.getChunk().chunk;
@@ -100,7 +102,8 @@ public class TransportFetchFileChunkAction extends
 
         }
 
-        ChunkRequest(String sessionUUID, String fileName, long offset, int size) {
+        ChunkRequest(String nodeId, String sessionUUID, String fileName, long offset, int size) {
+            super(nodeId);
             this.sessionUUID = sessionUUID;
             this.fileName = fileName;
             this.offset = offset;
@@ -134,7 +137,8 @@ public class TransportFetchFileChunkAction extends
 
         }
 
-        private ChunkResponse(byte[] chunk) {
+        private ChunkResponse(DiscoveryNode node, byte[] chunk) {
+            super(node);
             this.chunk = chunk;
         }
 

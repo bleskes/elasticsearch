@@ -15,6 +15,7 @@ import org.elasticsearch.action.support.nodes.BaseNodesResponse;
 import org.elasticsearch.action.support.nodes.TransportNodesAction;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.ClusterName;
+import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.inject.Inject;
 import org.elasticsearch.common.io.stream.StreamInput;
@@ -68,11 +69,11 @@ public class TransportCloseSessionAction extends
     @Override
     protected SessionResponse nodeOperation(SessionRequest request) {
         restoreSourceService.closeCommit(request.sessionUUID);
-        return new SessionResponse();
+        return new SessionResponse(clusterService.localNode());
     }
 
     public static void closeSession(Client client, TransportCreateRestoreSessionAction.Session session) {
-        Request request = new Request(new SessionRequest(session.getSessionUUID()));
+        Request request = new Request(new SessionRequest(session.getNodeId(), session.getSessionUUID()));
         request.nodesIds(session.getNodeId());
         Response response = client.execute(ACTION, request).actionGet();
         response.throwIfFailed();
@@ -86,7 +87,8 @@ public class TransportCloseSessionAction extends
 
         }
 
-        SessionRequest(String sessionUUID) {
+        SessionRequest(String nodeId, String sessionUUID) {
+            super(nodeId);
             this.sessionUUID = sessionUUID;
         }
 
@@ -107,6 +109,10 @@ public class TransportCloseSessionAction extends
 
         private SessionResponse() {
 
+        }
+
+        private SessionResponse(DiscoveryNode node) {
+            super(node);
         }
 
         public static SessionResponse newFromStream(StreamInput in) throws IOException {
